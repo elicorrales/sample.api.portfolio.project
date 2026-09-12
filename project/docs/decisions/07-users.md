@@ -90,6 +90,26 @@ Keeping date of birth out of the basic view is also a privacy benefit.
 | Effect on phones and addresses | Hidden along with the user, and restored with them | mine |
 | Create with a deleted user's email | Fails. The error can suggest restoring instead. | mine (follows from no reuse) |
 
+## Field details (spec piece 2)
+
+| # | Question | Choice | Why | Origin |
+|---|---|---|---|---|
+| 1 | Name length | **1–50 characters per field** (first and last separately), after trimming spaces | Real-world references: UK government standard uses 35; many systems use 50. Covers long real names like `García-Fernández de la Torre`. | **changed** (AI first suggested 100; I asked what's realistic) |
+| 2 | Allowed name characters | Letters in any language (including accents), spaces, hyphens, apostrophes (`'` and `’`), periods; at least one letter | Avoids blocking real people: José, Nguyễn, O'Brien, de la Cruz, one-letter names | suggested (prompted by my question) |
+| 3 | Email max length | 254 characters | Practical limit from the email standards | suggested |
+| 4 | Default sort | Last name, ascending | Natural for a people list | suggested |
+| 5 | Default view for "get one user" | Basic; detailed must be asked for | Matches the list view, and keeps date of birth private by default | suggested |
+| 6 | How "deleted" is shown | `deletedAt` timestamp (`null` if active), only when including deleted users | Says both whether and when | suggested |
+| 7 | Unknown fields in the body (e.g. `id`, `role`) | Rejected with `400` | Safer; catches client typos; easy to test | suggested |
+
+**Name pattern check:** tested against sample names before accepting.
+
+| Accepted | Rejected |
+|---|---|
+| José, Zoë, Nguyễn, O'Brien, D’Angelo, García-Fernández de la Torre, Mary Ann, Jr., O, 't Hooft | `--`, `...`, `R2D2`, `Bob!`, empty |
+
+The curly apostrophe (`’`) is allowed because phone keyboards often insert it instead of `'`.
+
 ## Test edge cases
 
 - Turned 18 today → allowed; turns 18 tomorrow → rejected

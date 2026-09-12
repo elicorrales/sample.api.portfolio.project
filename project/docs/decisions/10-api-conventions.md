@@ -127,6 +127,16 @@ Reusable parts that every endpoint references: the admin token scheme, the Probl
 | 11 | Rate-limit info | `Retry-After` on `429` only, or also `RateLimit-*` headers | **`Retry-After` only** | Finished standard; `RateLimit-*` was still a draft | suggested |
 | 12 | Problem `type` values | `about:blank`, or our own paths like `/problems/validation` | **Our own paths** | More specific; can become explanation pages on the portfolio site | suggested |
 
+A spec linter run after piece 1 flagged two more questions:
+
+| # | Question | Options | Choice | Why | Origin |
+|---|---|---|---|---|---|
+| 13 | Server list | None, or `http://localhost:3000` now plus the Render URL later | **`localhost:3000`, Render later** | Without it, Swagger UI's "Try it out" sends requests to the docs page's own address; 3000 is the usual Express port | suggested |
+| 14 | License | MIT, all rights reserved, or none | **MIT** | Common for portfolio code; others may reuse it with credit. `LICENSE` file at the repo root, copyright Eli Corrales. | mine |
+| 15 | Lint the spec as a standing step | Yes or no | **Yes**, after every spec change and later in CI | Cheap quality check employers recognize | suggested |
+
+Lint command (pinned version): `npx @redocly/cli@2.52.1 lint project/api/openapi.yaml`. The remaining warnings are expected: unused components until endpoints exist, and a note that the server is `localhost`.
+
 Also included, as standards rather than choices:
 
 - `401` responses send `WWW-Authenticate: Bearer`

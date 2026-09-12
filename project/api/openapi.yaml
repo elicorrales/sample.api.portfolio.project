@@ -4,6 +4,9 @@ info:
   title: Users Admin API
   version: 0.1.0
   summary: Admin API for managing users, their phones, and their addresses.
+  license:
+    name: MIT
+    identifier: MIT
   description: |
     A portfolio project built **design-first**: this contract is written and reviewed
     before any server code exists.
@@ -26,10 +29,217 @@ tags:
   - name: Addresses
     description: A user's U.S. addresses (at most one per type).
 
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
 security:
   - adminToken: []
 
-paths: {}
+paths:
+  /v1/users:
+    post:
+      tags: [Users]
+      operationId: createUser
+      summary: Create a user
+      description: |
+        Email must not belong to any user, **including deleted ones** (emails are never reused).
+        Date of birth must not be in the future, and the user must be 18 or older.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created.
+          headers:
+            Location:
+              $ref: "#/components/headers/Location"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetailed"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    get:
+      tags: [Users]
+      operationId: listUsers
+      summary: List users
+      description: |
+        Returns one page of users in the basic view.
+        `search` is a partial, case-insensitive match against first name, last name, and email.
+        Ties in sort order are broken by first name, then id. Deleted users are hidden unless `includeDeleted=true`.
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Order"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/IncludeDeleted"
+      responses:
+        "200":
+          description: One page of users.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+
+    get:
+      tags: [Users]
+      operationId: getUser
+      summary: Get one user
+      description: Basic view by default; `view=detailed` adds date of birth, phones, addresses, version, and timestamps.
+      parameters:
+        - $ref: "#/components/parameters/View"
+        - $ref: "#/components/parameters/IncludeDeleted"
+      responses:
+        "200":
+          description: The user.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/UserBasic"
+                  - $ref: "#/components/schemas/UserDetailed"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    put:
+      tags: [Users]
+      operationId: replaceUser
+      summary: Update a user (replace)
+      description: |
+        Replaces all four fields. Send the `ETag` you loaded in `If-Match`.
+        A deleted user must be restored before it can be updated.
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "200":
+          description: Updated.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetailed"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      tags: [Users]
+      operationId: deleteUser
+      summary: Delete a user
+      description: |
+        Marks the user as deleted; nothing is removed. Their phones and addresses become hidden.
+        Send the `ETag` you loaded in `If-Match`.
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: Deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/users/{userId}/restore:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+
+    post:
+      tags: [Users]
+      operationId: restoreUser
+      summary: Restore a deleted user
+      description: Brings back the user along with their phones and addresses. Restoring a user who isn't deleted returns `409`.
+      responses:
+        "200":
+          description: Restored.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetailed"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
 
 components:
   securitySchemes:
@@ -56,6 +266,120 @@ components:
       minimum: 1
       description: Increments on every change. Also sent as the `ETag` header.
       example: 3
+
+    PersonName:
+      type: string
+      minLength: 1
+      maxLength: 50
+      pattern: "^(?=.*\\p{L})[\\p{L}\\p{M}'’ .\\-]+$"
+      description: |
+        1–50 characters after trimming surrounding spaces. Letters in any language (including accents),
+        spaces, hyphens, apostrophes (' or ’), and periods. Must contain at least one letter.
+
+    Email:
+      type: string
+      format: email
+      maxLength: 254
+      description: Unique across all users, including deleted ones. Uniqueness ignores case.
+      example: jose.garcia@example.com
+
+    DateOfBirth:
+      type: string
+      format: date
+      description: Date only (`YYYY-MM-DD`). Not in the future; the user must be 18 or older.
+      example: "1990-05-17"
+
+    UserInput:
+      type: object
+      additionalProperties: false
+      description: Unknown fields (such as `id` or `role`) are rejected with `400`.
+      required: [firstName, lastName, email, dateOfBirth]
+      properties:
+        firstName:
+          $ref: "#/components/schemas/PersonName"
+        lastName:
+          $ref: "#/components/schemas/PersonName"
+        email:
+          $ref: "#/components/schemas/Email"
+        dateOfBirth:
+          $ref: "#/components/schemas/DateOfBirth"
+      example:
+        firstName: José
+        lastName: García-López
+        email: jose.garcia@example.com
+        dateOfBirth: "1990-05-17"
+
+    UserBasic:
+      type: object
+      required: [id, firstName, lastName, email]
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        firstName:
+          $ref: "#/components/schemas/PersonName"
+        lastName:
+          $ref: "#/components/schemas/PersonName"
+        email:
+          $ref: "#/components/schemas/Email"
+        deletedAt:
+          description: When the user was deleted; `null` if active. Only included when `includeDeleted=true`.
+          oneOf:
+            - $ref: "#/components/schemas/Timestamp"
+            - type: "null"
+      example:
+        id: 3f2a8c1e-7b4d-4e2a-9c6f-1d5e8b7a0c42
+        firstName: José
+        lastName: García-López
+        email: jose.garcia@example.com
+
+    UserDetailed:
+      allOf:
+        - $ref: "#/components/schemas/UserBasic"
+        - type: object
+          required: [dateOfBirth, phones, addresses, version, createdAt, updatedAt]
+          properties:
+            dateOfBirth:
+              $ref: "#/components/schemas/DateOfBirth"
+            phones:
+              type: array
+              maxItems: 3
+              description: Phone schema is defined in spec piece 3.
+              items:
+                type: object
+            addresses:
+              type: array
+              maxItems: 3
+              description: Address schema is defined in spec piece 3.
+              items:
+                type: object
+            version:
+              $ref: "#/components/schemas/Version"
+            createdAt:
+              $ref: "#/components/schemas/Timestamp"
+            updatedAt:
+              $ref: "#/components/schemas/Timestamp"
+      example:
+        id: 3f2a8c1e-7b4d-4e2a-9c6f-1d5e8b7a0c42
+        firstName: José
+        lastName: García-López
+        email: jose.garcia@example.com
+        dateOfBirth: "1990-05-17"
+        phones: []
+        addresses: []
+        version: 1
+        createdAt: "2026-09-12T18:40:00Z"
+        updatedAt: "2026-09-12T18:40:00Z"
+
+    UserPage:
+      allOf:
+        - $ref: "#/components/schemas/PageMeta"
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserBasic"
 
     PageMeta:
       type: object
@@ -163,6 +487,45 @@ components:
         minimum: 1
         maximum: 100
         default: 20
+
+    Search:
+      name: search
+      in: query
+      required: false
+      description: Partial, case-insensitive match against first name, last name, and email. `%` and `_` are plain characters.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+        example: garc
+
+    Sort:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [lastName, email]
+        default: lastName
+
+    Order:
+      name: order
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+
+    View:
+      name: view
+      in: query
+      required: false
+      description: "`detailed` adds date of birth, phones, addresses, version, and timestamps."
+      schema:
+        type: string
+        enum: [basic, detailed]
+        default: basic
 
     IncludeDeleted:
       name: includeDeleted
