@@ -1,0 +1,318 @@
+openapi: 3.1.0
+
+info:
+  title: Users Admin API
+  version: 0.1.0
+  summary: Admin API for managing users, their phones, and their addresses.
+  description: |
+    A portfolio project built **design-first**: this contract is written and reviewed
+    before any server code exists.
+
+    Status: work in progress. Endpoints are being added piece by piece.
+
+    ## Conventions
+    - **Auth:** every operation requires an admin token (`Authorization: Bearer <JWT>`).
+    - **Errors:** all errors use Problem Details (RFC 9457), `application/problem+json`.
+    - **Versioning:** responses carry an `ETag`; updates and user deletes must send it back in `If-Match`.
+    - **Paging:** list endpoints take `page` and `pageSize` (max 100) and return `{ items, page, pageSize, totalItems, totalPages }`.
+    - **Dates:** timestamps are UTC ISO 8601; date of birth is a date only (`YYYY-MM-DD`).
+    - **Rate limits:** exceeding them returns `429` with a `Retry-After` header.
+
+tags:
+  - name: Users
+    description: Create, list, update, delete, and restore users.
+  - name: Phones
+    description: A user's phone numbers (at most one per type).
+  - name: Addresses
+    description: A user's U.S. addresses (at most one per type).
+
+security:
+  - adminToken: []
+
+paths: {}
+
+components:
+  securitySchemes:
+    adminToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: A JWT whose `role` claim is `admin`.
+
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+      example: 3f2a8c1e-7b4d-4e2a-9c6f-1d5e8b7a0c42
+
+    Timestamp:
+      type: string
+      format: date-time
+      description: UTC, ISO 8601.
+      example: "2026-09-12T18:40:00Z"
+
+    Version:
+      type: integer
+      minimum: 1
+      description: Increments on every change. Also sent as the `ETag` header.
+      example: 3
+
+    PageMeta:
+      type: object
+      required: [page, pageSize, totalItems, totalPages]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+        totalItems:
+          type: integer
+          minimum: 0
+          example: 57
+        totalPages:
+          type: integer
+          minimum: 0
+          example: 3
+
+    FieldError:
+      type: object
+      required: [field, message]
+      properties:
+        field:
+          type: string
+          example: dateOfBirth
+        message:
+          type: string
+          example: Must be 18 or older
+
+    Problem:
+      type: object
+      description: Problem Details (RFC 9457).
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: Identifies the kind of problem.
+          example: /problems/validation
+        title:
+          type: string
+          description: Short, human-readable summary of the problem kind.
+          example: Invalid input
+        status:
+          type: integer
+          description: The HTTP status code.
+          example: 400
+        detail:
+          type: string
+          description: Explanation specific to this occurrence. Never contains stack traces, SQL, or file paths.
+          example: 2 fields are invalid
+        instance:
+          type: string
+          format: uri-reference
+          description: The request path this problem occurred on.
+          example: /v1/users
+        errors:
+          type: array
+          description: Field-level problems (validation failures only).
+          items:
+            $ref: "#/components/schemas/FieldError"
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Uuid"
+
+    PhoneId:
+      name: phoneId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Uuid"
+
+    AddressId:
+      name: addressId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/Uuid"
+
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    IncludeDeleted:
+      name: includeDeleted
+      in: query
+      required: false
+      description: Include users marked as deleted.
+      schema:
+        type: boolean
+        default: false
+
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: The `ETag` from when the record was loaded. A stale value returns `412`.
+      schema:
+        type: string
+        example: '"3"'
+
+  headers:
+    ETag:
+      description: The record's current version, quoted.
+      schema:
+        type: string
+        example: '"3"'
+
+    Location:
+      description: Path of the newly created record.
+      schema:
+        type: string
+        format: uri-reference
+        example: /v1/users/3f2a8c1e-7b4d-4e2a-9c6f-1d5e8b7a0c42
+
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+        example: 30
+
+    WWWAuthenticate:
+      description: How to authenticate.
+      schema:
+        type: string
+        example: Bearer
+
+  responses:
+    BadRequest:
+      description: Invalid input.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: /problems/validation
+            title: Invalid input
+            status: 400
+            detail: 2 fields are invalid
+            instance: /v1/users
+            errors:
+              - field: email
+                message: Must be a valid email
+              - field: dateOfBirth
+                message: Must be 18 or older
+
+    Unauthorized:
+      description: Missing, invalid, or expired token.
+      headers:
+        WWW-Authenticate:
+          $ref: "#/components/headers/WWWAuthenticate"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: /problems/unauthorized
+            title: Not signed in
+            status: 401
+            detail: A valid admin token is required
+
+    Forbidden:
+      description: Valid token, but not an admin.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: /problems/forbidden
+            title: Not allowed
+            status: 403
+            detail: This operation requires the admin role
+
+    NotFound:
+      description: No such record, or it is hidden because the user is deleted.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: /problems/not-found
+            title: Not found
+            status: 404
+            detail: No user with this id
+
+    Conflict:
+      description: Breaks a uniqueness rule, or the action doesn't fit the record's state.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: /problems/conflict
+            title: Conflict
+            status: 409
+            detail: A deleted user has this email; restore that user instead
+
+    PreconditionFailed:
+      description: The `If-Match` version is out of date.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: /problems/version-mismatch
+            title: Version out of date
+            status: 412
+            detail: This record changed since it was loaded; reload and try again
+
+    PreconditionRequired:
+      description: The `If-Match` header is missing.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: /problems/version-required
+            title: Version required
+            status: 428
+            detail: Send the If-Match header with the version you loaded
+
+    TooManyRequests:
+      description: Rate limit exceeded.
+      headers:
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: /problems/rate-limited
+            title: Too many requests
+            status: 429
+            detail: Rate limit exceeded; retry after 30 seconds

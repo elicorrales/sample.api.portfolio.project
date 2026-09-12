@@ -1,0 +1,7 @@
+# Netlify builds from the repo root and publishes website/.
+# The spec's single source is project/api/openapi.yaml. The docs page loads it from
+# /project/api/openapi.yaml, which works as-is when serving the repo root locally.
+# Netlify only publishes website/, so the deploy copies the spec to that same path inside it.
+[build]
+  publish = "website"
+  command = "mkdir -p website/project/api && cp project/api/openapi.yaml website/project/api/openapi.yaml"

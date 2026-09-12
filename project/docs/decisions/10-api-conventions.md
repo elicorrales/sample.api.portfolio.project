@@ -116,6 +116,23 @@ Prompted by my question about the future web client.
 
 The `Authorization` and `If-Match` headers trigger a browser CORS preflight, so the API must allow them.
 
+## Shared components (spec piece 1)
+
+Reusable parts that every endpoint references: the admin token scheme, the Problem error schema, paging, ID parameters, the `If-Match` / `ETag` version header, and the standard error responses.
+
+| # | Question | Options | Choice | Why | Origin |
+|---|---|---|---|---|---|
+| 9 | Default page size | 10, 20, 50 | **20** | Common middle ground | suggested |
+| 10 | List response shape | Wrapper `{ items, page, pageSize, totalItems, totalPages }`, or a bare array with paging info in headers | **Wrapper** | Easy for the web client; avoids the cross-domain header problem | suggested |
+| 11 | Rate-limit info | `Retry-After` on `429` only, or also `RateLimit-*` headers | **`Retry-After` only** | Finished standard; `RateLimit-*` was still a draft | suggested |
+| 12 | Problem `type` values | `about:blank`, or our own paths like `/problems/validation` | **Our own paths** | More specific; can become explanation pages on the portfolio site | suggested |
+
+Also included, as standards rather than choices:
+
+- `401` responses send `WWW-Authenticate: Bearer`
+- Timestamps are UTC ISO 8601
+- Date of birth is date-only, to avoid timezone off-by-one-day bugs
+
 ## Additions from those reviews
 
 **Origin:** suggested (prompted by my security and web client questions)
