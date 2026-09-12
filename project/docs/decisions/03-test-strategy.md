@@ -1,6 +1,6 @@
 # 03 — Test strategy
 
-**Date:** 2026-09-12 · **Status:** Mostly decided
+**Date:** 2026-09-12 · **Status:** Decided
 
 ## Approach
 
@@ -12,7 +12,7 @@
 
 ## Test categories
 
-**Origin:** mine (rate limiting replaces DDoS: suggested)
+**Origin:** mine (rate limiting replaces DDoS: suggested, and I confirmed)
 
 | Category | What it checks | Fake DB OK? | Tooling |
 |---|---|---|---|

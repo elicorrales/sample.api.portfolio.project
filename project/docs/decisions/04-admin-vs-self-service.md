@@ -17,7 +17,7 @@ Who owns the data?
 
 **Why:** Self-service brings individual logins and passwords. Starting with admin keeps version 1 focused.
 
-**Origin:** mine
+**Origin:** picked (self-service as a later phase: mine)
 
 ## What this changes
 

@@ -15,10 +15,10 @@
 
 | Field | Required | Rules | Origin |
 |---|---|---|---|
-| First name | Yes | | mine |
-| Last name | Yes | | mine |
-| Email | Yes | Unique; matching ignores case; **never reused**, even after delete | mine |
-| Date of birth | Yes | Not in the future; age 18 or older | mine |
+| First name | Yes | | picked |
+| Last name | Yes | | picked |
+| Email | Yes | Unique; matching ignores case; **never reused**, even after delete | picked (never reused: mine) |
+| Date of birth | Yes | Not in the future; age 18 or older | picked (age 18: mine) |
 | Created / updated timestamps | Automatic | | suggested |
 | Version | Automatic | For optimistic locking | suggested |
 
@@ -42,7 +42,7 @@ Keeping date of birth out of the basic view is also a privacy benefit.
 | Search | One partial-match term checked against first name, last name, and email; ignores case | mine |
 | Sort | Last name or email, ascending or descending | mine |
 | Tie-breaker | Then first name, then id, so order is stable across pages | suggested |
-| Paging | Yes | mine |
+| Paging | Yes | picked |
 | Deleted users | Hidden unless the admin asks to include them | mine |
 
 **Search notes:**
@@ -79,14 +79,14 @@ Keeping date of birth out of the basic view is also a privacy benefit.
 | Problem cases | Abandoned locks | The losing admin re-enters their edits |
 | Common in web APIs | Less | Standard |
 
-**Choice:** optimistic. **Origin:** mine, after comparing both
+**Choice:** optimistic. **Origin:** suggested (I asked for locking; the AI laid out both kinds and recommended optimistic)
 
 ## Delete
 
 | Question | Choice | Origin |
 |---|---|---|
-| Permanent, or mark as deleted? | Mark as deleted and keep the record | mine |
-| Restore? | Yes, for admin mistakes | mine |
+| Permanent, or mark as deleted? | Mark as deleted and keep the record | picked |
+| Restore? | Yes, for admin mistakes | picked (reason: mine) |
 | Effect on phones and addresses | Hidden along with the user, and restored with them | mine |
 | Create with a deleted user's email | Fails. The error can suggest restoring instead. | mine (follows from no reuse) |
 

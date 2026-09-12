@@ -38,7 +38,7 @@
 
 | Rule | Decision | Origin |
 |---|---|---|
-| Fields | Number, type, primary (yes/no) | suggested |
+| Fields | Number, type, primary (yes/no) | picked |
 | Region | U.S. numbers only | suggested |
 | Types | mobile, home, work | suggested |
 | Per type | One per type, so at most 3 per user | **changed** (suggested a limit of 10; I chose one per type) |
@@ -52,7 +52,7 @@
 
 | Rule | Decision | Origin |
 |---|---|---|
-| Fields | Street, street line 2 (optional), city, state, ZIP, type, primary | mine (line 2 and type/primary: suggested) |
+| Fields | Street, street line 2 (optional), city, state, ZIP, type, primary | picked; I dropped country (line 2 and type/primary: suggested) |
 | Region | U.S. only | mine |
 | Types | home, work, mailing | suggested (phone types don't fit addresses) |
 | Per type | One per type, so at most 3 per user | **changed** (suggested a limit of 10; I chose 3, matching phones) |
