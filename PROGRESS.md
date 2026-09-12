@@ -15,34 +15,14 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | License | MIT, `LICENSE` |
 | Test setup files | `project/package.json`, `tsconfig.json`, `vitest.config.ts`, `.nvmrc`, `.npmrc` |
 | App skeleton | `project/api/src/app.ts` answers `501` to everything; `server.ts` listens on 3000 |
-| First test | `project/tests/happy-path/users.create.test.ts` |
-
-## In progress: blocked on install
-
-`npm install` fails inside the VM: the VirtualBox shared folder doesn't allow symbolic links, and npm needs them for `node_modules/.bin`.
-
-**Options:**
-
-| Option | How |
-|---|---|
-| A. Install on the laptop | Run the commands below on the host, not in the VM |
-| B. Allow symlinks in the shared folder | On the **host**, with the VM fully powered off: `VBoxManage setextradata "<VM name>" VBoxInternal2/SharedFoldersEnableSymlinksCreate/<share name> 1`, then start the VM. Find names with `VBoxManage list vms` and the VM's Shared Folders settings (the share name is the folder name without the `sf_` prefix). Test with `ln -s api linktest` inside `project/`. |
-| C. `npm install --no-bin-links` in the VM | Works, but npm scripts would need long paths |
+| First test | `project/tests/happy-path/users.create.test.ts`: installed and run; red as intended (`expected 501 to be 201`) |
+| VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`); `ln -s` test passed. Install and tests were run on the laptop. |
 
 ## Next steps
 
-1. **Install and run the first test**
-   ```
-   cd project
-   nvm use
-   npm install
-   npm test
-   ```
-   **Expected:** 1 failed test, `expected 501 to be 201`. This is the intended "red": the test runs and fails for the right reason.
-2. **Log test setup** in `project/docs/journal.md` (row 20) once the red test is confirmed
-3. **Write the remaining failing tests**, one category at a time, starting with happy path, then bad calls. Walk through each category's test list before writing it.
-4. **Build the real code** (routes → service → repository, in-memory fakes first) until tests turn green
-5. **Later:** PGlite → native PostgreSQL; integrity, security, rate-limit, and performance tests; admin web client; hosting (Netlify docs page, Render API)
+1. **Write the remaining failing tests**, one category at a time, starting with happy path, then bad calls. Walk through each category's test list before writing it.
+2. **Build the real code** (routes → service → repository, in-memory fakes first) until tests turn green
+3. **Later:** PGlite → native PostgreSQL; integrity, security, rate-limit, and performance tests; admin web client; hosting (Netlify docs page, Render API)
 
 ## Useful commands (from `project/`)
 
