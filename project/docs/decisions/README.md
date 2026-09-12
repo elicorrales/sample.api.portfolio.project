@@ -42,4 +42,6 @@ These docs are written in my voice: **I / my / mine** means me, the project auth
 - Confirm the tech stack (02)
 - Pick how public demo visitors get an admin token (05)
 - Confirm the folder layout (06)
-- Plain-language list of every operation, then the OpenAPI file
+- Write the OpenAPI file from the reviewed [plain-language operations list](../spec/operations.md)
+
+See also the step-by-step [project journal](../journal.md).
