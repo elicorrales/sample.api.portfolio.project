@@ -36,12 +36,13 @@ These docs are written in my voice: **I / my / mine** means me, the project auth
 | 07 | [Users](07-users.md) | Decided |
 | 08 | [Phones and addresses](08-phones-addresses.md) | Decided |
 | 09 | [Docs, memory, and capturing the process](09-docs-and-process.md) | Decided |
+| 10 | [API conventions (mapping operations to HTTP)](10-api-conventions.md) | Decided |
 
 ## Open items
 
 - Confirm the tech stack (02)
 - Pick how public demo visitors get an admin token (05)
 - Confirm the folder layout (06)
-- Write the OpenAPI file from the reviewed [plain-language operations list](../spec/operations.md)
+- Write the OpenAPI file from the reviewed [plain-language operations list](../spec/operations.md) and the [API conventions](10-api-conventions.md)
 
 See also the step-by-step [project journal](../journal.md).
