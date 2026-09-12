@@ -1,2 +1,9 @@
 # Deploy-time copy of project/api/openapi.yaml (see netlify.toml)
 website/project/
+
+# Installed packages (recreated by npm install)
+node_modules/
+
+# Local secrets and generated output
+.env
+coverage/

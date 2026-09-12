@@ -45,7 +45,7 @@
 | Primary | At most one per user | suggested |
 | Setting a new primary | Old primary is automatically un-set | suggested |
 | Deleting the primary | No primary until the admin picks one (no auto-pick) | suggested |
-| Same number twice on one user | Not allowed | suggested |
+| Same number twice on one user | ~~Not allowed~~ **Allowed** under different types (reversed in spec piece 3; see below) | suggested |
 | Changing type to one already used | Conflict | suggested (follows from one per type) |
 
 ## Addresses
@@ -59,6 +59,23 @@
 | Primary | Same rules as phones | mine |
 | State | Valid 2-letter code, including DC | suggested |
 | ZIP | 5 digits only (no ZIP+4); leading zeros kept, e.g. `02134` | **changed** (suggested allowing ZIP+4; I chose 5-digit only) |
-| Same address twice on one user | Not allowed; compared ignoring case and extra spaces | suggested |
+| Same address twice on one user | ~~Not allowed~~ **Allowed** under different types (reversed in spec piece 3; see below) | suggested |
 
-**Known limitation:** "Main St" vs "Main Street" is not detected as a duplicate. Accepted for version 1.
+## Details and a reversal (spec piece 3)
+
+Writing the phone and address endpoints into the spec surfaced these questions.
+
+| # | Question | Choice | Why | Origin |
+|---|---|---|---|---|
+| 1 | Phone input format | **Flexible:** `3055551234`, `(305) 555-1234`, `305.555.1234`, `+1 305 555 1234`. Must be 10 digits; area code can't start with 0 or 1. | People type numbers many ways | suggested |
+| 2 | Phone stored and returned format | **E.164** (`+13055551234`) | International standard; ready for other countries later; the web client formats for display | suggested |
+| 3 | Work phone extensions | **None in version 1** | Easy to add later | suggested |
+| 4 | Address field lengths | Street and street line 2: up to 100 each. City: up to 50. | Realistic, and blocks junk | suggested |
+| 5 | U.S. territories | **Included:** AS, GU, MP, PR, VI, in addition to the 50 states + DC (56 codes) | They're U.S. addresses with state codes and ZIPs; Puerto Rico is common in U.S. data | suggested |
+| 6 | **Duplicate rule** | **Dropped** for both phones and addresses | With one per type, a "duplicate" can only be the same value under two types, and **home = mailing** (or mobile = work) is common | suggested |
+| 7 | Phone and address list shape | `{ items: [...] }` | Matches the user list, minus paging | suggested |
+| 8 | `primary` in input | Required | PUT replaces everything; matches how user fields work | suggested |
+| 9 | Does editing a phone or address change the user's version? | **No;** each record has its own version | Editing a phone shouldn't block someone else's edit to the user's name | suggested |
+| 10 | Timestamps on phones and addresses | Yes (created, updated) | Matches users | suggested |
+
+**About the reversal:** the duplicate rule was set earlier (from an AI suggestion) and looked reasonable on its own. It only showed up as a problem once combined with the later "one per type" rule, when writing the exact validation for the spec. That's one benefit of turning plain-language rules into a precise contract.

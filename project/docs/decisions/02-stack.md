@@ -1,6 +1,6 @@
 # 02 — Tech stack
 
-**Date:** 2026-09-12 · **Status:** Proposed (not yet confirmed)
+**Date:** 2026-09-12 · **Status:** Decided (confirmed at test setup)
 
 ## What each piece does
 
@@ -25,6 +25,17 @@
 | Validation now or later? | Now | "Bad calls" tests need it | suggested (correction in 01) |
 | Auth now or later? | Early | Security tests need to know who is calling | suggested (correction in 01) |
 | Plain `node` or a test runner? | Vitest (proposed) | Less plumbing. Node's built-in runner is a valid alternative. | suggested |
+
+## Confirmed at test setup
+
+| # | Question | Choice | Why | Origin |
+|---|---|---|---|---|
+| 1 | Language | **TypeScript** | Expected by employers; catches mistakes early | suggested |
+| 2 | Test runner | **Vitest** | Smooth with TypeScript; polished output | suggested |
+| 3 | Node version | **24 LTS**, pinned in `.nvmrc` | Installed on both my laptop (via nvm) and the dev VM; supported by Render | suggested |
+| 4 | Where `package.json` lives | **One in `project/`**, covering API and tests | Simplest; tests import the app directly | suggested |
+| 5 | Module style | **`import`** (ES modules) | Current standard | suggested |
+| 6 | Tooling installs | **Everything local to the repo:** no global packages; exact versions (`.npmrc` `save-exact`); `node_modules` ignored by git | My standing preference | mine |
 
 ## OpenAPI vs Swagger
 

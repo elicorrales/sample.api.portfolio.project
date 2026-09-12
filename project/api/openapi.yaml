@@ -241,6 +241,321 @@ paths:
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
+  /v1/users/{userId}/phones:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+
+    post:
+      tags: [Phones]
+      operationId: addPhone
+      summary: Add a phone
+      description: |
+        A user can have at most one phone per type. If `primary` is true, the user's previous primary phone is un-set.
+        Returns `404` if the user doesn't exist or is deleted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhoneInput"
+      responses:
+        "201":
+          description: Created.
+          headers:
+            Location:
+              $ref: "#/components/headers/Location"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Phone"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    get:
+      tags: [Phones]
+      operationId: listPhones
+      summary: List a user's phones
+      description: All of the user's phones (at most 3), primary first, then by type. No paging.
+      responses:
+        "200":
+          description: The user's phones.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/users/{userId}/phones/{phoneId}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+      - $ref: "#/components/parameters/PhoneId"
+
+    get:
+      tags: [Phones]
+      operationId: getPhone
+      summary: Get one phone
+      description: Returns `404` if the phone belongs to a different user.
+      responses:
+        "200":
+          description: The phone.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Phone"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    put:
+      tags: [Phones]
+      operationId: replacePhone
+      summary: Update a phone (replace)
+      description: |
+        Send the `ETag` you loaded in `If-Match`. Changing to a type the user already has returns `409`.
+        Setting `primary` to true un-sets the previous primary phone. Doesn't change the user's version.
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhoneInput"
+      responses:
+        "200":
+          description: Updated.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Phone"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      tags: [Phones]
+      operationId: deletePhone
+      summary: Delete a phone
+      description: Permanent. No `If-Match` needed. If it was the primary, the user has no primary phone until one is set.
+      responses:
+        "204":
+          description: Deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/users/{userId}/addresses:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+
+    post:
+      tags: [Addresses]
+      operationId: addAddress
+      summary: Add an address
+      description: |
+        A user can have at most one address per type. If `primary` is true, the user's previous primary address is un-set.
+        Returns `404` if the user doesn't exist or is deleted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddressInput"
+      responses:
+        "201":
+          description: Created.
+          headers:
+            Location:
+              $ref: "#/components/headers/Location"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    get:
+      tags: [Addresses]
+      operationId: listAddresses
+      summary: List a user's addresses
+      description: All of the user's addresses (at most 3), primary first, then by type. No paging.
+      responses:
+        "200":
+          description: The user's addresses.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AddressList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+  /v1/users/{userId}/addresses/{addressId}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+      - $ref: "#/components/parameters/AddressId"
+
+    get:
+      tags: [Addresses]
+      operationId: getAddress
+      summary: Get one address
+      description: Returns `404` if the address belongs to a different user.
+      responses:
+        "200":
+          description: The address.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    put:
+      tags: [Addresses]
+      operationId: replaceAddress
+      summary: Update an address (replace)
+      description: |
+        Send the `ETag` you loaded in `If-Match`. Changing to a type the user already has returns `409`.
+        Setting `primary` to true un-sets the previous primary address. Omitting `street2` clears it.
+        Doesn't change the user's version.
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddressInput"
+      responses:
+        "200":
+          description: Updated.
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Address"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
+    delete:
+      tags: [Addresses]
+      operationId: deleteAddress
+      summary: Delete an address
+      description: Permanent. No `If-Match` needed. If it was the primary, the user has no primary address until one is set.
+      responses:
+        "204":
+          description: Deleted.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
 components:
   securitySchemes:
     adminToken:
@@ -343,15 +658,15 @@ components:
             phones:
               type: array
               maxItems: 3
-              description: Phone schema is defined in spec piece 3.
+              description: Primary first, then by type.
               items:
-                type: object
+                $ref: "#/components/schemas/Phone"
             addresses:
               type: array
               maxItems: 3
-              description: Address schema is defined in spec piece 3.
+              description: Primary first, then by type.
               items:
-                type: object
+                $ref: "#/components/schemas/Address"
             version:
               $ref: "#/components/schemas/Version"
             createdAt:
@@ -369,6 +684,162 @@ components:
         version: 1
         createdAt: "2026-09-12T18:40:00Z"
         updatedAt: "2026-09-12T18:40:00Z"
+
+    PhoneType:
+      type: string
+      enum: [mobile, home, work]
+
+    PhoneInput:
+      type: object
+      additionalProperties: false
+      required: [number, type, primary]
+      properties:
+        number:
+          type: string
+          minLength: 10
+          maxLength: 20
+          description: |
+            A U.S. number in any common format: `3055551234`, `(305) 555-1234`, `305.555.1234`, `+1 305 555 1234`.
+            Must be 10 digits (after an optional leading `+1` or `1`); the area code can't start with 0 or 1.
+            Stored and returned as E.164 (`+13055551234`).
+          example: (305) 555-1234
+        type:
+          $ref: "#/components/schemas/PhoneType"
+        primary:
+          type: boolean
+      example:
+        number: (305) 555-1234
+        type: mobile
+        primary: true
+
+    Phone:
+      type: object
+      required: [id, number, type, primary, version, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        number:
+          type: string
+          pattern: "^\\+1[2-9]\\d{9}$"
+          description: E.164 format.
+          example: "+13055551234"
+        type:
+          $ref: "#/components/schemas/PhoneType"
+        primary:
+          type: boolean
+          example: true
+        version:
+          $ref: "#/components/schemas/Version"
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        updatedAt:
+          $ref: "#/components/schemas/Timestamp"
+
+    PhoneList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/Phone"
+
+    AddressType:
+      type: string
+      enum: [home, work, mailing]
+
+    UsState:
+      type: string
+      description: The 50 states, DC, and the territories AS, GU, MP, PR, and VI.
+      enum: [AL, AK, AZ, AR, CA, CO, CT, DE, FL, GA, HI, ID, IL, IN, IA, KS, KY, LA, ME, MD,
+             MA, MI, MN, MS, MO, MT, NE, NV, NH, NJ, NM, NY, NC, ND, OH, OK, OR, PA, RI, SC,
+             SD, TN, TX, UT, VT, VA, WA, WV, WI, WY, DC, AS, GU, MP, PR, VI]
+      example: FL
+
+    AddressInput:
+      type: object
+      additionalProperties: false
+      required: [street, city, state, zip, type, primary]
+      properties:
+        street:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: 123 Main St
+        street2:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Optional (apartment, suite, unit). Omit for none.
+          example: Apt 4B
+        city:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: Miami
+        state:
+          $ref: "#/components/schemas/UsState"
+        zip:
+          type: string
+          pattern: "^\\d{5}$"
+          description: Exactly 5 digits; leading zeros kept (e.g. `02134`).
+          example: "33101"
+        type:
+          $ref: "#/components/schemas/AddressType"
+        primary:
+          type: boolean
+      example:
+        street: 123 Main St
+        street2: Apt 4B
+        city: Miami
+        state: FL
+        zip: "33101"
+        type: home
+        primary: true
+
+    Address:
+      type: object
+      required: [id, street, street2, city, state, zip, type, primary, version, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        street:
+          type: string
+          example: 123 Main St
+        street2:
+          type: [string, "null"]
+          description: "`null` if none."
+          example: Apt 4B
+        city:
+          type: string
+          example: Miami
+        state:
+          $ref: "#/components/schemas/UsState"
+        zip:
+          type: string
+          example: "33101"
+        type:
+          $ref: "#/components/schemas/AddressType"
+        primary:
+          type: boolean
+          example: true
+        version:
+          $ref: "#/components/schemas/Version"
+        createdAt:
+          $ref: "#/components/schemas/Timestamp"
+        updatedAt:
+          $ref: "#/components/schemas/Timestamp"
+
+    AddressList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/Address"
 
     UserPage:
       allOf:

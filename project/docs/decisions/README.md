@@ -28,7 +28,7 @@ These docs are written in my voice: **I / my / mine** means me, the project auth
 | # | Topic | Status |
 |---|---|---|
 | 01 | [Cross-checking earlier AI advice](01-ai-cross-check.md) | Decided |
-| 02 | [Tech stack](02-stack.md) | Proposed |
+| 02 | [Tech stack](02-stack.md) | Decided |
 | 03 | [Test strategy](03-test-strategy.md) | Decided |
 | 04 | [Admin API vs self-service](04-admin-vs-self-service.md) | Decided |
 | 05 | [Hosting and public demo](05-hosting.md) | Partly decided |
@@ -40,7 +40,6 @@ These docs are written in my voice: **I / my / mine** means me, the project auth
 
 ## Open items
 
-- Confirm the tech stack (02)
 - Pick how public demo visitors get an admin token (05)
 - Confirm the folder layout (06)
 - Write the OpenAPI file from the reviewed [plain-language operations list](../spec/operations.md) and the [API conventions](10-api-conventions.md)

@@ -84,7 +84,7 @@ All phone operations happen **under one user**. If the user doesn't exist or is 
 | **Give** | User id · number (U.S.) · type (mobile, home, work) · primary: yes or no |
 | **Get back** | The new phone, including its id and version |
 | **Behavior** | If primary is yes, the user's previous primary phone is un-set |
-| **Fails when** | Invalid number or type · the user already has a phone of this type · the number is already on this user |
+| **Fails when** | Invalid number or type · the user already has a phone of this type |
 
 ### 8. List a user's phones
 
@@ -128,8 +128,10 @@ The same five operations and rules as phones (**12–16**: add, list, get one, u
 |---|---|---|
 | Fields | Number, type, primary | Street, street line 2 (optional), city, state, ZIP, type, primary |
 | Types | mobile, home, work | home, work, mailing |
-| Validation | U.S. number | State is a valid 2-letter code (DC included) · ZIP is exactly 5 digits |
-| Duplicate on same user | Same number | Same address, compared ignoring case and extra spaces |
+| Validation | U.S. number in any common format; returned as `+13055551234` | State is a valid 2-letter code (states, DC, and territories) · ZIP is exactly 5 digits |
+| Same value twice on one user | Allowed under different types (e.g. mobile = work) | Allowed under different types (e.g. home = mailing) |
+
+The duplicate rule was dropped while writing the spec; see [08](../decisions/08-phones-addresses.md#details-and-a-reversal-spec-piece-3).
 
 ## Questions raised while writing
 
