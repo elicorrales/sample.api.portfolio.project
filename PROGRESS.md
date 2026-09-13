@@ -17,12 +17,14 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | App skeleton | `project/api/src/app.ts` answers `501` to everything; `server.ts` listens on 3000 |
 | First test | `project/tests/happy-path/users.create.test.ts`: installed and run; red as intended (`expected 501 to be 201`) |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`); `ln -s` test passed. Install and tests were run on the laptop. |
+| Root README | Entry point for recruiters, employers, and devs: status, AI collaboration, reading order, run commands, links to my other work |
 
 ## Next steps
 
 1. **Write the remaining failing tests**, one category at a time, starting with happy path, then bad calls. Walk through each category's test list before writing it.
 2. **Build the real code** (routes → service → repository, in-memory fakes first) until tests turn green
 3. **Later:** PGlite → native PostgreSQL; integrity, security, rate-limit, and performance tests; admin web client; hosting (Netlify docs page, Render API)
+4. **Once the docs page is on Netlify:** add this API to the [projects landing page](https://all-my-projects-landing-page.netlify.app/), and add the live docs link to `README.md` (it has local-only instructions for now)
 
 ## Useful commands (from `project/`)
 
