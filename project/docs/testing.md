@@ -2,7 +2,7 @@
 
 **What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, attacks, and floods all fail the right way, with a clear error and no damage.
 
-**Last updated:** 2026-09-13 · **231 tests, all green, running against a real PostgreSQL 18 server**
+**Last updated:** 2026-09-13 · **245 tests, all green, running against a real PostgreSQL 18 server**
 
 ## By category
 
@@ -10,7 +10,7 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 
 | Category | What it proves | Tests | Status | Folder | Run it (from `project/`) |
 |---|---|---|---|---|---|
-| **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error | **115** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
+| **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error, including mistakes in the server's own settings | **129** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
 | **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks (to callers and to the server's own log), and other origins are blocked; only the docs are public | **73** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
 | **Integrity** | Two admins at once can't corrupt data or silently overwrite each other; a failed save changes nothing; the database refuses bad data even if the code lets it through | **14** | ✅ Green (on a real PostgreSQL server, with truly simultaneous connections) | [`tests/integrity/`](../tests/integrity/) | `npm run test:integrity` |
 | **Rate limiting** | Too many requests get `429` with `Retry-After`, not a slow or crashed server; token-guessing floods and faked IPs are stopped too | **12** | ✅ Green | [`tests/rate-limit/`](../tests/rate-limit/) | `npm run test:rate-limit` |
@@ -18,7 +18,7 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 | **Encryption** | Personal fields are stored encrypted: the raw database row never holds the plain value, a wrong key fails loudly, and data saved under an old key still reads after rotation | — | 📝 Designed, not built ([decision 12](decisions/12-encryption.md#if-this-project-continued)) | | |
 | Happy path + workflow | Each operation works, and they work together in one admin session | 17 | ✅ Green | [`tests/happy-path/`](../tests/happy-path/), [`tests/workflow/`](../tests/workflow/) | `npm run test:happy-path` |
 
-## Bad calls: 115 tests
+## Bad calls: 129 tests
 
 Every error uses the same format ([Problem Details](decisions/10-api-conventions.md#pushback-problem-details-is-json)) and names the field at fault, so a web form can show the message next to the right input.
 
@@ -78,6 +78,18 @@ Every error uses the same format ([Problem Details](decisions/10-api-conventions
 | Unknown path | `/`, `/v1/nope`, `/v2/users` | `404` |
 | Wrong method | `PATCH /v1/users/{id}`, `GET /v1/users/{id}/restore` | `405`, with `Allow: GET, PUT, DELETE` telling the client what does work |
 | No stray ETags | Lists and errors | No `ETag` header, so a client can't mistake one for a version |
+
+### G. Server settings: 14 tests ([`settings.test.ts`](../tests/bad-calls/settings.test.ts))
+
+The mistake here is made by whoever sets up the host, not by a client. **A typo must stop the server with a clear message**, not let it run quietly with a wrong or default value.
+
+| Group | Example cases | Result |
+|---|---|---|
+| Missing | Neither `JWT_SECRET` nor `DATABASE_URL` | Won't start; **both named in one message** |
+| Weak secret | A 31-character `JWT_SECRET` | Won't start; **the secret itself is never printed** |
+| Typos | `TRUST_PROXY=1.5`, `DEMO_MODE=yes`, `DEMO_MODE=TRUE`, `MAX_USERS=0`, `PORT=abc` | Won't start; names the setting and the bad value |
+| Several at once | 3 mistakes | All 3 listed, so one deploy shows everything to fix |
+| Correct | Only the required ones; then all 7 | Defaults (port 3000, 0 proxies, demo off, no user limit); then each value read back |
 
 ## What the bad-call tests found
 

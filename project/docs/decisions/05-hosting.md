@@ -125,6 +125,24 @@ The AI's pick was **Neon**: a portfolio link has to keep working for months. My 
 
 **As built:** turning on `erasableSyntaxOnly` first and letting the typechecker list the problems found **4 files, not the 2 the AI had counted** (it missed `ProblemError` and a test helper). **I asked that local runs match Render as closely as possible,** so `npm run dev` and `npm run token` also run on plain `node` (`node --watch` for auto-restart), and `tsx` was removed. My laptop's Node was 24.4.1, older than the 24.12 that made this stable; updated with `nvm install 24` to **24.21.0**, which Render will be pinned to as well. 218 green; in Swagger, a user created on a fresh database.
 
+### Settings checked at startup (2026-09-13)
+
+All settings come from environment variables, read and checked in one place (`shared/settings.ts`):
+
+| Variable | Rule | Unset means |
+|---|---|---|
+| `JWT_SECRET` | Required; **at least 32 characters** (HS256 wants 256 bits) | Won't start |
+| `DATABASE_URL` | Required | Won't start |
+| `PORT` | Whole number | 3000 (Render sets it) |
+| `CORS_ORIGINS` | Comma-separated list | None |
+| `TRUST_PROXY` | Whole number, 0 or more | 0 |
+| `DEMO_MODE` | Exactly `true` or `false` | Off |
+| `MAX_USERS` | Whole number, 1 or more | No limit |
+
+**Strict on purpose:** `TRUST_PROXY=one` or `DEMO_MODE=yes` stops the deploy with every problem listed at once, instead of running quietly with a default. Secrets are never echoed in the message, since it lands in the host's logs. The 32-character minimum is new; the dev secret is 38. `DEMO_MODE` and `MAX_USERS` were added now, though later steps use them, so the settings are decided and tested once. On startup the server prints proxy hops, demo mode, and the user limit, to confirm a deploy's settings at a glance.
+
+**Origin:** suggested; I agreed (including adding the later settings now)
+
 ## Viewing the spec before the API exists
 
 **Question:** How do I (and employers) see the OpenAPI spec while it's being written?
