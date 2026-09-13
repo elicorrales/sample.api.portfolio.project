@@ -34,7 +34,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 
 ## Next steps
 
-1. **Next: host the API on Render.** All 8 hosting questions are decided (journal row 37, decision 05). Build them in this order, each one red → green, then deploy:
+1. ~~Host the API on Render~~ **Done 2026-09-13: live at https://users-admin-api-98o8.onrender.com/docs.** All 8 hosting questions decided (journal row 37, decision 05), built in this order, each one red → green, then deployed:
    1. ~~Run on plain Node~~ **Done:** `erasableSyntaxOnly` on, 4 files' constructors rewritten, `npm start` = `node api/src/server.ts`, `dev` and `token` on plain `node` too, `tsx` removed, laptop Node 24.21.0 (pin it in `.nvmrc` and on Render at deploy). 218 green
    2. ~~Safe error logs~~ **Done:** logs only method, path, error name, PostgreSQL code, constraint, and the stack's `at` lines; 3 security tests (leaks D3a–c). **221 green**
    3. ~~Swagger in the API~~ **Done:** `/docs` (our page + an allowlist of 2 `swagger-ui-dist` files) and `/openapi.yaml`, no token; spec `servers: /`; Scarf install statistics off; `website/api-docs/` and `netlify.toml` deleted, `website/README.md` placeholder for the client. 10 security tests. **231 green**; tried in Swagger at `localhost:3000/docs`
@@ -42,8 +42,9 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
    5. ~~200-user cap~~ **Done:** `MAX_USERS` → `409` `/problems/user-limit` (deleted users count; only creates are limited); count + insert in one transaction under advisory lock `USER_COUNT_LOCK`; 3 bad-call tests + race A7 (forced with a pausing trigger; **fails with the lock removed**). **249 green**
    6. ~~Demo token~~ **Done:** `POST /demo/token` (demo mode only, before auth): 1-hour admin token, `no-store`, fake-data note; `405` for other methods; shared `signAdminToken()` with `npm run token`; spec has a Demo tag. 5 security tests. **254 green**
    7. ~~Starting users, nightly reset, notice~~ **Done:** `api/src/demo/`: 50 starting users (5 deleted, all through create's validation), added on startup only to an empty database; reset at 08:00 UTC (`TRUNCATE` + insert in one transaction; no extra lock needed); notice at the top of `/docs` and in the token response; `npm run dev:demo`. 9 integrity tests. **263 green**; tried locally: 45 users, 3 pages
-   8. **Deploy:** Render project with Starter web service + Postgres Basic-256mb (PostgreSQL 18), internal URL + `?sslmode=no-verify`, external database access off; then measure `TRUST_PROXY` with `curl` and a second device
-2. **Then: the admin web client**
+   8. ~~Deploy~~ **Done:** Render workspace `ancient-halls-server`, project `portfolio-api` (Production), Ohio. Postgres `users-api-db` (18, Basic-256mb, 1 GB, **outside access blocked**). Web service `users-admin-api` (Starter, root `project`, build `npm ci --omit=dev`, start `npm start`, health check `/docs`, auto-deploy on commit). Env: `DATABASE_URL` (internal + `?sslmode=no-verify`), `JWT_SECRET` (generated), `DEMO_MODE=true`, `MAX_USERS=200`, **`TRUST_PROXY=2`** (measured: `1` never blocked anyone). Checked: `401` without a token, 45 users with a demo token, rate limit blocks the laptop, ignores a fake `X-Forwarded-For`, and doesn't block a phone on cell data
+   - **Optional later:** rotate the database password (it was pasted into the AI chat; outside access is blocked, so it can't be used from the internet); startup log says `localhost:10000` on Render (cosmetic); spec intro still says "before any server code exists" (reword)
+2. **Next: the admin web client** in `website/`, hosted on Netlify (zip upload or Git: decide then); set `CORS_ORIGINS` on Render to its address
 3. **Skipped on purpose; note in the README as next steps if the project continued:** performance tests; field-level encryption (decision 12); mutation testing (e.g. Stryker); request ids in logs and the other logging practices (decision 11)
 4. Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
 

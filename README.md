@@ -4,6 +4,8 @@ A REST API for managing users, their phones, and their addresses. It is built **
 
 I'm building it as a portfolio piece and as an honest record of how a real API gets started: the questions, the tradeoffs, the mistakes, and how I work with an AI assistant without handing it the wheel.
 
+**Try it live:** [users-admin-api-98o8.onrender.com/docs](https://users-admin-api-98o8.onrender.com/docs). Call `POST /demo/token`, paste the token into **Authorize**, and try every operation. Without the token, every call gets `401`. All data is fake and resets every night at 08:00 UTC.
+
 ## Status
 
 | Stage | State |
@@ -17,8 +19,9 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
 | Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
 | Tests | ✅ 263 green; see [Tests](#tests) below |
-| Storage | ✅ PostgreSQL 18 via Drizzle; locally a real server run from `node_modules` (`embedded-postgres`), hosted later through `DATABASE_URL` |
-| Hosting | ⏳ Next: API and its Swagger page on Render (docs stay on GitHub) |
+| Storage | ✅ PostgreSQL 18 via Drizzle; locally a real server run from `node_modules` (`embedded-postgres`); hosted on Render Postgres, reached over Render's private network with SSL |
+| Hosting | ✅ [Live on Render](https://users-admin-api-98o8.onrender.com/docs): the API serves its own Swagger page; demo token, 50 starting users, 200-user limit, nightly reset; rate limit checked from outside |
+| Admin web client | ⏳ Next, on Netlify |
 
 Details: [PROGRESS.md](PROGRESS.md)
 

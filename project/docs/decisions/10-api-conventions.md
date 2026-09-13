@@ -133,7 +133,7 @@ A spec linter run after piece 1 flagged two more questions:
 
 | # | Question | Options | Choice | Why | Origin |
 |---|---|---|---|---|---|
-| 13 | Server list | None, or `http://localhost:3000` now plus the Render URL later | **`localhost:3000`, Render later** | Without it, Swagger UI's "Try it out" sends requests to the docs page's own address; 3000 is the usual Express port | suggested |
+| 13 | Server list | None, or `http://localhost:3000` now plus the Render URL later | ~~**`localhost:3000`, Render later**~~ **Now `/`** | Without it, Swagger UI's "Try it out" sends requests to the docs page's own address; 3000 is the usual Express port. **Changed at hosting time:** the API serves the docs page itself, so the page's own address *is* the API, laptop or Render ([05](05-hosting.md#swagger-served-by-the-api-netlify-kept-for-the-web-client-2026-09-13)) | suggested |
 | 14 | License | MIT, all rights reserved, or none | **MIT** | Common for portfolio code; others may reuse it with credit. `LICENSE` file at the repo root, copyright Eli Corrales. | mine |
 | 15 | Lint the spec as a standing step | Yes or no | **Yes**, after every spec change and later in CI | Cheap quality check employers recognize | suggested |
 
@@ -170,6 +170,17 @@ Planning the rate-limit tests raised these (2026-09-13):
 | 27 | Trust `X-Forwarded-For` for the client IP? | Always, never, or a set number of proxies | **0 proxies by default**, with a `trustProxy` option | Trusting it blindly lets anyone fake a new IP to get a fresh limit. The Render setting is decided at hosting time ([05](05-hosting.md)) | suggested |
 
 **Row 27 at hosting time (2026-09-13):** the hop count comes from a `TRUST_PROXY` environment variable (default 0), so a wrong value is fixed in Render's settings with no code change. Several Render users report 1 hop, but the AI couldn't confirm that in Render's docs, and Cloudflare in front of Render might add one. **Choice: deploy with `TRUST_PROXY=1` and measure** with `curl`: after 100 calls, one more with a fake `X-Forwarded-For` must still get `429` (a fresh limit would mean too many hops trusted), and a second device on another network must still get through (the same limit for everyone would mean too few). **Origin:** picked
+
+**Measured on Render (2026-09-13): `1` was wrong; `2` is right.**
+
+| Run | Result | Meaning |
+|---|---|---|
+| `TRUST_PROXY=1`, 150 calls one at a time | No `429` | Unclear: the calls took over a minute, so the window may have reset (I noticed the calls speed up partway) |
+| `TRUST_PROXY=1`, 110 calls 10 at a time (a few seconds) | **Still no `429`** | The API wasn't seeing my IP. Most likely the path is me → Cloudflare → Render's load balancer → API, so trusting 1 hop picked a Cloudflare address, which changes from call to call and spreads the count |
+| **`TRUST_PROXY=2`**, same burst | `100 401`, `10 429`; a fake `X-Forwarded-For` → `429` | Counted as one visitor; the header can't be faked (not too many) |
+| `2`, phone on cell data right after | Page loads | Other visitors aren't blocked with me (not too few) |
+
+The AI's first measuring command printed nothing until all 110 calls finished, so I stopped it early and its result meant nothing; the second one printed as it went. Changing the setting needed no code, which is why it was a setting. **Origin:** mine (the measurements); the commands were suggested
 
 Where it sits: CORS → **rate limit** → auth. After CORS, so preflights don't count and a `429` still has the CORS headers a web page needs to read `Retry-After`.
 
