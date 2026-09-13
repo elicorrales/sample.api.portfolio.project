@@ -101,8 +101,13 @@ export type UserInput = z.infer<typeof userInputSchema>;
 // Query-string booleans arrive as the text "true" or "false".
 const includeDeleted = z.enum(["true", "false"]).transform((value) => value === "true").default(false);
 
+// Query strings reject unknown parameters (e.g. the typo `pagesize`), just like request bodies.
+
+// For operations that take no query parameters at all.
+export const noQuerySchema = z.strictObject({});
+
 // Query string for listing users. Values arrive as text, so numbers are converted.
-export const listQuerySchema = z.object({
+export const listQuerySchema = z.strictObject({
   search: z.string().min(1).max(100).optional(),
   sort: z.enum(["lastName", "email"]).default("lastName"),
   order: z.enum(["asc", "desc"]).default("asc"),
@@ -116,7 +121,7 @@ export type ListQuery = z.infer<typeof listQuerySchema>;
 // Path and query for getting one user.
 export const userIdParamsSchema = z.object({ userId: z.uuid() });
 
-export const getQuerySchema = z.object({
+export const getQuerySchema = z.strictObject({
   view: z.enum(["basic", "detailed"]).default("basic"),
   includeDeleted,
 });

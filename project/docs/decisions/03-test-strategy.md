@@ -23,6 +23,17 @@
 | Performance | Speed under load | No | k6 or autocannon, separate from the test suite |
 | Rate limiting | Too many requests → `429` | Yes | Vitest + Supertest |
 
+## How the bad-call tests are written
+
+**Date:** 2026-09-13 · **Origin:** suggested; I agreed
+
+| Question | Choice | Why |
+|---|---|---|
+| Many similar cases (e.g. 12 bad phones) | **Table-driven** with `it.each`: one line per case | Easy to read and extend; each failure names its case |
+| Date-of-birth boundaries ("turns 18 today") | **Freeze the clock** in those tests (`vi.setSystemTime`) | The result can't change depending on the day the tests run |
+| Layout | `tests/bad-calls/`, one file per group: body, query, ids, versions, conflicts, paths | Each group maps to one kind of mistake a client can make |
+| Run order | Write all the tests, run them red, then change the code | 112 passed at once (rules already built); the 15 failures were exactly the new rules and one gap |
+
 ## Stubbing the database
 
 **Question:** Test only the Node layer at first, then all layers later?

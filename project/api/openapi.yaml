@@ -21,6 +21,8 @@ info:
     - **Paging:** list endpoints take `page` and `pageSize` (max 100) and return `{ items, page, pageSize, totalItems, totalPages }`.
     - **Dates:** timestamps are UTC ISO 8601; date of birth is a date only (`YYYY-MM-DD`).
     - **Rate limits:** exceeding them returns `429` with a `Retry-After` header.
+    - **Unknown input:** unknown body fields and unknown query parameters return `400`, naming each one.
+    - **Unknown paths and methods:** an unknown path returns `404`; a known path with an unsupported method returns `405` with an `Allow` header.
 
 tags:
   - name: Users

@@ -14,7 +14,7 @@ export interface AppOptions {
 }
 
 // Builds the Express app without starting a server, so tests can call it directly.
-// Order matters: CORS (answers preflights) → JSON body → auth → routes → 501 → errors.
+// Order matters: CORS (answers preflights) → JSON body → auth → routes → 404 → errors.
 export function createApp({ jwtSecret, corsOrigins = [], usersRepository = new MemoryUsersRepository() }: AppOptions) {
   const app = express();
   // Express would otherwise add its own body-hash ETag to every response. Our ETag is the
@@ -27,13 +27,9 @@ export function createApp({ jwtSecret, corsOrigins = [], usersRepository = new M
 
   app.use("/v1/users", usersRoutes(new UsersService(usersRepository)));
 
-  // Operations not built yet.
+  // No such path. (A known path with the wrong method gets 405 from its router instead.)
   app.use((req, res) => {
-    sendProblem(
-      res,
-      req.path,
-      new ProblemError(501, "/problems/not-implemented", "Not implemented", `${req.method} ${req.path} is not implemented yet`),
-    );
+    sendProblem(res, req.path, new ProblemError(404, "/problems/not-found", "Not found", "No such endpoint"));
   });
 
   app.use(errorHandler);

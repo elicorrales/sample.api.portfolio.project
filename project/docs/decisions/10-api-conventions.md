@@ -143,6 +143,15 @@ Planning the List tests raised one more:
 |---|---|---|---|---|---|
 | 16 | A page past the end (e.g. `page=5` when there are 2 pages) | `200` with empty `items`, or `400` | **`200` with empty `items`**, plus the real `totalItems` and `totalPages` | Not an error when another admin's delete shrinks the list; the web client can jump to `totalPages`. The existing response shape already gives a page-nav (`<< < 1 2 3 > >>`) everything it needs. | suggested |
 
+Planning the bad-call tests raised these:
+
+| # | Question | Options | Choice | Why | Origin |
+|---|---|---|---|---|---|
+| 17 | Unknown query parameters (e.g. the typo `pagesize`) | Ignore, or `400` | **`400`, naming each one**, on every operation | Same rule as unknown body fields; a typo fails loudly instead of silently using the default | suggested |
+| 18 | Unknown paths and wrong methods, once all operations existed | `404` for both, or `404` + `405` | **`404` for an unknown path; `405` with an `Allow` header for a known path with the wrong method** | Tells the client whether the path or the method is wrong, and which methods work | suggested |
+| 19 | How unknown fields are reported | As the whole `body`, or by name | **By name** (`role`, `phones.0.extension`); a name that isn't a plain name is reported as `(unknown)` | Found by the tests: errors said `body`. Names come from the request, so only safe ones are echoed. | suggested (gap found by the tests) |
+| 20 | Order of checks on update | | Token → id → query → `If-Match` → body → exists → version → email | Cheap checks first; existence before version | suggested |
+
 Lint command (pinned version): `npx @redocly/cli@2.52.1 lint project/api/openapi.yaml`. The remaining warnings are expected: unused components until endpoints exist, and a note that the server is `localhost`.
 
 Also included, as standards rather than choices:

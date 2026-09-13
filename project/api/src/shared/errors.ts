@@ -14,6 +14,7 @@ export class ProblemError extends Error {
     readonly title: string,
     readonly detail: string,
     readonly errors?: FieldError[],
+    readonly headers?: Record<string, string>,
   ) {
     super(detail);
   }
@@ -33,6 +34,7 @@ export const preconditionRequiredProblem = () =>
   new ProblemError(428, "/problems/version-required", "Version required", "Send the If-Match header with the version you loaded");
 
 export function sendProblem(res: Response, instance: string, problem: ProblemError) {
+  if (problem.headers) res.set(problem.headers);
   res
     .status(problem.status)
     .type("application/problem+json")
