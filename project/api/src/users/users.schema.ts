@@ -97,3 +97,14 @@ export const userInputSchema = z
   });
 
 export type UserInput = z.infer<typeof userInputSchema>;
+
+// Query string for listing users. Values arrive as text, so numbers are converted.
+export const listQuerySchema = z.object({
+  search: z.string().min(1).max(100).optional(),
+  sort: z.enum(["lastName", "email"]).default("lastName"),
+  order: z.enum(["asc", "desc"]).default("asc"),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export type ListQuery = z.infer<typeof listQuerySchema>;

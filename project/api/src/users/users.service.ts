@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { conflictProblem } from "../shared/errors.ts";
 import type { Address, Phone, User, UsersRepository } from "./users.repository.ts";
-import { ADDRESS_TYPES, PHONE_TYPES, type UserInput } from "./users.schema.ts";
+import { ADDRESS_TYPES, PHONE_TYPES, type ListQuery, type UserInput } from "./users.schema.ts";
 
 // Business rules. Knows nothing about HTTP; only talks to the repository interface.
 export class UsersService {
@@ -38,6 +38,18 @@ export class UsersService {
     await this.repository.insert(user);
     return user;
   }
+
+  // A page past the end is not an error: it has no items but still reports the real totals.
+  async list(query: ListQuery) {
+    const { items, totalItems } = await this.repository.list(query);
+    return {
+      items: items.map(toBasicView),
+      page: query.page,
+      pageSize: query.pageSize,
+      totalItems,
+      totalPages: Math.ceil(totalItems / query.pageSize),
+    };
+  }
 }
 
 // A single phone or address is primary automatically; otherwise validation already
@@ -50,6 +62,11 @@ function sortByPrimaryThenType<T extends Phone | Address>(items: T[], typeOrder:
   return [...items].sort(
     (a, b) => Number(b.primary) - Number(a.primary) || typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type),
   );
+}
+
+// The basic view: what lists show. No date of birth, phones, or addresses.
+export function toBasicView({ id, firstName, lastName, email }: User) {
+  return { id, firstName, lastName, email };
 }
 
 // The detailed view. `deletedAt` is left out; it only appears when including deleted users.

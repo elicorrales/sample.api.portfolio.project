@@ -1,4 +1,4 @@
-import type { ADDRESS_TYPES, PHONE_TYPES } from "./users.schema.ts";
+import type { ADDRESS_TYPES, ListQuery, PHONE_TYPES } from "./users.schema.ts";
 
 // A user as stored. Phones and addresses have no ids; (user, type) identifies each one.
 export interface Phone {
@@ -37,4 +37,7 @@ export interface UsersRepository {
   // Matches ignoring case, and includes deleted users (emails are never reused).
   findByEmail(email: string): Promise<User | undefined>;
   insert(user: User): Promise<void>;
+  // One page of matching users, plus how many match in total. Search, sort, and paging
+  // happen here because a database does them far better than code after the fact.
+  list(query: ListQuery): Promise<{ items: User[]; totalItems: number }>;
 }

@@ -47,6 +47,7 @@ Keeping date of birth out of the basic view is also a privacy benefit.
 | Sort | Last name or email, ascending or descending | mine |
 | Tie-breaker | Then first name, then id, so order is stable across pages | suggested |
 | Case in sorting | Ignored: `adams` sorts next to `Adams` (found while planning the List tests) | suggested |
+| Tie-breakers with `desc` | Only the sort field reverses; first name and id stay A to Z (e.g. Smith Bob, Smith Zoe, Adams Amy) | suggested |
 | Paging | Yes | picked |
 | Deleted users | Hidden unless the admin asks to include them | mine |
 

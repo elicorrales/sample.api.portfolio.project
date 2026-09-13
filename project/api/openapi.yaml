@@ -79,7 +79,7 @@ paths:
       description: |
         Returns one page of users in the basic view.
         `search` is a partial, case-insensitive match against first name, last name, and email.
-        Sorting ignores case; ties are broken by first name, then id. Deleted users are hidden unless `includeDeleted=true`.
+        Sorting ignores case; ties are broken by first name, then id, always ascending (`order` applies only to the `sort` field). Deleted users are hidden unless `includeDeleted=true`.
         A page past the end returns `200` with empty `items` and the real `totalItems` and `totalPages`.
       parameters:
         - $ref: "#/components/parameters/Search"
