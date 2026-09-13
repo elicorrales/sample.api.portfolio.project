@@ -34,6 +34,20 @@
 | Layout | `tests/bad-calls/`, one file per group: body, query, ids, versions, conflicts, paths | Each group maps to one kind of mistake a client can make |
 | Run order | Write all the tests, run them red, then change the code | 112 passed at once (rules already built); the 15 failures were exactly the new rules and one gap |
 
+## How the security tests are written
+
+**Date:** 2026-09-13 · **Origin:** suggested; I agreed
+
+| Question | Choice | Why |
+|---|---|---|
+| Layout | `tests/security/`, one file per area: tokens, auth-first, injection, leaks, CORS, body size | Each file maps to one kind of attack |
+| Forging tokens | Build them in the test with `jose`: wrong secret, `alg: none`, HS512, an edited payload, no `exp` | Tests the real verification code, not a mock of it |
+| Reaching a `500` | Pass `createApp()` a **fake repository whose methods throw** an error full of SQL and file paths, then check none of it reaches the response | No normal request causes a `500`. No app changes were needed, because the app already takes its repository as an argument (dependency injection). |
+| The logged error | Silence `console.error` in that test, but check it was called with the real error | Logs are for us; responses are for callers |
+| CORS | Build the app with one allowed origin, then try look-alikes (`admin.example.com.evil.com`, `http://`, `null`) | Catches loose origin matching |
+| Injection with in-memory storage | Write the tests anyway (`%`, `_`, `' OR '1'='1'`, SQL in `sort`) | They pass trivially today; they start to matter when PostgreSQL arrives |
+| Run order | Same as bad calls: all tests first, predict the failures, run red, change the code | 49 of 60 passed at once; the 11 failures were exactly the predicted ones |
+
 ## Stubbing the database
 
 **Question:** Test only the Node layer at first, then all layers later?

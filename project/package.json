@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:bad-calls": "vitest run tests/bad-calls",
     "test:happy-path": "vitest run tests/happy-path tests/workflow",
+    "test:security": "vitest run tests/security",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint:spec": "npx --yes @redocly/cli@2.52.1 lint api/openapi.yaml"

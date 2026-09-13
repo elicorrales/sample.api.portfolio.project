@@ -152,6 +152,15 @@ Planning the bad-call tests raised these:
 | 19 | How unknown fields are reported | As the whole `body`, or by name | **By name** (`role`, `phones.0.extension`); a name that isn't a plain name is reported as `(unknown)` | Found by the tests: errors said `body`. Names come from the request, so only safe ones are echoed. | suggested (gap found by the tests) |
 | 20 | Order of checks on update | | Token → id → query → `If-Match` → body → exists → version → email | Cheap checks first; existence before version | suggested |
 
+Planning the security tests raised these:
+
+| # | Question | Options | Choice | Why | Origin |
+|---|---|---|---|---|---|
+| 21 | A body over 100 KB | `400` "must be valid JSON" (as it was), or `413` | **`413` "Request body must be 100 KB or smaller"** | The old message was misleading: the JSON was fine, just too big | suggested |
+| 22 | `X-Powered-By: Express` header | Keep (Express default), or remove | **Remove** | Found by the tests: it tells attackers which framework, and its known flaws, to try | suggested (found by the tests) |
+
+Row 20 still holds, with one clarification: the token is checked **before the body is even read** ([04](04-admin-vs-self-service.md#auth-details-security-tests)).
+
 Lint command (pinned version): `npx @redocly/cli@2.52.1 lint project/api/openapi.yaml`. The remaining warnings are expected: unused components until endpoints exist, and a note that the server is `localhost`.
 
 Also included, as standards rather than choices:

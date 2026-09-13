@@ -56,3 +56,19 @@ Who owns the data?
 - Extra body fields (`id`, `createdAt`) are ignored or rejected
 - Errors don't leak stack traces or SQL
 - SQL injection attempts do nothing harmful
+
+**Built 2026-09-13:** 60 tests in `tests/security/`; see the [test showcase](../testing.md#security-60-tests).
+
+## Auth details (security tests)
+
+**Date:** 2026-09-13
+
+Settled while planning the security tests, or found by them.
+
+| # | Question | Options | Choice | Why | Origin |
+|---|---|---|---|---|---|
+| 1 | Malformed JSON from a caller with no token | `400` (body read first), or `401` | **`401`: auth runs before the body is read** | Nothing should be answered before auth, not even "your JSON is bad" | suggested; I asked that a test enforce it |
+| 2 | `bearer` in lowercase | `Bearer` only, or any case | **Any case** | The HTTP standard (RFC 9110) says the scheme name ignores case; the token itself is still checked exactly, so there's no security cost | suggested (after I asked for an explanation) |
+| 3 | A signed token with no `exp` | Accept, or `401` | **`401`: `exp` is required** | Found by the tests: the token library only checks `exp` when present, so a leaked token without one would work forever | suggested (gap found by the tests) |
+| 4 | A signed token with no `role` | `401`, or `403` | **`403`** | The token is genuine, so the caller is signed in, just not allowed | suggested |
+| 5 | Expose `WWW-Authenticate` to browser code via CORS | Yes, or no | **No** | Swagger UI didn't show it, which raised the question. The web client doesn't need it: a `401` already means "sign in again". | suggested; I agreed (`401` is sufficient) |

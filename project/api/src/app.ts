@@ -14,16 +14,19 @@ export interface AppOptions {
 }
 
 // Builds the Express app without starting a server, so tests can call it directly.
-// Order matters: CORS (answers preflights) → JSON body → auth → routes → 404 → errors.
+// Order matters: CORS (answers preflights) → auth → JSON body → routes → 404 → errors.
+// Auth comes before the body is read, so a caller without a token learns nothing, not even that their JSON is bad.
 export function createApp({ jwtSecret, corsOrigins = [], usersRepository = new MemoryUsersRepository() }: AppOptions) {
   const app = express();
   // Express would otherwise add its own body-hash ETag to every response. Our ETag is the
   // user's version (for If-Match), so only routes that return a user set one.
   app.set("etag", false);
+  // `X-Powered-By: Express` tells attackers which framework (and its known flaws) to try.
+  app.disable("x-powered-by");
 
   app.use(cors(corsOrigins));
-  app.use(express.json({ limit: "100kb" }));
   app.use(requireAdmin(jwtSecret));
+  app.use(express.json({ limit: "100kb" }));
 
   app.use("/v1/users", usersRoutes(new UsersService(usersRepository)));
 

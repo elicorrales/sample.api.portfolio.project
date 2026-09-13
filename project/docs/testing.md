@@ -1,8 +1,8 @@
 # Tests
 
-**What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, and wrong paths all fail the right way, with a clear error and no damage.
+**What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, and attacks all fail the right way, with a clear error and no damage.
 
-**Last updated:** 2026-09-13 · **132 tests, all green**
+**Last updated:** 2026-09-13 · **192 tests, all green**
 
 ## By category
 
@@ -11,7 +11,7 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 | Category | What it proves | Tests | Status | Folder | Run it (from `project/`) |
 |---|---|---|---|---|---|
 | **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error | **115** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
-| **Security** | Tokens and roles are enforced; injection and data leaks are blocked | — | ⏳ Planned | | |
+| **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks, and other origins are blocked | **60** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
 | **Integrity** | Two admins at once can't corrupt data or silently overwrite each other | — | ⏳ Planned (needs a real database) | | |
 | **Rate limiting** | Too many requests get `429`, not a slow or crashed server | — | ⏳ Planned | | |
 | **Performance** | Search and paging stay fast with many users | — | ⏳ Planned (separate load-test tool) | | |
@@ -86,9 +86,87 @@ Written before the code changes, they ran red first: 112 of 127 passed at once, 
 
 See [journal row 30](journal.md).
 
+## Security: 60 tests
+
+Every `401` looks the same (`"A valid admin token is required"`, `WWW-Authenticate: Bearer`), whatever the reason, so an attacker learns nothing from trying.
+
+### A. Tokens: 23 tests ([`tokens.test.ts`](../tests/security/tokens.test.ts))
+
+| Group | Example cases | Result |
+|---|---|---|
+| No usable token | No header; `Basic` credentials; a valid token with the wrong scheme or no scheme; `Bearer abc` | `401` |
+| **Forged or untrusted** | Signed with a guessed secret; **unsigned (`alg: none`)**; right secret but HS512; **a non-admin token edited to say `admin`**; expired; not valid yet; **no expiry at all** | `401` |
+| Not an admin | Role `user`, no role, `Admin` (wrong case), `["admin"]` (a list) | `403` |
+| Scheme name | `bearer`, `BEARER` + a valid token | `200` (the standard says the scheme ignores case); the token lowercased → `401` |
+
+### B. Auth before anything else: 12 tests ([`auth-first.test.ts`](../tests/security/auth-first.test.ts))
+
+Without a token, a caller can't learn which ids exist, which rules apply, or what the API accepts.
+
+| Without a token | A signed-in admin would get | Result |
+|---|---|---|
+| An unknown user id | `404` | `401` |
+| An id that isn't a UUID; an unknown query parameter; an invalid body; **malformed JSON** | `400` | `401` |
+| A body over 100 KB | `413` | `401` (the body isn't even read) |
+| An update without `If-Match` | `428` | `401` |
+| An unknown path / a wrong method | `404` / `405` with `Allow` | `401`, no `Allow` header |
+| With a **non-admin** token: an unknown id, malformed JSON | `404`, `400` | `403` |
+| A create with no token, then with a non-admin token | | Refused, and **nothing is saved** |
+
+### C. Injection: 8 tests ([`injection.test.ts`](../tests/security/injection.test.ts))
+
+| Case | Result |
+|---|---|
+| `search=%`, `search=_` (SQL wildcards), `search=' OR '1'='1` | `200` with **0 matches**, not every user |
+| `sort=lastName; DROP TABLE users`, `sort=lastName, password`, `order=asc --` | `400` (only values from the allowed list) |
+| An id of `1' OR '1'='1` | `400` |
+| `"__proto__": {"role": "admin"}` in the body | `400`, and no object in the server gains a `role` |
+
+Storage is in memory today, so these pass easily. They're here for when it becomes PostgreSQL.
+
+### D. Data leaks: 6 tests ([`leaks.test.ts`](../tests/security/leaks.test.ts))
+
+| Case | Result |
+|---|---|
+| **A forced crash** on list, get, and create: storage throws an error containing SQL, a file path, and a stack trace | `500` "Something went wrong"; **none of it reaches the response**, but the server log has the real error |
+| Any response: success, `401`, `404` | No `X-Powered-By` header naming the framework |
+
+### E. CORS: 9 tests ([`cors.test.ts`](../tests/security/cors.test.ts))
+
+| Case | Result |
+|---|---|
+| The allowed web page | CORS headers naming **exactly** that origin, never `*` |
+| Another site; **a look-alike** (`admin.example.com.evil.com`); the allowed host over `http`; the `null` origin | No CORS headers, so the browser blocks the page from reading the response |
+| A preflight from the allowed page, with no token | `204`, allowing `Authorization` |
+| A `401` to the allowed page | Still has CORS headers, so the web client can tell the admin to sign in again |
+
+### F. Body size: 2 tests ([`body-size.test.ts`](../tests/security/body-size.test.ts))
+
+| Case | Result |
+|---|---|
+| A body over 100 KB | `413` "Request body must be 100 KB or smaller" |
+| A body just under 100 KB | Read normally, then `400` for the 90,000-character name |
+
+## What the security tests found
+
+Written before the code changes, with the failures predicted in advance: **49 of 60 passed at once**, and the 11 failures were exactly the predicted ones. Two were **real holes**:
+
+- **A token with no expiry was accepted.** The token library only checks `exp` when it's there, so a leaked token without one would have worked forever. `exp` is now required.
+- **Every response said `X-Powered-By: Express`**, telling attackers which framework to target. Turned off.
+
+And three corrections:
+
+- **Malformed JSON got `400` before auth ran**, telling a caller with no token something about the API. Auth now runs before the body is read.
+- **An oversized body got `400` "must be valid JSON"**, which was untrue. Now `413` with an honest message.
+- **`bearer` in lowercase was refused**, though the HTTP standard allows it. Now accepted.
+
+See [journal row 31](journal.md).
+
 ## How the tests are written
 
 - **Red first.** Each test runs and fails for the expected reason before the code exists (details in [decision 03](decisions/03-test-strategy.md#how-the-bad-call-tests-are-written)).
+- **Failures predicted.** Before each red run, the AI writes down which tests will fail and why; a surprise means someone misunderstood the code.
+- **Real failures without breaking the app.** A `500` is forced by handing the app a storage layer that throws ([decision 03](decisions/03-test-strategy.md#how-the-security-tests-are-written)).
 - **Table-driven.** Similar cases share one test with one line per case, so adding a case is one line.
 - **Isolated.** Every test gets a fresh app with empty in-memory storage; no test depends on another.
 - **Through the API only.** Tests set up data the way an admin would (by calling the API), never by reaching into storage.

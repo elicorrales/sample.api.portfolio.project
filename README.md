@@ -16,7 +16,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Update user | ✅ Whole-user replace with optimistic locking (tests green, callable from Swagger UI) |
 | Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
 | Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
-| Tests | ✅ 132 green; see [Tests](#tests) below |
+| Tests | ✅ 192 green; see [Tests](#tests) below |
 | Storage | In memory for now; PostgreSQL later |
 | Hosting | ⏳ Later: docs page on Netlify, API on Render |
 
@@ -24,12 +24,12 @@ Details: [PROGRESS.md](PROGRESS.md)
 
 ## Tests
 
-**What the API refuses matters more than what it accepts.** Most of the suite proves that bad input, stale versions, conflicts, and wrong paths fail the right way.
+**What the API refuses matters more than what it accepts.** Most of the suite proves that bad input, stale versions, conflicts, wrong paths, forged tokens, and attacks fail the right way.
 
 | Category | What it proves | Tests | Status |
 |---|---|---|---|
 | **Bad calls** | Every kind of client mistake gets the right status and an error naming the field: `José` → 400, stale version → 412, deleted user's email → 409, `<script>` never echoed back | **115** | ✅ |
-| **Security** | Tokens, roles, injection, data leaks | — | ⏳ Planned |
+| **Security** | Forged tokens (`alg: none`, edited role, no expiry) → 401; no token → 401 before anything else is checked; SQL in `search`/`sort` does nothing; a forced crash leaks no SQL or file paths; look-alike origins get no CORS. **Found 2 real holes**, now fixed | **60** | ✅ |
 | **Integrity** | Two admins at once can't corrupt or silently overwrite data | — | ⏳ Planned |
 | **Rate limiting** | Floods get `429` | — | ⏳ Planned |
 | **Performance** | Search and paging stay fast at scale | — | ⏳ Planned |
@@ -41,7 +41,7 @@ Details: [PROGRESS.md](PROGRESS.md)
 
 - **Spec before code.** The contract ([`openapi.yaml`](project/api/openapi.yaml)) was written and linted before any endpoint existed.
 - **Tests before code.** Each test is written first and must fail for the right reason before any code is written to pass it.
-- **115 bad-call tests vs 17 happy-path.** Most of the work is proving what the API refuses ([tests](project/docs/testing.md)).
+- **175 bad-call and security tests vs 17 happy-path.** Most of the work is proving what the API refuses ([tests](project/docs/testing.md)).
 - **Decisions on paper.** Every choice records the question, the options, what was picked, and why ([decision log](project/docs/decisions/README.md)).
 - **A visible AI trail.** See below.
 
@@ -87,6 +87,7 @@ npm test
 |---|---|
 | `npm test` | Run all tests once |
 | `npm run test:bad-calls` | Run only the bad-call tests |
+| `npm run test:security` | Run only the security tests |
 | `npm run test:happy-path` | Run only the happy-path and workflow tests |
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |

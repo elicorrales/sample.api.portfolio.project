@@ -9,13 +9,15 @@ export function requireAdmin(jwtSecret: string): RequestHandler {
 
   return async (req, res, next) => {
     const [scheme, token] = req.headers.authorization?.split(" ") ?? [];
-    if (scheme !== "Bearer" || !token) {
+    // The scheme name ignores case (RFC 9110), so `bearer` works too. The token itself is exact.
+    if (scheme?.toLowerCase() !== "bearer" || !token) {
       return unauthorized(res, req.path);
     }
 
     let role: unknown;
     try {
-      ({ payload: { role } } = await jwtVerify(token, key, { algorithms: ["HS256"] }));
+      // `exp` is required: without it, a leaked token would work forever.
+      ({ payload: { role } } = await jwtVerify(token, key, { algorithms: ["HS256"], requiredClaims: ["exp"] }));
     } catch {
       // Bad signature, expired, or malformed. The reason isn't revealed.
       return unauthorized(res, req.path);

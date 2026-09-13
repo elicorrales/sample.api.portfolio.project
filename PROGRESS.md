@@ -23,20 +23,17 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | **Restore user** | `POST /v1/users/{userId}/restore` (no `If-Match`) → `200`, version bump; `409` if not deleted. **All 6 operations now work** (in-memory storage). Tried from Swagger UI. |
 | Happy-path tests | **17 green, happy path complete:** `tests/happy-path/` (16: create 2, list 5, get 2, update 2, delete 3, restore 2) and `tests/workflow/admin-session.test.ts` (1: one admin session, ETags passed step to step). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
 | **Bad-call tests** | **115 green** in `tests/bad-calls/` (body 64, query 18, ids 9, versions 8, conflicts 4, paths 12). Unknown query params → 400; unknown path → 404; wrong method → 405 + `Allow`; unknown fields named. **132 tests total.** |
+| **Security tests** | **60 green** in `tests/security/` (tokens 23, auth-first 12, injection 8, leaks 6, CORS 9, body size 2). Found and fixed 2 holes: tokens without `exp` were accepted; `X-Powered-By: Express` was sent. Also: auth now runs before the body is read; oversized body → `413`; `bearer` in any case. **192 tests total.** |
 | Test showcase | [`project/docs/testing.md`](project/docs/testing.md) (every category, most important first, with example cases) and a Tests section near the top of the README |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`). Installs, tests, and servers run on the laptop (the VM is memory-limited). |
 | Root README | Entry point for recruiters, employers, and devs: status, AI collaboration, reading order, run commands, links to my other work |
 
 ## Next steps
 
-1. **Next: security tests** (chosen 2026-09-13). Nothing new is needed; they run against the current app. Start by walking through the test list together, as with bad calls. Candidate areas to propose:
-   - **Tokens:** none, wrong scheme, malformed, bad signature, expired, a different algorithm (e.g. `alg: none`), missing `role` → `401`; valid token with a non-admin role → `403`. Both helpers already exist in `tests/helpers/tokens.ts`.
-   - **Auth before anything else:** no token on an unknown id, a bad body, or an unknown path still gets `401`, so nothing leaks about what exists. Open question: malformed JSON without a token currently gets `400` (the JSON parser runs before auth).
-   - **Injection:** `%` and `_` in `search` treated as plain characters (decision 07); sort only from the allowed list.
-   - **Data leaks:** no stack traces, SQL, or file paths in errors, including a forced `500`; `401` sends `WWW-Authenticate: Bearer`.
-   - **CORS:** only allowed origins get CORS headers; preflight answered without a token.
-   - **Body size:** over `100kb` → rejected.
-2. **After security:** rate limiting, or the database path (PGlite, needed for integrity tests). Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
+1. **Next: pick one** (not yet chosen):
+   - **Rate limiting:** too many requests → `429` with `Retry-After`. Runs on the current app.
+   - **Database path:** PGlite (real PostgreSQL inside Node), needed for integrity tests. The injection tests start to matter here.
+2. Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
 3. **Maybe later:** mutation testing (e.g. Stryker) to check the tests catch deliberately broken code
 4. **Later:** PGlite → native PostgreSQL; integrity and performance tests; admin web client; hosting (Netlify docs page, Render API)
 5. **Once the docs page is on Netlify:** add this API to the [projects landing page](https://all-my-projects-landing-page.netlify.app/), and add the live docs link to `README.md` (it has local-only instructions for now)
@@ -48,6 +45,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | `npm test` | Run all tests once |
 | `npm run test:bad-calls` | Only the bad-call tests |
 | `npm run test:happy-path` | Only the happy-path and workflow tests |
+| `npm run test:security` | Only the security tests |
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |
@@ -66,3 +64,4 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 - **How each step goes:** walk through the test list and open questions first → the AI writes the tests and **predicts** which fail and why → I run them on my laptop (red) → the AI changes the code → I run them (green) and try it in Swagger UI → the AI updates decisions, a journal row, PROGRESS, README, and the test showcase → I commit
 - **Laptop, not VM:** installs, test runs, and servers run on my laptop; the AI's VM is memory-limited (it writes code, typechecks, and lints)
 - **Showcase what the API refuses:** the non-happy-path test categories get top billing in the README and `project/docs/testing.md`
+- **Swagger UI can't see every header:** browser code only reads headers the API exposes through CORS. To check headers like `WWW-Authenticate`, use `curl -i`.

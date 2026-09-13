@@ -14,7 +14,8 @@ info:
     Status: all 6 operations work, on in-memory storage for now (PostgreSQL later).
 
     ## Conventions
-    - **Auth:** every operation requires an admin token (`Authorization: Bearer <JWT>`).
+    - **Auth:** every operation requires an admin token (`Authorization: Bearer <JWT>`) with an expiry (`exp`). Auth is checked first: without a valid token, every request gets `401` (or `403` for a non-admin), whatever else is wrong with it.
+    - **Body size:** request bodies over 100 KB return `413`.
     - **Errors:** all errors use Problem Details (RFC 9457), `application/problem+json`.
     - **Whole user:** phones and addresses are part of the user. Create and update send all of them; there are no separate phone or address endpoints.
     - **Versioning:** responses carry an `ETag`; updates and deletes must send it back in `If-Match`.
@@ -71,6 +72,8 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "409":
           $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
         "429":
           $ref: "#/components/responses/TooManyRequests"
 
@@ -179,6 +182,8 @@ paths:
           $ref: "#/components/responses/Conflict"
         "412":
           $ref: "#/components/responses/PreconditionFailed"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
         "428":
           $ref: "#/components/responses/PreconditionRequired"
         "429":
@@ -809,6 +814,18 @@ components:
             title: Version out of date
             status: 412
             detail: This record changed since it was loaded; reload and try again
+
+    PayloadTooLarge:
+      description: The request body is over 100 KB. It is refused without being read.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: /problems/too-large
+            title: Body too large
+            status: 413
+            detail: Request body must be 100 KB or smaller
 
     PreconditionRequired:
       description: The `If-Match` header is missing.

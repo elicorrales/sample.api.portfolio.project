@@ -52,9 +52,12 @@ export function sendProblem(res: Response, instance: string, problem: ProblemErr
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   if (err instanceof ProblemError) {
     sendProblem(res, req.path, err);
-  } else if (err?.type === "entity.parse.failed" || err?.type === "entity.too.large") {
-    // Thrown by express.json() for a malformed or oversized body.
+  } else if (err?.type === "entity.parse.failed") {
+    // Thrown by express.json() for a malformed body.
     sendProblem(res, req.path, new ProblemError(400, "/problems/validation", "Invalid input", "Request body must be valid JSON"));
+  } else if (err?.type === "entity.too.large") {
+    // Thrown by express.json() before reading a body over its limit.
+    sendProblem(res, req.path, new ProblemError(413, "/problems/too-large", "Body too large", "Request body must be 100 KB or smaller"));
   } else {
     console.error(err);
     sendProblem(res, req.path, new ProblemError(500, "/problems/internal", "Internal error", "Something went wrong"));
