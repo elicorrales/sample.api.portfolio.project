@@ -23,6 +23,12 @@ export class MemoryUsersRepository implements UsersRepository {
     this.users.set(user.id, structuredClone(user));
   }
 
+  async replace(user: User, expectedVersion: number) {
+    if (this.users.get(user.id)?.version !== expectedVersion) return false;
+    this.users.set(user.id, structuredClone(user));
+    return true;
+  }
+
   async list({ search, sort, order, page, pageSize }: ListQuery) {
     const term = search?.toLowerCase();
     const matches = [...this.users.values()].filter(

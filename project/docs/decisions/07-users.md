@@ -87,6 +87,13 @@ Keeping date of birth out of the basic view is also a privacy benefit.
 
 **Choice:** optimistic. **Origin:** suggested (I asked for locking; the AI laid out both kinds and recommended optimistic)
 
+**Update details** (settled while planning the Update tests):
+
+| Question | Choice | Why | Origin |
+|---|---|---|---|
+| Saving with the email the user already has | Allowed: the uniqueness check skips the user being edited | Otherwise every save of an unchanged email would conflict with itself | suggested |
+| A save where nothing changed | Version still goes up | Simple: the server doesn't compare every field. The other admin just reloads. | suggested |
+
 ## Delete
 
 | Question | Choice | Origin |

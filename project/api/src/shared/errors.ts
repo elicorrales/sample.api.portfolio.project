@@ -26,6 +26,12 @@ export const conflictProblem = (detail: string) => new ProblemError(409, "/probl
 
 export const notFoundProblem = (detail: string) => new ProblemError(404, "/problems/not-found", "Not found", detail);
 
+export const preconditionFailedProblem = (detail: string) =>
+  new ProblemError(412, "/problems/version-mismatch", "Version out of date", detail);
+
+export const preconditionRequiredProblem = () =>
+  new ProblemError(428, "/problems/version-required", "Version required", "Send the If-Match header with the version you loaded");
+
 export function sendProblem(res: Response, instance: string, problem: ProblemError) {
   res
     .status(problem.status)

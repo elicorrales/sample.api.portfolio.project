@@ -38,6 +38,9 @@ export interface UsersRepository {
   findByEmail(email: string): Promise<User | undefined>;
   findById(id: string): Promise<User | undefined>;
   insert(user: User): Promise<void>;
+  // Saves only if the stored version is still `expectedVersion`; returns false otherwise.
+  // With a database this is one statement (UPDATE ... WHERE version = ...), so two saves can't both win.
+  replace(user: User, expectedVersion: number): Promise<boolean>;
   // One page of matching users, plus how many match in total. Search, sort, and paging
   // happen here because a database does them far better than code after the fact.
   list(query: ListQuery): Promise<{ items: User[]; totalItems: number }>;
