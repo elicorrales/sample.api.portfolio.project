@@ -5,7 +5,11 @@ import { ADDRESS_TYPES, PHONE_TYPES, type ListQuery, type UserInput } from "./us
 
 // Business rules. Knows nothing about HTTP; only talks to the repository interface.
 export class UsersService {
-  constructor(private readonly repository: UsersRepository) {}
+  private readonly repository: UsersRepository;
+
+  constructor(repository: UsersRepository) {
+    this.repository = repository;
+  }
 
   async create(input: UserInput): Promise<User> {
     await this.checkEmailIsFree(input.email);

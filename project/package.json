@@ -8,8 +8,9 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "JWT_SECRET=dev-only-secret-not-for-production-use CORS_ORIGINS=http://localhost:8080 tsx scripts/dev.ts",
-    "token": "JWT_SECRET=dev-only-secret-not-for-production-use tsx scripts/dev-token.ts",
+    "start": "node api/src/server.ts",
+    "dev": "JWT_SECRET=dev-only-secret-not-for-production-use CORS_ORIGINS=http://localhost:8080 node scripts/dev.ts",
+    "token": "JWT_SECRET=dev-only-secret-not-for-production-use node scripts/dev-token.ts",
     "test": "vitest run",
     "test:bad-calls": "vitest run tests/bad-calls",
     "test:happy-path": "vitest run tests/happy-path tests/workflow",
@@ -36,7 +37,6 @@
     "drizzle-kit": "0.31.10",
     "embedded-postgres": "18.4.0-beta.17",
     "supertest": "7.2.2",
-    "tsx": "4.23.13",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
   }

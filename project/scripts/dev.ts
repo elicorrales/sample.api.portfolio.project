@@ -29,7 +29,8 @@ if (!rowCount) {
   await postgres.createDatabase(database);
 }
 
-const api = spawn(join("node_modules", ".bin", "tsx"), ["watch", "api/src/server.ts"], {
+// Plain Node runs the TypeScript, the same way Render does (`npm start`); --watch adds the auto-restart.
+const api = spawn(process.execPath, ["--watch", "api/src/server.ts"], {
   stdio: "inherit",
   env: { ...process.env, DATABASE_URL: `postgres://${user}:${password}@localhost:${port}/${database}` },
 });

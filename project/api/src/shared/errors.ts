@@ -8,15 +8,28 @@ export interface FieldError {
 }
 
 export class ProblemError extends Error {
+  readonly status: number;
+  readonly type: string;
+  readonly title: string;
+  readonly detail: string;
+  readonly errors?: FieldError[];
+  readonly headers?: Record<string, string>;
+
   constructor(
-    readonly status: number,
-    readonly type: string,
-    readonly title: string,
-    readonly detail: string,
-    readonly errors?: FieldError[],
-    readonly headers?: Record<string, string>,
+    status: number,
+    type: string,
+    title: string,
+    detail: string,
+    errors?: FieldError[],
+    headers?: Record<string, string>,
   ) {
     super(detail);
+    this.status = status;
+    this.type = type;
+    this.title = title;
+    this.detail = detail;
+    this.errors = errors;
+    this.headers = headers;
   }
 }
 
@@ -48,6 +61,26 @@ export function sendProblem(res: Response, instance: string, problem: ProblemErr
     });
 }
 
+// What an unexpected error may put in the server log: only fields that can't hold personal data.
+// Messages are left out (Drizzle's includes the query's values), and so is PostgreSQL's `detail`
+// (e.g. "Key (email)=(...) already exists"). The path has no query string, so no search terms.
+// The stack keeps only its "at ..." lines, since its first lines repeat the message.
+function safeLogFields(method: string, path: string, err: unknown) {
+  const error = err as { name?: string; stack?: string; code?: string; constraint?: string; cause?: unknown };
+  const database = (error?.cause ?? error) as { code?: string; constraint?: string } | undefined;
+  return {
+    method,
+    path,
+    name: error?.name,
+    code: database?.code,
+    constraint: database?.constraint,
+    stack: error?.stack
+      ?.split("\n")
+      .filter((line) => /^\s+at /.test(line))
+      .join("\n"),
+  };
+}
+
 // Last middleware: turns anything thrown into a Problem response.
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   if (err instanceof ProblemError) {
@@ -59,7 +92,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     // Thrown by express.json() before reading a body over its limit.
     sendProblem(res, req.path, new ProblemError(413, "/problems/too-large", "Body too large", "Request body must be 100 KB or smaller"));
   } else {
-    console.error(err);
+    console.error("Unexpected error", safeLogFields(req.method, req.path, err));
     sendProblem(res, req.path, new ProblemError(500, "/problems/internal", "Internal error", "Something went wrong"));
   }
 };

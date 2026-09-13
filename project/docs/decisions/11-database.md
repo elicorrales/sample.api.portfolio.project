@@ -115,7 +115,7 @@ The other 11 passed at once: the version check inside `UPDATE ... WHERE version 
 
 ### Found along the way: personal data in server logs (open)
 
-The red run printed the failed database error, and **Drizzle's error includes the full query with its values**: names, emails, dates of birth. Nothing reaches callers (responses stay `"Something went wrong"`, [security D1](../testing.md#d-data-leaks-6-tests-leakstestts)), but logs holding personal data become a privacy problem once the API is hosted and logs are kept.
+The red run printed the failed database error, and **Drizzle's error includes the full query with its values**: names, emails, dates of birth. Nothing reaches callers (responses stay `"Something went wrong"`, [security D1](../testing.md#d-data-leaks-9-tests-leakstestts)), but logs holding personal data become a privacy problem once the API is hosted and logs are kept.
 
 | Option | Effect |
 |---|---|
@@ -151,6 +151,8 @@ The red run printed the failed database error, and **Drizzle's error includes th
 Under privacy laws such as GDPR, logs holding personal data are personal data too; a deletion request would have to reach them. Not logging it avoids that.
 
 **Origin:** picked (A+ and the list came from my question)
+
+**As built:** `safeLogFields` in `shared/errors.ts` logs the method, the path (no query string), the error name, PostgreSQL's code and constraint, and only the `at ...` lines of the stack. Messages and PostgreSQL's `detail` are never logged, for any error. Three security tests ([data leaks D3](../testing.md#d-data-leaks-9-tests-leakstestts)), each failing as predicted before the fix. **Found while writing them:** a create saves the user row, then phones, then addresses, and Drizzle logs only the query that failed. A trigger on addresses would have leaked only the street, so the test trigger refuses the `users` row instead, where the name, email, and date of birth are. One existing test changed: D1 had required the whole error object to be logged, the behavior being removed. 221 green.
 
 ## Stage 3: a real PostgreSQL server (2026-09-13)
 

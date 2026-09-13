@@ -14,7 +14,11 @@ import { userAddresses, userPhones, users } from "./users.table.ts";
 
 // PostgreSQL storage. Every value goes in as a query parameter, never pasted into the SQL text.
 export class PgUsersRepository implements UsersRepository {
-  constructor(private readonly db: Database) {}
+  private readonly db: Database;
+
+  constructor(db: Database) {
+    this.db = db;
+  }
 
   async findByEmail(email: string) {
     const rows = await this.db

@@ -8,7 +8,11 @@ import type { User, UsersRepository } from "../../api/src/users/users.repository
 export class RacingRepository implements UsersRepository {
   private held?: { method: keyof UsersRepository; count: number; waiting: (() => void)[] };
 
-  constructor(private readonly real: UsersRepository) {}
+  private readonly real: UsersRepository;
+
+  constructor(real: UsersRepository) {
+    this.real = real;
+  }
 
   holdUntil(method: keyof UsersRepository, count: number) {
     this.held = { method, count, waiting: [] };

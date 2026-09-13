@@ -115,6 +115,8 @@ The AI's pick was **Neon**: a portfolio link has to keep working for months. My 
 
 **Origin:** picked
 
+**As built:** turning on `erasableSyntaxOnly` first and letting the typechecker list the problems found **4 files, not the 2 the AI had counted** (it missed `ProblemError` and a test helper). **I asked that local runs match Render as closely as possible,** so `npm run dev` and `npm run token` also run on plain `node` (`node --watch` for auto-restart), and `tsx` was removed. My laptop's Node was 24.4.1, older than the 24.12 that made this stable; updated with `nvm install 24` to **24.21.0**, which Render will be pinned to as well. 218 green; in Swagger, a user created on a fresh database.
+
 ## Viewing the spec before the API exists
 
 **Question:** How do I (and employers) see the OpenAPI spec while it's being written?

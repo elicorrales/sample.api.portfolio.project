@@ -16,7 +16,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Update user | ✅ Whole-user replace with optimistic locking (tests green, callable from Swagger UI) |
 | Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
 | Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
-| Tests | ✅ 218 green; see [Tests](#tests) below |
+| Tests | ✅ 221 green; see [Tests](#tests) below |
 | Storage | ✅ PostgreSQL 18 via Drizzle; locally a real server run from `node_modules` (`embedded-postgres`), hosted later through `DATABASE_URL` |
 | Hosting | ⏳ Next: API and its Swagger page on Render (docs stay on GitHub) |
 
@@ -29,7 +29,7 @@ Details: [PROGRESS.md](PROGRESS.md)
 | Category | What it proves | Tests | Status |
 |---|---|---|---|
 | **Bad calls** | Every kind of client mistake gets the right status and an error naming the field: `José` → 400, stale version → 412, deleted user's email → 409, `<script>` never echoed back | **115** | ✅ |
-| **Security** | Forged tokens (`alg: none`, edited role, no expiry) → 401; no token → 401 before anything else is checked; SQL in `search`/`sort` does nothing; a forced crash leaks no SQL or file paths; look-alike origins get no CORS. **Found 2 real holes**, now fixed | **60** | ✅ |
+| **Security** | Forged tokens (`alg: none`, edited role, no expiry) → 401; no token → 401 before anything else is checked; SQL in `search`/`sort` does nothing; a forced crash leaks no SQL or file paths, and **the server's own log holds no names or emails**; look-alike origins get no CORS. **Found 2 real holes**, now fixed | **63** | ✅ |
 | **Integrity** | Two requests forced to collide: same email → one `201`, one `409`; same version → one `200`, one `412`, saved once; a save failing midway leaves nothing half-written. **Found 1 real bug** (`500` instead of `409` in a race), now fixed | **14** | ✅ |
 | **Rate limiting** | Over 100 requests a minute → `429` with `Retry-After`; token-guessing floods and faked IP headers are stopped too; a blocked create saves nothing | **12** | ✅ |
 | **Performance** | Search and paging stay fast at scale | — | ⏳ Planned |

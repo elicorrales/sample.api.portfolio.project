@@ -2,7 +2,7 @@
 
 **What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, attacks, and floods all fail the right way, with a clear error and no damage.
 
-**Last updated:** 2026-09-13 · **218 tests, all green, running against a real PostgreSQL 18 server**
+**Last updated:** 2026-09-13 · **221 tests, all green, running against a real PostgreSQL 18 server**
 
 ## By category
 
@@ -11,7 +11,7 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 | Category | What it proves | Tests | Status | Folder | Run it (from `project/`) |
 |---|---|---|---|---|---|
 | **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error | **115** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
-| **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks, and other origins are blocked | **60** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
+| **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks (to callers and to the server's own log), and other origins are blocked | **63** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
 | **Integrity** | Two admins at once can't corrupt data or silently overwrite each other; a failed save changes nothing; the database refuses bad data even if the code lets it through | **14** | ✅ Green (on a real PostgreSQL server, with truly simultaneous connections) | [`tests/integrity/`](../tests/integrity/) | `npm run test:integrity` |
 | **Rate limiting** | Too many requests get `429` with `Retry-After`, not a slow or crashed server; token-guessing floods and faked IPs are stopped too | **12** | ✅ Green | [`tests/rate-limit/`](../tests/rate-limit/) | `npm run test:rate-limit` |
 | **Performance** | Search and paging stay fast with many users | — | ⏳ Planned (separate load-test tool) | | |
@@ -87,7 +87,7 @@ Written before the code changes, they ran red first: 112 of 127 passed at once, 
 
 See [journal row 30](journal.md).
 
-## Security: 60 tests
+## Security: 63 tests
 
 Every `401` looks the same (`"A valid admin token is required"`, `WWW-Authenticate: Bearer`), whatever the reason, so an attacker learns nothing from trying.
 
@@ -125,12 +125,15 @@ Without a token, a caller can't learn which ids exist, which rules apply, or wha
 
 Written when storage was in memory, where they passed easily. **Since the move to PostgreSQL they run against real SQL**: `ILIKE` with escaped wildcards, and every value sent as a query parameter. They still pass.
 
-### D. Data leaks: 6 tests ([`leaks.test.ts`](../tests/security/leaks.test.ts))
+### D. Data leaks: 9 tests ([`leaks.test.ts`](../tests/security/leaks.test.ts))
 
 | Case | Result |
 |---|---|
-| **A forced crash** on list, get, and create: storage throws an error containing SQL, a file path, and a stack trace | `500` "Something went wrong"; **none of it reaches the response**, but the server log has the real error |
+| **A forced crash** on list, get, and create: storage throws an error containing SQL, a file path, and a stack trace | `500` "Something went wrong"; **none of it reaches the response** |
 | Any response: success, `401`, `404` | No `X-Powered-By` header naming the framework |
+| **The server's own log:** a real database failure (a test-only trigger refuses the save), whose error carries the full query with the user's name, email, and date of birth | **None of those values is logged** |
+| The same failure | The log **still helps**: method, path, error name, PostgreSQL's code (`P0001`), and where in the code it broke |
+| A non-database error whose message holds an email | The email isn't logged: no error message is |
 
 ### E. CORS: 9 tests ([`cors.test.ts`](../tests/security/cors.test.ts))
 
@@ -161,7 +164,7 @@ And three corrections:
 - **An oversized body got `400` "must be valid JSON"**, which was untrue. Now `413` with an honest message.
 - **`bearer` in lowercase was refused**, though the HTTP standard allows it. Now accepted.
 
-See [journal row 31](journal.md).
+See [journal row 31](journal.md). The log tests came later: 3 written and run red first, each failing as predicted ([journal row 39](journal.md)).
 
 ## Integrity: 14 tests
 
@@ -213,7 +216,7 @@ Failures predicted in advance: **3 of 14 failed, exactly the predicted ones.** O
 
 The other 11 passed at once. The version check inside the `UPDATE` statement, the transactions, and the database rules were already right.
 
-**Found along the way, not yet fixed:** the failing run printed the database error to the server log, and **that error includes the query's values: names, emails, dates of birth.** Callers never see it (responses stay generic), but a hosted server's logs shouldn't hold personal data. **Plan:** decide before hosting whether to log only the error code and constraint, or use a logging library that removes sensitive fields ([decision 11](decisions/11-database.md#found-along-the-way-personal-data-in-server-logs-open)).
+**Found along the way:** the failing run printed the database error to the server log, and **that error includes the query's values: names, emails, dates of birth.** Callers never see it (responses stay generic), but a hosted server's logs shouldn't hold personal data. **Fixed before hosting:** the log now keeps only fields that can't hold personal data, proven by 3 new security tests ([data leaks](#d-data-leaks-9-tests-leakstestts), [decision 11](decisions/11-database.md#found-along-the-way-personal-data-in-server-logs-open)).
 
 See [journal row 34](journal.md).
 

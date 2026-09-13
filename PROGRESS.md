@@ -23,10 +23,10 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | **Restore user** | `POST /v1/users/{userId}/restore` (no `If-Match`) → `200`, version bump; `409` if not deleted. **All 6 operations now work** (in-memory storage). Tried from Swagger UI. |
 | Happy-path tests | **17 green, happy path complete:** `tests/happy-path/` (16: create 2, list 5, get 2, update 2, delete 3, restore 2) and `tests/workflow/admin-session.test.ts` (1: one admin session, ETags passed step to step). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
 | **Bad-call tests** | **115 green** in `tests/bad-calls/` (body 64, query 18, ids 9, versions 8, conflicts 4, paths 12). Unknown query params → 400; unknown path → 404; wrong method → 405 + `Allow`; unknown fields named. **132 tests total.** |
-| **Security tests** | **60 green** in `tests/security/` (tokens 23, auth-first 12, injection 8, leaks 6, CORS 9, body size 2). Found and fixed 2 holes: tokens without `exp` were accepted; `X-Powered-By: Express` was sent. Also: auth now runs before the body is read; oversized body → `413`; `bearer` in any case. **192 tests total.** |
+| **Security tests** | **63 green** in `tests/security/` (tokens 23, auth-first 12, injection 8, leaks 9, CORS 9, body size 2). Found and fixed 2 holes: tokens without `exp` were accepted; `X-Powered-By: Express` was sent. Also: auth now runs before the body is read; oversized body → `413`; `bearer` in any case. **192 tests total.** |
 | **Rate-limit tests** | **12 green** in `tests/rate-limit/`. `shared/rate-limit.ts`: 100/min per IP, fixed window, before auth, after CORS; `trustProxy` option (default 0). Checked by hand with a `curl` loop. **204 tests total.** |
 | **Database** | PostgreSQL via **Drizzle** on **PGlite** (decision 11). Tables `users`, `user_phones`, `user_addresses`; migration `api/migrations/0000_create_users.sql`. In-memory repository removed. **All 204 tests green on PostgreSQL**, one file at a time (`maxWorkers: 1`, ~50 s; parallel runs froze the laptop). `npm run dev` saves to `project/.data/`; checked in Swagger that data survives a restart. |
-| **Integrity tests** | **14 green** in `tests/integrity/` (races 6, isolation 2, rollback 2, database rules 4). Races forced with `tests/helpers/racing-repository.ts`; mid-save failure via a temporary trigger. **Found 1 bug:** a same-email race got `500`, now `409` (`EmailTakenError`). **Open:** server logs include query values (names, emails); decide before hosting (decision 11). **218 tests total.** |
+| **Integrity tests** | **14 green** in `tests/integrity/` (races 6, isolation 2, rollback 2, database rules 4). Races forced with `tests/helpers/racing-repository.ts`; mid-save failure via a temporary trigger. **Found 1 bug:** a same-email race got `500`, now `409` (`EmailTakenError`). Server logs included query values (names, emails): fixed in hosting step 2. **218 tests total.** |
 | **Real PostgreSQL server** | Stage 3 done (decision 11): PGlite removed; `pg` driver; `embedded-postgres` runs PostgreSQL 18 from `node_modules` (no system install). Tests: one server per run (`tests/global-setup.ts`), one database per file copied from a migrated template. **218 green, no test changed, 65 s → 22 s.** `npm run dev` (`scripts/dev.ts`) starts PostgreSQL + API; checked in Swagger that data survives a restart. Hosted, the API only needs `DATABASE_URL`. |
 | Test showcase | [`project/docs/testing.md`](project/docs/testing.md) (every category, most important first, with example cases) and a Tests section near the top of the README |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`). Installs, tests, and servers run on the laptop (the VM is memory-limited). |
@@ -35,8 +35,8 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 ## Next steps
 
 1. **Next: host the API on Render.** All 8 hosting questions are decided (journal row 37, decision 05). Build them in this order, each one red → green, then deploy:
-   1. **Run on plain Node:** rewrite 2 constructors, add `erasableSyntaxOnly`; start with `node api/src/server.ts`. No new tests; the 218 must stay green
-   2. **Safe error logs:** log only error name, PostgreSQL code, constraint, stack; security test proving no personal data is logged (decision 11)
+   1. ~~Run on plain Node~~ **Done:** `erasableSyntaxOnly` on, 4 files' constructors rewritten, `npm start` = `node api/src/server.ts`, `dev` and `token` on plain `node` too, `tsx` removed, laptop Node 24.21.0 (pin it in `.nvmrc` and on Render at deploy). 218 green
+   2. ~~Safe error logs~~ **Done:** logs only method, path, error name, PostgreSQL code, constraint, and the stack's `at` lines; 3 security tests (leaks D3a–c). **221 green**
    3. **Swagger in the API:** `/docs` (`swagger-ui-dist`) and `/openapi.yaml` without a token, spec `servers: /`; delete `website/api-docs/` and `netlify.toml` (`website/` stays for the web client); update README and PROGRESS instructions
    4. **Settings from env vars:** `TRUST_PROXY` (default 0), `DEMO_MODE`, `MAX_USERS`
    5. **200-user cap:** `409` `/problems/user-limit`, deleted users included; advisory lock; bad-call and integrity (race) tests; spec first
@@ -60,7 +60,8 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |
-| `npm run dev` | Start the API on port 3000 (dev secret; allows the docs page on 8080 via CORS). Also starts PostgreSQL on port 54320; data in `project/.data/postgres` survives restarts; delete that folder (with the server stopped) to start empty. |
+| `npm start` | Start the API the way Render does (`node api/src/server.ts`); needs `JWT_SECRET` and `DATABASE_URL` set |
+| `npm run dev` | Start the API on port 3000 with plain `node --watch` (dev secret; allows the docs page on 8080 via CORS). Also starts PostgreSQL on port 54320; data in `project/.data/postgres` survives restarts; delete that folder (with the server stopped) to start empty. |
 | `npm run db:generate` | After changing `users.table.ts`: write the next SQL migration into `api/migrations/` (review it before running) |
 | `npm run token` | Print an admin token (8 hours) to paste into Swagger UI's **Authorize** |
 
