@@ -14,7 +14,7 @@ Before writing the OpenAPI file, the AI walked me through how the [plain-languag
 
 | Location | Used for | Example |
 |---|---|---|
-| Path | Which record | `/users/{userId}/phones/{phoneId}` |
+| Path | Which record | `/users/{userId}` |
 | Query string | Filtering and options | `?search=smi&sort=lastName` |
 | Body (JSON) | The record's fields | `{ "firstName": "Ann", ... }` |
 | Header | Auth token, version check | `Authorization`, `If-Match` |
@@ -29,10 +29,12 @@ Before writing the OpenAPI file, the AI walked me through how the [plain-languag
 | 4 | Update user | PUT | `/v1/users/{userId}` |
 | 5 | Delete user | DELETE | `/v1/users/{userId}` |
 | 6 | Restore user | POST | `/v1/users/{userId}/restore` |
-| 7–11 | Phones | POST, GET, GET, PUT, DELETE | `/v1/users/{userId}/phones[/{phoneId}]` |
-| 12–16 | Addresses | POST, GET, GET, PUT, DELETE | `/v1/users/{userId}/addresses[/{addressId}]` |
+| ~~7–11~~ | ~~Phones~~ | ~~POST, GET, GET, PUT, DELETE~~ | ~~`/v1/users/{userId}/phones[/{phoneId}]`~~ |
+| ~~12–16~~ | ~~Addresses~~ | ~~POST, GET, GET, PUT, DELETE~~ | ~~`/v1/users/{userId}/addresses[/{addressId}]`~~ |
 
 **Restore uses POST** because it's an action, not a field change.
+
+**Phones and addresses:** operations 7–16 were removed. They're saved as part of the user through create and update. See [08, one user form, one save](08-phones-addresses.md#revision-one-user-form-one-save).
 
 ## Status codes
 
@@ -61,7 +63,7 @@ Before writing the OpenAPI file, the AI walked me through how the [plain-languag
 | 5 | Paging style | Page + page size, or cursor | **Page + page size** | Supports "Page 3 of 12" in the web client | suggested |
 | 6 | Field naming | `firstName` or `first_name` | **`firstName`** | JavaScript convention | suggested |
 | 7 | Version prefix | `/v1/users` or `/users` | **`/v1`** | Room for breaking changes later | suggested |
-| 8 | Deleting a phone or address requires the version? | Yes or no | **No** | Permanent and cheap to redo; matches the operations list | suggested |
+| 8 | ~~Deleting a phone or address requires the version?~~ | ~~Yes or no~~ | ~~**No**~~ | **No longer applies:** no phone or address delete; they're saved with the user, which requires the version ([08 revision](08-phones-addresses.md#revision-one-user-form-one-save)) | suggested |
 
 ## Pushback: Problem Details is JSON
 
@@ -97,7 +99,7 @@ Prompted by my question about intrusion and hacking.
 | 5 | Page + page size | Risk: huge page sizes or deep pages cause slow queries |
 | 6 | camelCase | None |
 | 7 | `/v1` | Minor: old versions left running add attack surface |
-| 8 | No version on delete | None |
+| ~~8~~ | ~~No version on delete~~ | ~~None~~ (no longer applies) |
 
 ## Web client review of the choices
 
@@ -112,7 +114,7 @@ Prompted by my question about the future web client.
 | 5 | Page + page size | "Page 3 of 12"; pages can shift if records change meanwhile |
 | 6 | camelCase | JSON used as-is in JavaScript |
 | 7 | `/v1` | Part of the base URL setting |
-| 8 | No version on delete | "Are you sure?" dialog instead |
+| ~~8~~ | ~~No version on delete~~ | ~~"Are you sure?" dialog instead~~ (no longer applies) |
 
 The `Authorization` and `If-Match` headers trigger a browser CORS preflight, so the API must allow them.
 

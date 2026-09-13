@@ -44,7 +44,8 @@ Who owns the data?
 - Two admins update the same user at once → no silent lost update (see optimistic locking in [07](07-users.md))
 - Two creates with the same email at once → exactly one succeeds
 - Simultaneous changes to different users don't leak into each other
-- A phone can't be reached through another user's path: `/users/2/phones/{phone-of-user-1}` → `404`
+- ~~A phone can't be reached through another user's path: `/users/2/phones/{phone-of-user-1}` → `404`~~ No longer applies: phones and addresses have no paths of their own ([08 revision](08-phones-addresses.md#revision-one-user-form-one-save))
+- Saving one user never changes another user's phones or addresses
 - Deleting a user hides their phones and addresses
 
 ## Security tests

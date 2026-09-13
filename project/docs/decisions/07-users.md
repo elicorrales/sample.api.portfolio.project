@@ -11,6 +11,8 @@
 - Delete a user
 - Restore a deleted user
 
+Create and update carry the **whole user**, including phones and addresses. There are no separate phone or address operations. See [08, one user form, one save](08-phones-addresses.md#revision-one-user-form-one-save).
+
 ## Fields
 
 | Field | Required | Rules | Origin |
@@ -19,6 +21,8 @@
 | Last name | Yes | | picked |
 | Email | Yes | Unique; matching ignores case; **never reused**, even after delete | picked (never reused: mine) |
 | Date of birth | Yes | Not in the future; age 18 or older | picked (age 18: mine) |
+| Phones | Yes | 1–3, one per type, exactly one primary. Rules in [08](08-phones-addresses.md#phones) | mine |
+| Addresses | Yes | 1–3, one per type, exactly one primary. Rules in [08](08-phones-addresses.md#addresses) | mine |
 | Created / updated timestamps | Automatic | | suggested |
 | Version | Automatic | For optimistic locking | suggested |
 
@@ -63,7 +67,7 @@ Keeping date of birth out of the basic view is also a privacy benefit.
 
 **How locking changed the answer:** PATCH's main advantage was fewer clashes between admins. Once optimistic locking was chosen, both styles were equally safe, so PUT's simpler validation won.
 
-**Choice:** PUT. The request sends all fields plus the version it loaded.
+**Choice:** PUT. The request sends all fields plus the version it loaded. "All fields" includes phones and addresses (see [08](08-phones-addresses.md#revision-one-user-form-one-save)).
 
 **Origin:** changed. I asked for pros and cons from both the API and the future web client's point of view. The AI recommended PATCH; I held off, and chose PUT once locking was settled.
 
@@ -116,4 +120,5 @@ The curly apostrophe (`’`) is allowed because phone keyboards often insert it 
 - Born February 29
 - `Bob@x.com` vs `bob@x.com` → same email
 - Stale version on update → conflict
+- Save with no phones, no addresses, or no primary picked → rejected
 - Get or update a deleted user → not found (unless including deleted)

@@ -6,6 +6,8 @@ Every operation the API offers, described without technology. This is the step b
 
 Writing this list surfaced a few new questions; see [Questions raised while writing](#questions-raised-while-writing).
 
+**Revised at test planning:** 16 operations became 6. Phones and addresses are now saved as part of the user.
+
 ## Applies to every operation
 
 - The caller must be an **admin**
@@ -27,9 +29,9 @@ Writing this list surfaced a few new questions; see [Questions raised while writ
 
 | | |
 |---|---|
-| **Give** | First name, last name, email, date of birth |
+| **Give** | First name, last name, email, date of birth · phones · addresses |
 | **Get back** | The new user (detailed view), including id, version, and timestamps |
-| **Fails when** | Any field is missing or invalid · date of birth is in the future or the user is under 18 · email is already used by any user, **including deleted ones** (the message suggests restoring) |
+| **Fails when** | Any field is missing or invalid · phone or address rules broken (see [below](#phones-and-addresses-part-of-the-user)) · date of birth is in the future or the user is under 18 · email is already used by any user, **including deleted ones** (the message suggests restoring) |
 
 ### 2. List users
 
@@ -52,9 +54,9 @@ Writing this list surfaced a few new questions; see [Questions raised while writ
 
 | | |
 |---|---|
-| **Give** | User id · all four fields · the version I loaded |
+| **Give** | User id · all fields, including phones and addresses · the version I loaded |
 | **Get back** | The updated user with a new version number |
-| **Fails when** | Not found or deleted (restore first) · any field invalid · email belongs to another user · **version is out of date** (someone changed it since I loaded it) |
+| **Fails when** | Not found or deleted (restore first) · any field invalid · phone or address rules broken · email belongs to another user · **version is out of date** (someone changed it since I loaded it) |
 
 ### 5. Delete a user
 
@@ -73,63 +75,19 @@ Writing this list surfaced a few new questions; see [Questions raised while writ
 | **Get back** | The restored user, with phones and addresses visible again |
 | **Fails when** | Not found · user isn't deleted (conflict) |
 
-## Phones
+## Phones and addresses (part of the user)
 
-All phone operations happen **under one user**. If the user doesn't exist or is deleted, the result is *not found*.
-
-### 7. Add a phone
-
-| | |
-|---|---|
-| **Give** | User id · number (U.S.) · type (mobile, home, work) · primary: yes or no |
-| **Get back** | The new phone, including its id and version |
-| **Behavior** | If primary is yes, the user's previous primary phone is un-set |
-| **Fails when** | Invalid number or type · the user already has a phone of this type |
-
-### 8. List a user's phones
-
-| | |
-|---|---|
-| **Give** | User id |
-| **Get back** | All the user's phones (at most 3), primary first |
-| **Behavior** | No paging, search, or sort; there are never more than 3 |
-
-### 9. Get one phone
-
-| | |
-|---|---|
-| **Give** | User id · phone id |
-| **Get back** | The phone |
-| **Fails when** | The phone doesn't exist **or belongs to a different user** |
-
-### 10. Update a phone (replace)
-
-| | |
-|---|---|
-| **Give** | User id · phone id · number · type · primary · the version I loaded |
-| **Get back** | The updated phone |
-| **Behavior** | Setting primary to yes un-sets the previous primary |
-| **Fails when** | Same rules as adding · the phone belongs to a different user · version is out of date |
-
-### 11. Delete a phone
-
-| | |
-|---|---|
-| **Give** | User id · phone id |
-| **Get back** | Confirmation |
-| **Behavior** | **Permanent.** If it was the primary, the user has no primary phone until one is set. |
-| **Fails when** | The phone doesn't exist or belongs to a different user |
-
-## Addresses
-
-The same five operations and rules as phones (**12–16**: add, list, get one, update, delete), with these differences:
+Phones and addresses have **no operations of their own**. They're sent with the user on create and update, and returned in the detailed view. See [08, one user form, one save](../decisions/08-phones-addresses.md#revision-one-user-form-one-save).
 
 | | Phones | Addresses |
 |---|---|---|
 | Fields | Number, type, primary | Street, street line 2 (optional), city, state, ZIP, type, primary |
 | Types | mobile, home, work | home, work, mailing |
+| How many | 1–3, one per type | 1–3, one per type |
+| Primary | Exactly one. A single phone is primary automatically; with 2–3, one must be marked. | Same as phones |
 | Validation | U.S. number in any common format; returned as `+13055551234` | State is a valid 2-letter code (states, DC, and territories) · ZIP is exactly 5 digits |
 | Same value twice on one user | Allowed under different types (e.g. mobile = work) | Allowed under different types (e.g. home = mailing) |
+| Removing one | Leave it out of the save; it's gone permanently | Same as phones |
 
 The duplicate rule was dropped while writing the spec; see [08](../decisions/08-phones-addresses.md#details-and-a-reversal-spec-piece-3).
 
@@ -142,5 +100,5 @@ All five proposals were accepted as-is. **Origin:** suggested
 | 1 | Does **list users** return the basic or the detailed view? | Basic only; detailed comes from "get one user" | Keeps lists small; date of birth stays out of bulk results |
 | 2 | Does **delete user** require the version I loaded? | Yes | Prevents deleting a user based on an out-of-date screen |
 | 3 | Restoring a user who isn't deleted | Conflict | Tells the caller something is off, instead of silently doing nothing |
-| 4 | Do phones and addresses use **optimistic locking** (version) like users? | Yes | Same "no silent overwrite" rule everywhere; one pattern for the web client |
+| 4 | Do phones and addresses use **optimistic locking** (version) like users? | ~~Yes~~ **Covered by the user's version** (revision) | ~~Same "no silent overwrite" rule everywhere; one pattern for the web client~~ They're saved as part of the user |
 | 5 | Order of a user's phones and addresses | Primary first, then by type | Predictable display in the web client |
