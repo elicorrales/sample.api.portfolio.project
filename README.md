@@ -15,7 +15,8 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Get one user | ✅ Basic and detailed views (tests green, callable from Swagger UI) |
 | Update user | ✅ Whole-user replace with optimistic locking (tests green, callable from Swagger UI) |
 | Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
-| Restore user | 🔴 In progress: the last of the 6 operations |
+| Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
+| Storage | In memory for now; PostgreSQL next |
 | Hosting | ⏳ Later: docs page on Netlify, API on Render |
 
 Details: [PROGRESS.md](PROGRESS.md)

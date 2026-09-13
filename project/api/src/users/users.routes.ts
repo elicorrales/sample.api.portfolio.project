@@ -47,6 +47,12 @@ export function usersRoutes(service: UsersService) {
     res.status(204).end();
   });
 
+  router.post("/:userId/restore", async (req, res) => {
+    const { userId } = parseOrThrow(userIdParamsSchema, req.params, "userId");
+    const user = await service.restore(userId);
+    res.set("ETag", `"${user.version}"`).json(toDetailedView(user));
+  });
+
   return router;
 }
 

@@ -60,6 +60,18 @@ export class UsersService {
     if (!(await this.repository.replace(deleted, expectedVersion))) throw versionOutOfDate();
   }
 
+  // Brings back a deleted user, phones and addresses included. No If-Match: a deleted user
+  // can't be edited, so there's nothing to overwrite. Restoring a user who isn't deleted is a conflict.
+  async restore(id: string): Promise<User> {
+    const current = await this.get(id, true);
+    if (!current.deletedAt) throw notDeleted();
+
+    const restored: User = { ...current, deletedAt: null, version: current.version + 1, updatedAt: new Date().toISOString() };
+    // If this fails, another admin restored it first.
+    if (!(await this.repository.replace(restored, current.version))) throw notDeleted();
+    return restored;
+  }
+
   // A page past the end is not an error: it has no items but still reports the real totals.
   async list(query: ListQuery) {
     const { items, totalItems } = await this.repository.list(query);
@@ -84,6 +96,8 @@ export class UsersService {
     }
   }
 }
+
+const notDeleted = () => conflictProblem("This user isn't deleted");
 
 const versionOutOfDate = () => preconditionFailedProblem("This user changed since it was loaded; reload and try again");
 
