@@ -137,6 +137,12 @@ A spec linter run after piece 1 flagged two more questions:
 | 14 | License | MIT, all rights reserved, or none | **MIT** | Common for portfolio code; others may reuse it with credit. `LICENSE` file at the repo root, copyright Eli Corrales. | mine |
 | 15 | Lint the spec as a standing step | Yes or no | **Yes**, after every spec change and later in CI | Cheap quality check employers recognize | suggested |
 
+Planning the List tests raised one more:
+
+| # | Question | Options | Choice | Why | Origin |
+|---|---|---|---|---|---|
+| 16 | A page past the end (e.g. `page=5` when there are 2 pages) | `200` with empty `items`, or `400` | **`200` with empty `items`**, plus the real `totalItems` and `totalPages` | Not an error when another admin's delete shrinks the list; the web client can jump to `totalPages`. The existing response shape already gives a page-nav (`<< < 1 2 3 > >>`) everything it needs. | suggested |
+
 Lint command (pinned version): `npx @redocly/cli@2.52.1 lint project/api/openapi.yaml`. The remaining warnings are expected: unused components until endpoints exist, and a note that the server is `localhost`.
 
 Also included, as standards rather than choices:

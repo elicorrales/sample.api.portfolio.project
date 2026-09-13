@@ -4,8 +4,8 @@ import { adminToken } from "../helpers/tokens.ts";
 
 // The smallest valid user: one phone and one address, neither marked primary.
 const validUser = {
-  firstName: "José",
-  lastName: "García-López",
+  firstName: "Jose",
+  lastName: "Garcia-Lopez",
   email: "jose.garcia@example.com",
   dateOfBirth: "1990-05-17",
   phones: [{ number: "(305) 555-1234", type: "mobile" }],

@@ -90,6 +90,7 @@ Rows below marked ~~struck~~ were replaced by this revision.
 | Types | home, work, mailing | suggested (phone types don't fit addresses) |
 | Per type | One per type, so at most 3 per user | **changed** (suggested a limit of 10; I chose 3, matching phones) |
 | Primary and minimum | Same rules as phones | mine |
+| Allowed characters (street, street line 2, city) | A–Z, a–z, 0–9, space, `-`, `,`, `.`, `#` (e.g. `123 Main St., Apt #4`). Decided with the plain-English names revision in [07](07-users.md#revision-plain-english-letters-only). | mine |
 | State | Valid 2-letter code, including DC | suggested |
 | ZIP | 5 digits only (no ZIP+4); leading zeros kept, e.g. `02134` | **changed** (suggested allowing ZIP+4; I chose 5-digit only) |
 | Same address twice on one user | ~~Not allowed~~ **Allowed** under different types (reversed in spec piece 3; see below) | suggested |

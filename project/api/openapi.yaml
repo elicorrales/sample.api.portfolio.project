@@ -79,7 +79,8 @@ paths:
       description: |
         Returns one page of users in the basic view.
         `search` is a partial, case-insensitive match against first name, last name, and email.
-        Ties in sort order are broken by first name, then id. Deleted users are hidden unless `includeDeleted=true`.
+        Sorting ignores case; ties are broken by first name, then id. Deleted users are hidden unless `includeDeleted=true`.
+        A page past the end returns `200` with empty `items` and the real `totalItems` and `totalPages`.
       parameters:
         - $ref: "#/components/parameters/Search"
         - $ref: "#/components/parameters/Sort"
@@ -270,10 +271,11 @@ components:
       type: string
       minLength: 1
       maxLength: 50
-      pattern: "^(?=.*\\p{L})[\\p{L}\\p{M}'’ .\\-]+$"
+      pattern: "^(?=.*[A-Za-z])[A-Za-z .'-]+$"
       description: |
-        1–50 characters after trimming surrounding spaces. Letters in any language (including accents),
-        spaces, hyphens, apostrophes (' or ’), and periods. Must contain at least one letter.
+        1–50 characters after trimming surrounding spaces. Plain English letters (A–Z, a–z),
+        spaces, hyphens, periods, and the straight apostrophe ('). Must contain at least one letter.
+      example: O'Brien
 
     Email:
       type: string
@@ -321,8 +323,8 @@ components:
           items:
             $ref: "#/components/schemas/AddressInput"
       example:
-        firstName: José
-        lastName: García-López
+        firstName: Jose
+        lastName: Garcia-Lopez
         email: jose.garcia@example.com
         dateOfBirth: "1990-05-17"
         phones:
@@ -355,8 +357,8 @@ components:
             - type: "null"
       example:
         id: 3f2a8c1e-7b4d-4e2a-9c6f-1d5e8b7a0c42
-        firstName: José
-        lastName: García-López
+        firstName: Jose
+        lastName: Garcia-Lopez
         email: jose.garcia@example.com
 
     UserDetailed:
@@ -389,8 +391,8 @@ components:
               $ref: "#/components/schemas/Timestamp"
       example:
         id: 3f2a8c1e-7b4d-4e2a-9c6f-1d5e8b7a0c42
-        firstName: José
-        lastName: García-López
+        firstName: Jose
+        lastName: Garcia-Lopez
         email: jose.garcia@example.com
         dateOfBirth: "1990-05-17"
         phones:
@@ -464,26 +466,32 @@ components:
              SD, TN, TX, UT, VT, VA, WA, WV, WI, WY, DC, AS, GU, MP, PR, VI]
       example: FL
 
+    AddressText100:
+      type: string
+      minLength: 1
+      maxLength: 100
+      pattern: "^[A-Za-z0-9 ,.#-]+$"
+      description: Letters, digits, spaces, and `- , . #`.
+      example: 123 Main St.
+
     AddressInput:
       type: object
       additionalProperties: false
       required: [street, city, state, zip, type]
       properties:
         street:
-          type: string
-          minLength: 1
-          maxLength: 100
-          example: 123 Main St
+          $ref: "#/components/schemas/AddressText100"
         street2:
-          type: string
-          minLength: 1
-          maxLength: 100
+          allOf:
+            - $ref: "#/components/schemas/AddressText100"
           description: Optional (apartment, suite, unit). Omit for none.
           example: Apt 4B
         city:
           type: string
           minLength: 1
           maxLength: 50
+          pattern: "^[A-Za-z0-9 ,.#-]+$"
+          description: Letters, digits, spaces, and `- , . #`.
           example: Miami
         state:
           $ref: "#/components/schemas/UsState"

@@ -31,7 +31,7 @@ Writing this list surfaced a few new questions; see [Questions raised while writ
 |---|---|
 | **Give** | First name, last name, email, date of birth · phones · addresses |
 | **Get back** | The new user (detailed view), including id, version, and timestamps |
-| **Fails when** | Any field is missing or invalid · phone or address rules broken (see [below](#phones-and-addresses-part-of-the-user)) · date of birth is in the future or the user is under 18 · email is already used by any user, **including deleted ones** (the message suggests restoring) |
+| **Fails when** | Any field is missing or invalid · a name uses anything but A–Z, spaces, hyphens, periods, or `'` · phone or address rules broken (see [below](#phones-and-addresses-part-of-the-user)) · date of birth is in the future or the user is under 18 · email is already used by any user, **including deleted ones** (the message suggests restoring) |
 
 ### 2. List users
 
@@ -39,7 +39,7 @@ Writing this list surfaced a few new questions; see [Questions raised while writ
 |---|---|
 | **Give** (all optional) | Search text · sort by last name or email · ascending or descending · page number · page size · include deleted users |
 | **Get back** | One page of users (basic view) plus paging info: total count, current page, page size |
-| **Behavior** | Search is a partial match, ignoring case, across first name, last name, and email · ties sort by first name, then id · deleted users hidden unless requested |
+| **Behavior** | Search is a partial match, ignoring case, across first name, last name, and email · sorting ignores case · ties sort by first name, then id · deleted users hidden unless requested · a page past the end returns no items (not an error), with the real totals |
 | **Fails when** | Unknown sort field · invalid page number or page size |
 
 ### 3. Get one user
@@ -85,7 +85,7 @@ Phones and addresses have **no operations of their own**. They're sent with the 
 | Types | mobile, home, work | home, work, mailing |
 | How many | 1–3, one per type | 1–3, one per type |
 | Primary | Exactly one. A single phone is primary automatically; with 2–3, one must be marked. | Same as phones |
-| Validation | U.S. number in any common format; returned as `+13055551234` | State is a valid 2-letter code (states, DC, and territories) · ZIP is exactly 5 digits |
+| Validation | U.S. number in any common format; returned as `+13055551234` | State is a valid 2-letter code (states, DC, and territories) · ZIP is exactly 5 digits · street and city use only A–Z, 0–9, spaces, and `- , . #` |
 | Same value twice on one user | Allowed under different types (e.g. mobile = work) | Allowed under different types (e.g. home = mailing) |
 | Removing one | Leave it out of the save; it's gone permanently | Same as phones |
 

@@ -17,7 +17,7 @@ const personName = z
   .trim()
   .min(1)
   .max(50)
-  .regex(/^(?=.*\p{L})[\p{L}\p{M}'’ .\-]+$/u, "Letters, spaces, hyphens, apostrophes, and periods only");
+  .regex(/^(?=.*[A-Za-z])[A-Za-z .'-]+$/, "Letters A-Z, spaces, hyphens, periods, and ' only");
 
 // Date only, not in the future, and 18 or older. Compared as YYYY-MM-DD strings in UTC,
 // so someone born Feb 29 turns 18 on Mar 1 in non-leap years.
@@ -48,6 +48,10 @@ const phoneNumber = z
     return `+1${digits}`;
   });
 
+// Street, street line 2, and city.
+const addressText = (max: number) =>
+  z.string().min(1).max(max).regex(/^[A-Za-z0-9 ,.#-]+$/, "Letters, digits, spaces, and - , . # only");
+
 const phoneInput = z.strictObject({
   number: phoneNumber,
   type: z.enum(PHONE_TYPES),
@@ -55,9 +59,9 @@ const phoneInput = z.strictObject({
 });
 
 const addressInput = z.strictObject({
-  street: z.string().min(1).max(100),
-  street2: z.string().min(1).max(100).optional(),
-  city: z.string().min(1).max(50),
+  street: addressText(100),
+  street2: addressText(100).optional(),
+  city: addressText(50),
   state: z.enum(US_STATES),
   zip: z.string().regex(/^\d{5}$/, "Must be exactly 5 digits"),
   type: z.enum(ADDRESS_TYPES),

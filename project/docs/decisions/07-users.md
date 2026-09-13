@@ -46,6 +46,7 @@ Keeping date of birth out of the basic view is also a privacy benefit.
 | Search | One partial-match term checked against first name, last name, and email; ignores case | mine |
 | Sort | Last name or email, ascending or descending | mine |
 | Tie-breaker | Then first name, then id, so order is stable across pages | suggested |
+| Case in sorting | Ignored: `adams` sorts next to `Adams` (found while planning the List tests) | suggested |
 | Paging | Yes | picked |
 | Deleted users | Hidden unless the admin asks to include them | mine |
 
@@ -98,21 +99,35 @@ Keeping date of birth out of the basic view is also a privacy benefit.
 
 | # | Question | Choice | Why | Origin |
 |---|---|---|---|---|
-| 1 | Name length | **1–50 characters per field** (first and last separately), after trimming spaces | Real-world references: UK government standard uses 35; many systems use 50. Covers long real names like `García-Fernández de la Torre`. | **changed** (AI first suggested 100; I asked what's realistic) |
-| 2 | Allowed name characters | Letters in any language (including accents), spaces, hyphens, apostrophes (`'` and `’`), periods; at least one letter | Avoids blocking real people: José, Nguyễn, O'Brien, de la Cruz, one-letter names | suggested (prompted by my question) |
+| 1 | Name length | **1–50 characters per field** (first and last separately), after trimming spaces | Real-world references: UK government standard uses 35; many systems use 50. Covers long real names like `Garcia-Fernandez de la Torre` (written without accents since the [revision](#revision-plain-english-letters-only)). | **changed** (AI first suggested 100; I asked what's realistic) |
+| 2 | Allowed name characters | ~~Letters in any language (including accents), spaces, hyphens, apostrophes (`'` and `’`), periods; at least one letter~~ **A–Z, a–z, spaces, hyphens, periods, straight apostrophe `'`; at least one letter** (see [revision](#revision-plain-english-letters-only)) | ~~Avoids blocking real people: José, Nguyễn, O'Brien, de la Cruz, one-letter names~~ Keeps search, sorting, and tests simple | suggested → **changed** |
 | 3 | Email max length | 254 characters | Practical limit from the email standards | suggested |
 | 4 | Default sort | Last name, ascending | Natural for a people list | suggested |
 | 5 | Default view for "get one user" | Basic; detailed must be asked for | Matches the list view, and keeps date of birth private by default | suggested |
 | 6 | How "deleted" is shown | `deletedAt` timestamp (`null` if active), only when including deleted users | Says both whether and when | suggested |
 | 7 | Unknown fields in the body (e.g. `id`, `role`) | Rejected with `400` | Safer; catches client typos; easy to test | suggested |
 
-**Name pattern check:** tested against sample names before accepting.
+**Name pattern check:** ~~tested against sample names before accepting.~~ Replaced by the revision below.
+
+| ~~Accepted~~ | ~~Rejected~~ |
+|---|---|
+| ~~José, Zoë, Nguyễn, O'Brien, D’Angelo, García-Fernández de la Torre, Mary Ann, Jr., O, 't Hooft~~ | ~~`--`, `...`, `R2D2`, `Bob!`, empty~~ |
+
+~~The curly apostrophe (`’`) is allowed because phone keyboards often insert it instead of `'`.~~
+
+## Revision: plain English letters only
+
+**Date:** 2026-09-12 (while planning the List tests) · **Origin:** mine
+
+**How it came up:** planning the List tests raised questions like "does searching `garcia` find `García`?" and "where does `Élise` sort?" Handling letters from every language adds rules and tests that don't serve a sample project.
+
+**Choice:** names use plain U.S. English characters only.
 
 | Accepted | Rejected |
 |---|---|
-| José, Zoë, Nguyễn, O'Brien, D’Angelo, García-Fernández de la Torre, Mary Ann, Jr., O, 't Hooft | `--`, `...`, `R2D2`, `Bob!`, empty |
+| Jose, O'Brien, Mary Ann, Smith-Jones, Jr., O, de la Cruz | `José`, `Zoë`, `D’Angelo` (curly apostrophe), `--`, `...`, `R2D2`, `Bob!`, empty |
 
-The curly apostrophe (`’`) is allowed because phone keyboards often insert it instead of `'`.
+**Tradeoff accepted:** real names with accents must be typed without them (`Jose Garcia`).
 
 ## Test edge cases
 
