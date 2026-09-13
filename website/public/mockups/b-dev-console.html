@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup B: Developer console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* Direction B: an IDE-like console. Every request is visible; status colors follow HTTP classes. */
+  :root {
+    --bg: #1E2530;
+    --panel: #252D39;
+    --raised: #2C3645;
+    --line: #36414F;
+    --text: #D7DEE7;
+    --muted: #8C99A9;
+    --blue: #7DB6FF;
+    --ok: #62CF8C;      /* 2xx */
+    --warn: #F2B54A;    /* 4xx */
+    --bad: #F07A6E;     /* 429, 5xx */
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #151A22; color: var(--text); font: 13.5px/1.5 "IBM Plex Sans", system-ui, sans-serif; }
+  .caption { max-width: 1360px; margin: 0 auto; padding: 26px 20px 10px; color: var(--muted); font-size: 13px; }
+  .caption strong { color: var(--text); }
+  .app { max-width: 1360px; margin: 0 auto 40px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+
+  .titlebar { display: flex; align-items: center; gap: 16px; padding: 9px 14px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .titlebar b { font-weight: 600; }
+  .host { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .host i { font-style: normal; color: var(--ok); }
+  .demo { margin-left: auto; color: var(--warn); font-size: 12.5px; }
+  .tok { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; color: var(--text); }
+  .tok span { color: var(--ok); }
+
+  .panes { display: grid; grid-template-columns: 220px 1fr 420px; min-height: 720px; }
+  .nav { background: var(--panel); border-right: 1px solid var(--line); padding: 12px 0; }
+  .nav h4 { font-weight: 500; color: var(--muted); font-size: 12px; margin: 14px 16px 6px; }
+  .nav a { display: flex; justify-content: space-between; padding: 5px 16px; color: var(--text); text-decoration: none; }
+  .nav a.on { background: var(--raised); box-shadow: inset 2px 0 0 var(--blue); }
+  .nav a em { font-style: normal; font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  .nav a em.ok { color: var(--ok); }
+  .nav a em.w { color: var(--warn); }
+  .nav a em.b { color: var(--bad); }
+
+  .center { padding: 14px 16px; min-width: 0; }
+  .bar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .query { flex: 1; min-width: 260px; font-family: var(--mono); font-size: 12.5px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; color: var(--muted); }
+  .query b { color: var(--blue); font-weight: 400; }
+  button { font: inherit; font-size: 12.5px; background: var(--raised); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+  button.go { background: var(--blue); color: #10233F; border-color: var(--blue); font-weight: 600; }
+  button.danger { color: var(--bad); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 7px 8px; border-bottom: 1px solid #2B3441; white-space: nowrap; }
+  td.m { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  tr.sel td { background: #2A3A52; }
+  tr.del td { color: #6C7888; text-decoration: line-through; text-decoration-color: #6C7888; }
+  .foot { display: flex; justify-content: space-between; color: var(--muted); margin-top: 8px; font-size: 12.5px; }
+
+  .editor { margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .editor header { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  .editor header .m { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .editor header .sp { flex: 1; }
+  .form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 12px; padding: 12px; }
+  .form label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+  .form label.w2 { grid-column: span 2; }
+  input, select { font: 13px var(--mono); color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; }
+  input.bad { border-color: var(--bad); }
+  .form input { width: 100%; min-width: 0; }
+  .errline { grid-column: span 4; font-family: var(--mono); font-size: 12px; color: var(--bad); }
+
+  .inspect { background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; }
+  .inspect h3 { margin: 0; padding: 10px 14px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; }
+  .inspect h3 span { color: var(--muted); font-weight: 400; }
+  .log { font-family: var(--mono); font-size: 12px; border-bottom: 1px solid var(--line); }
+  .log div { display: grid; grid-template-columns: 56px 1fr 38px 52px; gap: 8px; padding: 4px 14px; }
+  .log div.on { background: var(--raised); }
+  .log .t { color: var(--muted); }
+  .s2 { color: var(--ok); } .s4 { color: var(--warn); } .s5 { color: var(--bad); }
+  .log .ms { color: var(--muted); text-align: right; }
+  .detail { padding: 12px 14px; font-family: var(--mono); font-size: 12px; overflow-x: auto; }
+  .detail .sec { color: var(--muted); margin: 10px 0 4px; font-family: "IBM Plex Sans", sans-serif; font-size: 12px; }
+  .detail pre { margin: 0; white-space: pre; line-height: 1.55; }
+  .k { color: var(--blue); } .str { color: #C9A6FF; } .n { color: var(--warn); }
+
+  /* Screen 2 */
+  .run { padding: 16px; }
+  .run h2 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .run p { color: var(--muted); margin: 0 0 14px; max-width: 70ch; }
+  .caution { border: 1px solid #5A4520; background: #2E2819; color: var(--warn); padding: 8px 12px; border-radius: 6px; margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(21, 1fr); gap: 3px; margin: 10px 0; }
+  .grid i { height: 18px; border-radius: 2px; background: #2F6A48; }
+  .grid i.x { background: var(--bad); }
+  .stats { display: flex; gap: 28px; font-family: var(--mono); margin: 12px 0 18px; }
+  .stats div span { display: block; font-family: "IBM Plex Sans", sans-serif; font-size: 12px; color: var(--muted); }
+  .stats b { font-size: 22px; font-weight: 600; }
+  .countdown { color: var(--bad); }
+  .suite { border-top: 1px solid var(--line); }
+  .suite div { display: grid; grid-template-columns: 1fr 150px 260px 90px; gap: 10px; padding: 8px 0; border-bottom: 1px solid #2B3441; align-items: center; }
+  .suite .m { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  @media (max-width: 1000px) {
+    .panes { grid-template-columns: 1fr; }
+    .nav, .inspect { border: 0; border-top: 1px solid var(--line); }
+    .center { overflow-x: auto; }
+    .suite div { grid-template-columns: 1fr; }
+    .form { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<p class="caption"><strong>Mockup B: Developer console.</strong> Screen 1: users on the left, the raw request and response always open on the right. Static picture.</p>
+
+<div class="app">
+  <div class="titlebar">
+    <b>users-admin</b>
+    <span class="host"><i>●</i> users-admin-api-98o8.onrender.com</span>
+    <span class="demo">Demo only: all data is fake and resets every night at 08:00 UTC</span>
+    <span class="tok">Bearer eyJhbGci… <span>42:17 left</span></span>
+  </div>
+
+  <div class="panes">
+    <nav class="nav">
+      <h4>Data</h4>
+      <a class="on" href="#">Users <em>45</em></a>
+      <a href="#">Deleted users <em>5</em></a>
+      <h4>Checks</h4>
+      <a href="#">No token <em class="ok">401 ✓</em></a>
+      <a href="#">Forged token <em>not run</em></a>
+      <a href="#">Rate limit <em class="b">429 ✓</em></a>
+      <a href="#">Stale save <em class="w">412 ✓</em></a>
+      <a href="#">Same email race <em>not run</em></a>
+      <a href="#">Bad input <em>not run</em></a>
+      <a href="#">SQL in search <em>not run</em></a>
+      <h4>Links</h4>
+      <a href="#">Swagger docs</a>
+      <a href="#">Test showcase</a>
+      <a href="#">Journal</a>
+    </nav>
+
+    <main class="center">
+      <div class="bar">
+        <div class="query">GET /v1/users?<b>page</b>=2&amp;<b>sort</b>=lastName&amp;<b>search</b>=</div>
+        <button>Include deleted</button>
+        <button class="go">New user</button>
+      </div>
+      <table>
+        <thead><tr><th>lastName ▲</th><th>firstName</th><th>email</th></tr></thead>
+        <tbody>
+          <tr><td>Lee</td><td>Carter</td><td>carter.lee@example.com</td></tr>
+          <tr><td>Lewis</td><td>Levi</td><td>levi.lewis@example.com</td></tr>
+          <tr><td>Lopez</td><td>Mason</td><td>mason.lopez@example.com</td></tr>
+          <tr><td>Martin</td><td>Jackson</td><td>jackson.martin@example.com</td></tr>
+          <tr><td>Martinez</td><td>Ethan</td><td>ethan.martinez@example.com</td></tr>
+          <tr><td>Miller</td><td>Sophia</td><td>sophia.miller@example.com</td></tr>
+          <tr><td>Moore</td><td>Aiden</td><td>aiden.moore@example.com</td></tr>
+          <tr><td>Nelson</td><td>Naomi</td><td>naomi.nelson@example.com</td></tr>
+          <tr class="sel"><td>O'Brien</td><td>Nora</td><td>nora.obrien@example.com</td></tr>
+          <tr><td>Perez</td><td>Ella</td><td>ella.perez@example.com</td></tr>
+        </tbody>
+      </table>
+      <div class="foot"><span>45 users, page 2 of 3</span><span><button>Previous</button> <button>Next</button></span></div>
+
+      <section class="editor">
+        <header><b>Nora O'Brien</b><span class="m">If-Match: "3"</span><span class="sp"></span><button class="danger">Delete</button><button>Cancel</button><button class="go">Save changes</button></header>
+        <div class="form">
+          <label>firstName<input value="Nora"></label>
+          <label>lastName<input value="O'Brien"></label>
+          <label class="w2">email<input value="nora.obrien@example.com"></label>
+          <label>dateOfBirth<input value="1988-04-12"></label>
+          <label>phone (mobile, primary)<input value="+13055550130"></label>
+          <label class="w2">phone (work)<input class="bad" value="(105) 555-0131"></label>
+          <div class="errline">phones[1].number: Must be a 10-digit U.S. number; area code can't start with 0 or 1</div>
+          <label class="w2">address (home, primary)<input value="1420 Brickell Ave, Miami, FL 33101"></label>
+        </div>
+      </section>
+    </main>
+
+    <aside class="inspect">
+      <h3>Requests <span>last 6</span></h3>
+      <div class="log">
+        <div><span class="t">10:42:01</span><span>POST /demo/token</span><span class="s2">200</span><span class="ms">88ms</span></div>
+        <div><span class="t">10:42:03</span><span>GET /v1/users?page=1</span><span class="s2">200</span><span class="ms">141ms</span></div>
+        <div><span class="t">10:42:09</span><span>GET /v1/users?page=2</span><span class="s2">200</span><span class="ms">97ms</span></div>
+        <div><span class="t">10:42:12</span><span>GET /v1/users/7f3c…?view=detailed</span><span class="s2">200</span><span class="ms">64ms</span></div>
+        <div class="on"><span class="t">10:42:40</span><span>PUT /v1/users/7f3c…</span><span class="s4">400</span><span class="ms">52ms</span></div>
+      </div>
+      <div class="detail">
+        <div class="sec">Request headers</div>
+<pre><span class="k">Authorization</span>: Bearer eyJhbGci…
+<span class="k">If-Match</span>: "3"
+<span class="k">Content-Type</span>: application/json</pre>
+        <div class="sec">Response 400, application/problem+json</div>
+<pre>{
+  <span class="k">"type"</span>: <span class="str">"/problems/validation"</span>,
+  <span class="k">"title"</span>: <span class="str">"Invalid input"</span>,
+  <span class="k">"status"</span>: <span class="n">400</span>,
+  <span class="k">"detail"</span>: <span class="str">"1 field(s) are invalid"</span>,
+  <span class="k">"instance"</span>: <span class="str">"/v1/users/7f3c…"</span>,
+  <span class="k">"errors"</span>: [
+    {
+      <span class="k">"field"</span>: <span class="str">"phones[1].number"</span>,
+      <span class="k">"message"</span>: <span class="str">"Must be a 10-digit U.S. number…"</span>
+    }
+  ]
+}</pre>
+        <div class="sec">Proven by</div>
+        <pre>tests/bad-calls/body.test.ts</pre>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<p class="caption"><strong>Screen 2: a check running.</strong> The rate-limit check just sent 105 requests. Each square is one request.</p>
+
+<div class="app">
+  <div class="titlebar">
+    <b>users-admin</b>
+    <span class="host"><i>●</i> users-admin-api-98o8.onrender.com</span>
+    <span class="demo">Demo only: all data is fake and resets every night at 08:00 UTC</span>
+    <span class="tok">Bearer eyJhbGci… <span>41:02 left</span></span>
+  </div>
+  <div class="panes" style="grid-template-columns: 220px 1fr;">
+    <nav class="nav">
+      <h4>Data</h4>
+      <a href="#">Users <em>45</em></a>
+      <a href="#">Deleted users <em>5</em></a>
+      <h4>Checks</h4>
+      <a href="#">No token <em class="ok">401 ✓</em></a>
+      <a href="#">Forged token <em>not run</em></a>
+      <a class="on" href="#">Rate limit <em class="b">429 ✓</em></a>
+      <a href="#">Stale save <em class="w">412 ✓</em></a>
+      <a href="#">Same email race <em>not run</em></a>
+      <a href="#">Bad input <em>not run</em></a>
+      <a href="#">SQL in search <em>not run</em></a>
+    </nav>
+    <main class="run">
+      <h2>Rate limit</h2>
+      <p>The API allows 100 requests a minute from one visitor, counted before the token is checked, so floods of guessed tokens are stopped too.</p>
+      <div class="caution">Running this blocks your own address for the rest of the minute, on every page including Swagger.</div>
+      <div class="grid" aria-label="100 answered, 5 blocked">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="x"></i><i class="x"></i><i class="x"></i><i class="x"></i><i class="x"></i>
+      </div>
+      <div class="stats">
+        <div><span>Answered</span><b class="s2">100</b></div>
+        <div><span>Blocked with 429</span><b class="s5">5</b></div>
+        <div><span>Retry-After</span><b>38 s</b></div>
+        <div><span>Unblocked in</span><b class="countdown">0:36</b></div>
+      </div>
+      <div class="suite">
+        <div><span>Request 101</span><span class="m">GET /v1/users</span><span class="m">429, Retry-After: 38</span><span class="s5">blocked</span></div>
+        <div><span>Same test in the suite</span><span class="m">12 tests</span><span class="m">tests/rate-limit/rate-limit.test.ts</span><span class="s2">green</span></div>
+      </div>
+      <p style="margin-top:16px"><button class="go">Run again when unblocked</button></p>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup D: Dense back-office grid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Direction D: the tool an operations team lives in all day. Many columns, small type, zero decoration.
+     The checks live in a docked panel at the bottom, like a results pane. */
+  :root {
+    --page: #E4E6EA;
+    --chrome: #2A2F37;
+    --chrome-text: #E6E9EE;
+    --surface: #FFFFFF;
+    --stripe: #F6F7F9;
+    --line: #D3D7DD;
+    --ink: #1F242B;
+    --muted: #646C78;
+    --select: #DDE3F8;
+    --accent: #3B4CB8;
+    --red: #B42D2D;
+    --green: #237A4B;
+    --amber: #9A6400;
+    --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 13px/1.4 "IBM Plex Sans", system-ui, sans-serif; }
+  .caption { max-width: 1440px; margin: 0 auto; padding: 24px 16px 8px; color: var(--muted); }
+  .caption strong { color: var(--ink); }
+  .win { max-width: 1440px; margin: 0 auto 36px; background: var(--surface); border: 1px solid #BFC4CB; display: flex; flex-direction: column; min-height: 820px; }
+
+  .menubar { background: var(--chrome); color: var(--chrome-text); display: flex; align-items: center; gap: 18px; padding: 0 12px; height: 34px; }
+  .menubar b { font-weight: 600; margin-right: 10px; }
+  .menubar a { color: #B9C0CA; text-decoration: none; }
+  .menubar a.on { color: #fff; box-shadow: inset 0 -2px 0 #8FA0FF; padding: 8px 0; }
+  .menubar .r { margin-left: auto; display: flex; gap: 14px; color: #B9C0CA; font-size: 12px; }
+  .menubar .r .demo { color: #F4C56B; }
+  .menubar .r .t { color: #9FE0B8; }
+
+  .toolbar { display: flex; gap: 6px; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--line); background: #F2F3F5; flex-wrap: wrap; }
+  .tb { font: inherit; background: #fff; border: 1px solid #C4C9D0; border-radius: 3px; padding: 3px 9px; color: var(--ink); cursor: pointer; }
+  .tb.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tb.red { color: var(--red); }
+  .sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; }
+  .count { margin-left: auto; color: var(--muted); }
+
+  .gridwrap { overflow-x: auto; flex: 1; }
+  table { border-collapse: collapse; width: 100%; font-family: var(--cond); font-size: 13px; }
+  th { position: sticky; top: 0; background: #ECEEF1; text-align: left; font-weight: 600; padding: 4px 8px; border-right: 1px solid var(--line); border-bottom: 1px solid #C4C9D0; white-space: nowrap; }
+  th small { color: var(--muted); font-weight: 400; }
+  tr.filter td { background: #FAFAFB; padding: 2px 4px; }
+  tr.filter input { width: 100%; font: 12px var(--cond); border: 1px solid #DADDE2; padding: 2px 4px; border-radius: 2px; }
+  td { padding: 3px 8px; border-right: 1px solid #E6E8EB; border-bottom: 1px solid #E6E8EB; white-space: nowrap; }
+  tbody tr:nth-child(even) td { background: var(--stripe); }
+  tbody tr.sel td { background: var(--select); }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; }
+  td.id { color: var(--muted); }
+  .st { font-weight: 600; }
+  .st.a { color: var(--green); }
+  .st.d { color: var(--red); }
+  tr.deleted td { color: #8B929C; }
+
+  tr.expand td { background: #F4F6FD !important; padding: 10px 14px 12px; border-bottom: 2px solid var(--accent); }
+  .ed { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 16px; font-family: "IBM Plex Sans", sans-serif; white-space: normal; }
+  .ed fieldset { border: 1px solid var(--line); background: #fff; padding: 8px 10px; margin: 0; }
+  .ed legend { font-weight: 600; padding: 0 4px; }
+  .ed .f { display: grid; grid-template-columns: 96px 1fr; gap: 4px 8px; align-items: center; margin-bottom: 4px; }
+  .ed label { color: var(--muted); }
+  .ed input, .ed select { font: 13px "IBM Plex Sans", sans-serif; border: 1px solid #C4C9D0; border-radius: 2px; padding: 2px 5px; width: 100%; }
+  .ed input.bad { border-color: var(--red); background: #FFF5F5; }
+  .ed .msg { grid-column: 2; color: var(--red); font-size: 12px; }
+  .ed .btns { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; }
+  .ed .btns .v { margin-left: auto; color: var(--muted); }
+
+  .status { display: flex; gap: 16px; padding: 3px 10px; background: #ECEEF1; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+  .dock { border-top: 2px solid #9AA1AB; height: 280px; display: flex; flex-direction: column; }
+  .docktabs { display: flex; background: #ECEEF1; border-bottom: 1px solid var(--line); }
+  .docktabs a { padding: 5px 14px; color: var(--muted); text-decoration: none; border-right: 1px solid var(--line); }
+  .docktabs a.on { background: #fff; color: var(--ink); font-weight: 600; }
+  .docktabs .hint { margin-left: auto; padding: 5px 12px; color: var(--amber); }
+  .dockbody { display: grid; grid-template-columns: 1fr 380px; flex: 1; min-height: 0; }
+  .dockbody table td, .dockbody table th { font-size: 12.5px; }
+  .res.ok { color: var(--green); font-weight: 600; }
+  .res.no { color: var(--muted); }
+  .raw { border-left: 1px solid var(--line); padding: 8px 10px; background: #FAFBFC; overflow: auto; }
+  .raw h5 { margin: 0 0 6px; font-size: 12.5px; }
+  .raw pre { margin: 0; font: 12px/1.5 ui-monospace, "IBM Plex Mono", monospace; white-space: pre-wrap; }
+
+  @media (max-width: 900px) {
+    .dock { height: auto; }
+    .dockbody { grid-template-columns: 1fr; }
+    .raw { border-left: 0; border-top: 1px solid var(--line); }
+    .ed { grid-template-columns: 1fr; }
+    .menubar { flex-wrap: wrap; height: auto; padding: 6px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<p class="caption"><strong>Mockup D: Dense back-office grid.</strong> One screen: the grid with a user expanded in place for editing (loaded with its own detailed call), and the checks docked at the bottom. Static picture.</p>
+
+<div class="win">
+  <div class="menubar">
+    <b>Users Admin</b>
+    <a class="on" href="#">Users</a><a href="#">Swagger</a><a href="#">Tests</a><a href="#">Journal</a>
+    <div class="r"><span class="demo">Demo only: all data is fake and resets every night at 08:00 UTC</span><span class="t">Demo token, 42:17 left</span><span>users-admin-api-98o8.onrender.com</span></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="tb pri">New user</button>
+    <button class="tb">Edit</button>
+    <button class="tb red">Delete</button>
+    <button class="tb">Restore</button>
+    <span class="sep"></span>
+    <button class="tb">Refresh</button>
+    <label><input type="checkbox" checked> Include deleted</label>
+    <span class="sep"></span>
+    <span>Page size</span><select class="tb"><option>20</option></select>
+    <span class="count">Rows 21 to 40 of 50 (5 deleted), page 2 of 3</span>
+  </div>
+
+  <div class="gridwrap">
+    <table>
+      <thead>
+        <tr><th>Id</th><th>Last name <small>▲ 1</small></th><th>First name</th><th>Email</th><th>Deleted at (UTC)</th><th>Status</th></tr>
+        <tr class="filter"><td></td><td><input placeholder="Filter"></td><td><input></td><td><input></td><td></td><td></td></tr>
+      </thead>
+      <tbody>
+        <tr><td class="id">3a91…</td><td>Lee</td><td>Carter</td><td>carter.lee@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">b702…</td><td>Lewis</td><td>Levi</td><td>levi.lewis@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">55ce…</td><td>Lopez</td><td>Mason</td><td>mason.lopez@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr class="deleted"><td class="id">c0d4…</td><td>Martin</td><td>Jackson</td><td>jackson.martin@example.com</td><td>2026-09-13 09:58</td><td class="st d">Deleted</td></tr>
+        <tr><td class="id">91ab…</td><td>Martinez</td><td>Ethan</td><td>ethan.martinez@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">e47f…</td><td>Miller</td><td>Sophia</td><td>sophia.miller@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">2d18…</td><td>Moore</td><td>Aiden</td><td>aiden.moore@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">8be0…</td><td>Nelson</td><td>Naomi</td><td>naomi.nelson@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">6f02…</td><td>Nguyen</td><td>Stella</td><td>stella.nguyen@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr class="sel"><td class="id">7f3c…</td><td>O'Brien</td><td>Nora</td><td>nora.obrien@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr class="expand"><td colspan="6">
+          <div class="ed">
+            <fieldset><legend>Person</legend>
+              <div class="f"><label>First name</label><input value="Nora"></div>
+              <div class="f"><label>Last name</label><input value="O'Brien"></div>
+              <div class="f"><label>Email</label><input value="nora.obrien@example.com"></div>
+              <div class="f"><label>Date of birth</label><input value="1988-04-12"></div>
+            </fieldset>
+            <fieldset><legend>Phones (2 of 3)</legend>
+              <div class="f"><select><option>Mobile</option></select><input value="(305) 555-0130"></div>
+              <div class="f"><select><option>Work</option></select><input class="bad" value="(105) 555-0131"></div>
+              <div class="f"><span></span><span class="msg">phones[1].number: area code can't start with 0 or 1</span></div>
+              <div class="f"><label>Primary</label><select><option>Mobile</option></select></div>
+            </fieldset>
+            <fieldset><legend>Addresses (1 of 3)</legend>
+              <div class="f"><select><option>Home</option></select><input value="1420 Brickell Ave"></div>
+              <div class="f"><label>City, state</label><input value="Miami, FL"></div>
+              <div class="f"><label>ZIP</label><input value="33101"></div>
+            </fieldset>
+            <div class="btns"><button class="tb pri">Save changes</button><button class="tb">Cancel</button><span class="v">Sends If-Match: "3"</span></div>
+          </div>
+        </td></tr>
+        <tr><td class="id">4c6a…</td><td>Perez</td><td>Ella</td><td>ella.perez@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">a3e9…</td><td>Ramirez</td><td>Zoey</td><td>zoey.ramirez@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">0b57…</td><td>Robinson</td><td>Julian</td><td>julian.robinson@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">d81c…</td><td>Rodriguez</td><td>Mia</td><td>mia.rodriguez@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">5e2b…</td><td>Sanchez</td><td>Chloe</td><td>chloe.sanchez@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr class="deleted"><td class="id">f9a0…</td><td>Scott</td><td>Layla</td><td>layla.scott@example.com</td><td>2026-09-13 10:21</td><td class="st d">Deleted</td></tr>
+        <tr><td class="id">1c7d…</td><td>Smith</td><td>Ava</td><td>ava.smith@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">68b4…</td><td>Smith</td><td>Emily</td><td>emily.smith@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">c25f…</td><td>Smith-Jones</td><td>Aria</td><td>aria.smith-jones@example.com</td><td></td><td class="st a">Active</td></tr>
+        <tr><td class="id">9d3e…</td><td>St. Clair</td><td>Aurora</td><td>aurora.stclair@example.com</td><td></td><td class="st a">Active</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="status"><span>Last call: PUT /v1/users/7f3c… answered 400 in 52 ms</span><span>Rate limit: 100 requests a minute</span></div>
+
+  <section class="dock">
+    <div class="docktabs"><a class="on" href="#">Checks</a><a href="#">Request log</a><span class="hint">Rate-limit check blocks you for up to a minute</span></div>
+    <div class="dockbody">
+      <div class="gridwrap">
+        <table>
+          <thead><tr><th>Check</th><th>What it sends</th><th>Expected</th><th>Got</th><th>Proven by</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>No token</td><td>GET /v1/users without Authorization</td><td>401</td><td class="res ok">401</td><td>tests/security/tokens.test.ts</td><td><button class="tb">Run</button></td></tr>
+            <tr><td>Forged token</td><td>Role edited, old signature kept</td><td>401</td><td class="res no">not run</td><td>tests/security/tokens.test.ts</td><td><button class="tb">Run</button></td></tr>
+            <tr class="sel"><td>Rate limit</td><td>105 list requests in a row</td><td>429 + Retry-After</td><td class="res ok">429, retry in 38 s</td><td>tests/rate-limit/rate-limit.test.ts</td><td><button class="tb" disabled>0:36</button></td></tr>
+            <tr><td>Stale save</td><td>Two saves with If-Match "3"</td><td>200, 412</td><td class="res ok">200, 412</td><td>tests/bad-calls/versions.test.ts</td><td><button class="tb">Run</button></td></tr>
+            <tr><td>Same email race</td><td>Two creates at once</td><td>201, 409</td><td class="res no">not run</td><td>tests/integrity/races.test.ts</td><td><button class="tb">Run</button></td></tr>
+            <tr><td>SQL in search</td><td>search='; DROP TABLE users;--</td><td>200, no rows</td><td class="res no">not run</td><td>tests/security/injection.test.ts</td><td><button class="tb">Run</button></td></tr>
+            <tr><td>Bad input</td><td>Name "José", ZIP "3310"</td><td>400, 2 fields named</td><td class="res no">not run</td><td>tests/bad-calls/body.test.ts</td><td><button class="tb">Run</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="raw">
+        <h5>Rate limit, request 101</h5>
+<pre>HTTP/1.1 429
+Retry-After: 38
+Content-Type: application/problem+json
+
+{
+  "type": "/problems/rate-limited",
+  "title": "Too many requests",
+  "status": 429,
+  "detail": "Rate limit exceeded; retry after 38 seconds",
+  "instance": "/v1/users"
+}</pre>
+      </div>
+    </div>
+  </section>
+</div>
+
+</body>
+</html>

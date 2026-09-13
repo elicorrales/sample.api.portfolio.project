@@ -108,7 +108,7 @@ Prompted by my question about the future web client.
 | # | Choice | Web client effect |
 |---|---|---|
 | 1 | UUID | Long URLs; IDs can't be typed by hand |
-| 2 | If-Match | Client sends back the version it loaded. The client (Netlify) and API (Render) are on different domains, so the browser hides `ETag` unless the API exposes it. On `412`, show "changed, reload". |
+| 2 | If-Match | Client sends back the version it loaded. The client and API are on different domains, so the browser hides `ETag` unless the API exposes it. On `412`, show "changed, reload". |
 | 3 | Problem Details | One error handler; the `errors` list maps directly to form-field messages |
 | 4 | `400` for all | Client reads the error body, not the code |
 | 5 | Page + page size | "Page 3 of 12"; pages can shift if records change meanwhile |

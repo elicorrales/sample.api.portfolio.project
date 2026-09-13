@@ -8,7 +8,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 
 | Area | State |
 |---|---|
-| Design decisions | Logged in `project/docs/decisions/` (01–12) |
+| Design decisions | Logged in `project/docs/decisions/` (01–13) |
 | Plain-language operations | `project/docs/spec/operations.md` (6 operations; was 16 before the "one user form, one save" revision) |
 | OpenAPI spec | `project/api/openapi.yaml`: all 6 operations; phones and addresses are part of the user; passes lint; version 0.1.0 (1.0.0 once the web client proves it) |
 | Docs page | Served by the API: Swagger UI at `/docs` (from `swagger-ui-dist`), the spec at `/openapi.yaml`; no token needed |
@@ -44,7 +44,10 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
    7. ~~Starting users, nightly reset, notice~~ **Done:** `api/src/demo/`: 50 starting users (5 deleted, all through create's validation), added on startup only to an empty database; reset at 08:00 UTC (`TRUNCATE` + insert in one transaction; no extra lock needed); notice at the top of `/docs` and in the token response; `npm run dev:demo`. 9 integrity tests. **263 green**; tried locally: 45 users, 3 pages
    8. ~~Deploy~~ **Done:** Render workspace `ancient-halls-server`, project `portfolio-api` (Production), Ohio. Postgres `users-api-db` (18, Basic-256mb, 1 GB, **outside access blocked**). Web service `users-admin-api` (Starter, root `project`, build `npm ci --omit=dev`, start `npm start`, health check `/docs`, auto-deploy on commit). Env: `DATABASE_URL` (internal + `?sslmode=no-verify`), `JWT_SECRET` (generated), `DEMO_MODE=true`, `MAX_USERS=200`, **`TRUST_PROXY=2`** (measured: `1` never blocked anyone). Checked: `401` without a token, 45 users with a demo token, rate limit blocks the laptop, ignores a fake `X-Forwarded-For`, and doesn't block a phone on cell data
    - **Optional later:** rotate the database password (it was pasted into the AI chat; outside access is blocked, so it can't be used from the internet); startup log says `localhost:10000` on Render (cosmetic); spec intro still says "before any server code exists" (reword)
-2. **Next: the admin web client** in `website/`, hosted on Netlify (zip upload or Git: decide then); set `CORS_ORIGINS` on Render to its address
+2. **Next: the admin web client** in `website/`, a single-page app hosted as a **Render static site** (changed from Netlify, decision 05; needs build filters so client and API commits don't redeploy each other); set `CORS_ORIGINS` on Render to its address, plus `localhost` to run it locally against the Render API
+   1. ~~5 look-and-feel mockups~~ **Done:** `website/public/mockups/` (deployed with the client at `/mockups/`; screenshots for the docs in `screenshots/`); **picked C, the engineering notebook** (checks as experiments, friendlier for non-technical visitors); decision 13
+   2. ~~Stack~~ **Done: Vite + React + TypeScript** (decision 13). **Now:** set up the project, then build, deploy; record the build and deploy steps in the journal as we go. The list call returns only id, names, email: the table shows those, and opening a user loads the rest
+   3. Showcase panel ideas: demo token with countdown, no/forged token → `401`, rate-limit button (warn: blocks the visitor's IP up to 60 s), stale edit → `412`, same email twice → `409`, bad input / SQL in search, request inspector; each linked to its test
 3. **Skipped on purpose; note in the README as next steps if the project continued:** performance tests; field-level encryption (decision 12); mutation testing (e.g. Stryker); request ids in logs and the other logging practices (decision 11)
 4. Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
 

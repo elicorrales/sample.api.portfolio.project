@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup E: Bold modern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* Direction E: big type, thick black lines, flat saturated color. The memorable part is screen 2,
+     where each check is a tile led by the status code it tries to force. */
+  :root {
+    --page: #E9ECF1;
+    --paper: #F7F8FA;
+    --ink: #000000;
+    --soft: #4A4F58;
+    --cobalt: #2F3CFF;
+    --lime: #C4F04D;
+    --pink: #FF5C9D;
+    --orange: #FF7A1A;
+    --line: 2px solid var(--ink);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 16px/1.45 "Space Grotesk", system-ui, sans-serif; }
+  .caption { max-width: 1320px; margin: 0 auto; padding: 28px 24px 10px; color: var(--soft); font-size: 14px; }
+  .caption strong { color: var(--ink); }
+  .frame { max-width: 1320px; margin: 0 auto 44px; background: var(--paper); border: var(--line); }
+
+  .top { display: flex; align-items: stretch; border-bottom: var(--line); flex-wrap: wrap; }
+  .logo { padding: 14px 22px; font-weight: 700; font-size: 20px; border-right: var(--line); }
+  .top nav { display: flex; }
+  .top nav a { padding: 16px 22px; color: var(--ink); text-decoration: none; font-weight: 500; border-right: var(--line); }
+  .top nav a.on { background: var(--ink); color: var(--paper); }
+  .top .demo { flex: 1; display: flex; align-items: center; padding: 0 22px; background: var(--lime); font-weight: 500; min-width: 260px; }
+  .top .token { display: flex; align-items: center; gap: 10px; padding: 0 22px; border-left: var(--line); font-weight: 500; }
+  .top .token b { font-size: 20px; font-variant-numeric: tabular-nums; }
+
+  .work { display: grid; grid-template-columns: 1fr 440px; }
+  .list { padding: 28px 28px 24px; }
+  .list h1 { font-size: 72px; line-height: .95; letter-spacing: -0.035em; margin: 0 0 22px; font-weight: 700; }
+  .tools { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+  .search { font: 500 17px "Space Grotesk", sans-serif; border: var(--line); background: #fff; padding: 10px 14px; width: 320px; }
+  .toggle { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+  .toggle i { width: 40px; height: 22px; border: var(--line); border-radius: 999px; position: relative; background: #fff; }
+  .toggle i::after { content: ""; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--ink); top: 2px; left: 2px; }
+  .btn { font: 700 16px "Space Grotesk", sans-serif; border: var(--line); background: #fff; color: var(--ink); padding: 10px 18px; cursor: pointer; }
+  .btn.go { background: var(--cobalt); color: #fff; box-shadow: 4px 4px 0 var(--ink); }
+  .btn.stop { background: var(--pink); }
+  .sp { flex: 1; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 14px; font-weight: 500; color: var(--soft); padding: 8px 12px; border-bottom: var(--line); }
+  td { padding: 13px 12px; border-bottom: 1px solid #C9CDD4; font-size: 18px; }
+  td.e { font-size: 16px; color: var(--soft); }
+  tr.sel td { background: var(--cobalt); color: #fff; }
+  tr.sel td.e { color: #DDE0FF; }
+  .pager { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-weight: 500; }
+  .pager .pages { display: flex; }
+  .pager .pages span { width: 42px; height: 42px; display: grid; place-items: center; border: var(--line); margin-left: -2px; font-weight: 700; }
+  .pager .pages span.on { background: var(--ink); color: var(--paper); }
+
+  .edit { background: var(--ink); color: var(--paper); padding: 28px; }
+  .edit h2 { font-size: 36px; line-height: 1; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .edit .v { color: #A8AEB8; margin: 0 0 22px; }
+  .f { display: grid; gap: 4px; margin-bottom: 14px; }
+  .f > span { font-size: 14px; color: #C3C8D0; }
+  .f input { font: 500 16px "Space Grotesk", sans-serif; background: var(--paper); border: 0; padding: 9px 11px; color: var(--ink); }
+  .f input { width: 100%; min-width: 0; }
+  .f input.bad { outline: 3px solid var(--orange); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .edit h3 { margin: 20px 0 10px; font-size: 18px; display: flex; justify-content: space-between; align-items: baseline; }
+  .edit h3 a { color: var(--lime); font-size: 15px; text-decoration: none; }
+  .chip { display: inline-block; font-size: 13px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: var(--lime); color: var(--ink); }
+  .errbox { background: var(--orange); color: var(--ink); padding: 8px 11px; font-weight: 500; font-size: 14.5px; margin: -6px 0 14px; }
+  .edit .row { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+  .edit .btn { border-color: var(--paper); }
+  .edit .btn.go { box-shadow: 4px 4px 0 var(--lime); border-color: var(--cobalt); }
+
+  /* Screen 2 */
+  .break { padding: 28px; }
+  .break h1 { font-size: 72px; line-height: .95; letter-spacing: -0.035em; margin: 0 0 10px; }
+  .break .lead { font-size: 19px; max-width: 58ch; margin: 0 0 26px; color: var(--soft); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); border-top: var(--line); border-left: var(--line); }
+  .tile { border-right: var(--line); border-bottom: var(--line); padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 8px; min-height: 270px; background: #fff; }
+  .tile .code { font-size: 104px; line-height: .85; font-weight: 700; letter-spacing: -0.05em; }
+  .tile h4 { margin: 6px 0 0; font-size: 22px; }
+  .tile p { margin: 0; color: var(--soft); }
+  .tile .proof { font-size: 14px; color: var(--soft); margin-top: auto; }
+  .tile .proof a { color: inherit; }
+  .tile.hit { background: var(--pink); }
+  .tile.hit p, .tile.hit .proof { color: var(--ink); }
+  .tile.done { background: var(--lime); }
+  .tile.done p, .tile.done .proof { color: var(--ink); }
+  .tile .result { font-weight: 700; font-size: 17px; }
+  .meter { display: grid; grid-template-columns: repeat(35, 1fr); gap: 2px; }
+  .meter i { height: 14px; background: var(--ink); }
+  .meter i.x { background: #fff; outline: 2px solid var(--ink); outline-offset: -2px; }
+  .warn { border: var(--line); background: #fff; padding: 6px 10px; font-weight: 500; font-size: 14.5px; }
+
+  @media (max-width: 960px) {
+    .work { grid-template-columns: 1fr; }
+    .tiles { grid-template-columns: 1fr; }
+    .list h1, .break h1 { font-size: 48px; }
+    .search { width: 100%; }
+    .top .token { border-left: 0; padding: 10px 22px; }
+  }
+  @media (min-width: 961px) and (max-width: 1200px) { .tiles { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<p class="caption"><strong>Mockup E: Bold modern.</strong> Screen 1: the list with the selected user open in a dark panel. Static picture.</p>
+
+<div class="frame">
+  <header class="top">
+    <div class="logo">Users Admin</div>
+    <nav><a class="on" href="#">Users</a><a href="#">Try to break it</a></nav>
+    <div class="demo">Demo only: all data is fake and resets every night at 08:00 UTC</div>
+    <div class="token">Demo token <b>42:17</b></div>
+  </header>
+
+  <div class="work">
+    <section class="list">
+      <h1>Users</h1>
+      <div class="tools">
+        <input class="search" placeholder="Search name or email">
+        <span class="toggle"><i></i> Include deleted</span>
+        <span class="sp"></span>
+        <button class="btn go">New user</button>
+      </div>
+      <table>
+        <thead><tr><th>Last name ▲</th><th>First name</th><th>Email</th></tr></thead>
+        <tbody>
+          <tr><td>Lee</td><td>Carter</td><td class="e">carter.lee@example.com</td></tr>
+          <tr><td>Lewis</td><td>Levi</td><td class="e">levi.lewis@example.com</td></tr>
+          <tr><td>Lopez</td><td>Mason</td><td class="e">mason.lopez@example.com</td></tr>
+          <tr><td>Martin</td><td>Jackson</td><td class="e">jackson.martin@example.com</td></tr>
+          <tr><td>Martinez</td><td>Ethan</td><td class="e">ethan.martinez@example.com</td></tr>
+          <tr><td>Miller</td><td>Sophia</td><td class="e">sophia.miller@example.com</td></tr>
+          <tr><td>Moore</td><td>Aiden</td><td class="e">aiden.moore@example.com</td></tr>
+          <tr><td>Nelson</td><td>Naomi</td><td class="e">naomi.nelson@example.com</td></tr>
+          <tr><td>Nguyen</td><td>Stella</td><td class="e">stella.nguyen@example.com</td></tr>
+          <tr class="sel"><td>O'Brien</td><td>Nora</td><td class="e">nora.obrien@example.com</td></tr>
+          <tr><td>Perez</td><td>Ella</td><td class="e">ella.perez@example.com</td></tr>
+        </tbody>
+      </table>
+      <div class="pager"><span class="pages"><span>1</span><span class="on">2</span><span>3</span></span><span>45 users</span></div>
+    </section>
+
+    <aside class="edit">
+      <h2>Nora O'Brien</h2>
+      <p class="v">Version 3</p>
+      <div class="two">
+        <label class="f"><span>First name</span><input value="Nora"></label>
+        <label class="f"><span>Last name</span><input value="O'Brien"></label>
+      </div>
+      <label class="f"><span>Email</span><input value="nora.obrien@example.com"></label>
+      <label class="f"><span>Date of birth</span><input value="1988-04-12"></label>
+
+      <h3>Phones <a href="#">Add phone</a></h3>
+      <label class="f"><span>Mobile <span class="chip">Primary</span></span><input value="(305) 555-0130"></label>
+      <label class="f"><span>Work</span><input class="bad" value="(105) 555-0131"></label>
+      <div class="errbox">Area code can't start with 0 or 1</div>
+
+      <h3>Addresses <a href="#">Add address</a></h3>
+      <label class="f"><span>Home <span class="chip">Primary</span></span><input value="1420 Brickell Ave, Miami, FL 33101"></label>
+
+      <div class="row"><button class="btn go">Save changes</button><button class="btn">Cancel</button><span class="sp"></span><button class="btn stop">Delete</button></div>
+    </aside>
+  </div>
+</div>
+
+<p class="caption"><strong>Screen 2: Try to break it.</strong> Each tile names the status code it tries to force. Pink: just ran. Green: ran earlier. White: not run yet.</p>
+
+<div class="frame">
+  <header class="top">
+    <div class="logo">Users Admin</div>
+    <nav><a href="#">Users</a><a class="on" href="#">Try to break it</a></nav>
+    <div class="demo">Demo only: all data is fake and resets every night at 08:00 UTC</div>
+    <div class="token">Demo token <b>40:51</b></div>
+  </header>
+
+  <section class="break">
+    <h1>Try to break it</h1>
+    <p class="lead">Every tile sends real requests to the live API. Each one is also an automated test that runs before every change.</p>
+
+    <div class="tiles">
+      <article class="tile hit">
+        <div class="code">429</div>
+        <h4>Flood it</h4>
+        <p>105 requests in a row. The limit is 100 a minute.</p>
+        <div class="meter" aria-label="100 answered, 5 blocked">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="x"></i><i class="x"></i>
+        </div>
+        <p class="result">Blocked at request 101. Unblocked in 0:36.</p>
+        <div class="proof"><a href="#">tests/rate-limit/rate-limit.test.ts</a></div>
+      </article>
+
+      <article class="tile done">
+        <div class="code">412</div>
+        <h4>Save a stale copy</h4>
+        <p>Open the same user twice and save both.</p>
+        <p class="result">Second save refused. Nothing overwritten.</p>
+        <div class="proof"><a href="#">tests/bad-calls/versions.test.ts</a></div>
+      </article>
+
+      <article class="tile">
+        <div class="code">401</div>
+        <h4>Forge a token</h4>
+        <p>Change the role inside the token, keep the old signature.</p>
+        <button class="btn">Run it</button>
+        <div class="proof"><a href="#">tests/security/tokens.test.ts</a></div>
+      </article>
+
+      <article class="tile">
+        <div class="code">409</div>
+        <h4>Same email, twice at once</h4>
+        <p>Two creates sent together. A browser can't force the overlap like the tests do.</p>
+        <button class="btn">Run it</button>
+        <div class="proof"><a href="#">tests/integrity/races.test.ts</a></div>
+      </article>
+
+      <article class="tile">
+        <div class="code">400</div>
+        <h4>Send bad input</h4>
+        <p>Name "José" and ZIP "3310". The answer names both fields.</p>
+        <button class="btn">Run it</button>
+        <div class="proof"><a href="#">tests/bad-calls/body.test.ts</a></div>
+      </article>
+
+      <article class="tile">
+        <div class="code">200</div>
+        <h4>SQL in the search box</h4>
+        <p>Search for <b>'; DROP TABLE users;--</b> and get an empty list, with all 45 users still there.</p>
+        <button class="btn">Run it</button>
+        <div class="proof"><a href="#">tests/security/injection.test.ts</a></div>
+      </article>
+    </div>
+    <p class="warn" style="margin-top:18px">Flood it blocks your own address for up to a minute, on every page including Swagger.</p>
+  </section>
+</div>
+
+</body>
+</html>

@@ -14,7 +14,7 @@ Start local, then host on services I already use.
 | Swagger UI | Served by the API at `/docs` | Docs and API share one URL, so no CORS setup |
 | PostgreSQL | Render Postgres | Or Neon/Supabase if Render's free tier doesn't fit |
 | Portfolio pages | Netlify | `website/` |
-| Web client (later) | Netlify | Needs CORS enabled on the API |
+| Web client (later) | Netlify → **Render static site** ([changed](#web-client-on-render-not-netlify-2026-09-13)) | Needs CORS enabled on the API |
 
 ### Revised at hosting time (2026-09-13)
 
@@ -164,6 +164,23 @@ Live at **https://users-admin-api-98o8.onrender.com/docs**.
 - First log: Node 24.21.0, 90 packages, 0 vulnerabilities, `Demo: added the 50 starting users`, live. In Swagger: `401` without a token, then 45 users over 3 pages with a demo token
 
 **Origin:** picked (the step-by-step clicks were suggested; I asked to go one tiny step at a time)
+
+### Web client on Render, not Netlify (2026-09-13)
+
+The plan above put the admin web client on Netlify. **Changed to a Render static site.**
+
+| | Render static site | Netlify |
+|---|---|---|
+| Dashboards | One, shared with the API and database | A second one to set up and document |
+| Deploy | From Git on commit, like the API; the repo shows how it's deployed | Git or zip upload (my habit); a zip leaves no trace in the repo |
+| Watch out for | **Build filters**: without them, a client-only commit also redeploys the API, and the other way round | Free plan meters usage in credits |
+| Same either way | Static and fast, never sleeps, free at this size; a different domain from the API, so `CORS_ORIGINS` is needed | |
+
+- **Picked Render:** one place to deploy, check, and explain, and a Git deploy is the better showcase
+- Running the client locally against the Render API means adding its `http://localhost:<port>` address to `CORS_ORIGINS`
+- How it's built (framework, look) goes in its own decision when the client step starts
+
+**Origin:** changed (I raised Render; the AI laid out pros and cons and recommended it; I agreed)
 
 ## Viewing the spec before the API exists
 

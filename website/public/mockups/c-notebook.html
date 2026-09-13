@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup C: Engineering notebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Direction C: a green engineering pad. The project is spec-first and test-first, so the checks read as
+     lab entries: what we claim, what we predict, what came back. Ink blue for data, red pencil for results. */
+  :root {
+    --desk: #CBD3C4;
+    --paper: #EEF3E8;
+    --grid: rgba(74, 128, 92, 0.13);
+    --margin: #C9695F;
+    --ink: #1E2A48;
+    --blue: #2946A3;
+    --pencil: #5F665E;
+    --red: #B0342C;
+    --mark: rgba(246, 226, 94, 0.55);
+    --mono: "Spline Sans Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--desk); color: var(--ink); font: 17px/1.6 Newsreader, Georgia, serif; }
+  .caption { max-width: 1120px; margin: 0 auto; padding: 28px 24px 10px; font: 13px/1.5 system-ui, sans-serif; color: #3E473C; }
+
+  .sheet {
+    position: relative; max-width: min(1120px, calc(100vw - 110px)); margin: 0 auto 44px; padding: 34px 48px 44px 104px;
+    background-color: var(--paper);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 22px 22px;
+    box-shadow: 0 1px 0 #B5BEAE, 0 12px 30px rgba(40, 55, 40, 0.18);
+  }
+  .sheet::before { content: ""; position: absolute; top: 0; bottom: 0; left: 78px; width: 1px; background: var(--margin); }
+
+  .dividers { position: absolute; right: -44px; top: 60px; display: grid; gap: 6px; }
+  .dividers a { writing-mode: vertical-rl; padding: 14px 8px; font-size: 14px; color: var(--ink); text-decoration: none; background: #D9E4CF; border: 1px solid #B9C7AE; border-left: 0; border-radius: 0 6px 6px 0; }
+  .dividers a.on { background: var(--paper); font-weight: 600; }
+
+  .head { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 8px; }
+  .head h1 { font-size: 44px; line-height: 1; font-weight: 500; margin: 0; letter-spacing: -0.01em; }
+  .head .who { margin-left: auto; font-family: var(--mono); font-size: 12.5px; color: var(--pencil); text-align: right; }
+  .head .who b { color: var(--blue); font-weight: 500; }
+  .note { font-style: italic; color: var(--pencil); margin: 8px 0 22px; }
+  .gutter { position: absolute; left: 14px; width: 56px; font-family: var(--mono); font-size: 11px; color: var(--pencil); text-align: right; }
+
+  .tools { display: flex; gap: 22px; align-items: end; flex-wrap: wrap; margin-bottom: 14px; }
+  .line-input { display: grid; font-size: 13px; color: var(--pencil); }
+  .line-input input { font: 16px var(--mono); color: var(--blue); background: transparent; border: 0; border-bottom: 1.5px solid var(--ink); padding: 4px 2px; width: 280px; }
+  .btn { font: 500 15px Newsreader, serif; color: var(--ink); background: transparent; border: 1.5px solid var(--ink); border-radius: 3px; padding: 5px 14px; cursor: pointer; }
+  .btn.solid { background: var(--ink); color: var(--paper); }
+  .btn.red { color: var(--red); border-color: var(--red); }
+  .tick { display: flex; gap: 6px; align-items: center; font-size: 15px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: 600; font-size: 14.5px; padding: 6px 8px; border-bottom: 1.5px solid var(--ink); }
+  td { padding: 5px 8px; border-bottom: 1px solid rgba(30, 42, 72, 0.18); font-size: 16px; }
+  td.d { font-family: var(--mono); font-size: 13.5px; color: var(--blue); }
+  tr.sel td { background: var(--mark); }
+  .pager { display: flex; justify-content: space-between; margin-top: 10px; font-style: italic; color: var(--pencil); }
+
+  .entry { margin-top: 34px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 36px; }
+  .entry h2 { font-size: 28px; font-weight: 500; margin: 0 0 2px; }
+  .entry .sub { font-family: var(--mono); font-size: 12.5px; color: var(--pencil); margin-bottom: 14px; }
+  .fill { display: grid; grid-template-columns: 130px 1fr; gap: 6px 14px; align-items: end; }
+  .fill span { font-size: 15px; color: var(--pencil); }
+  .fill input { font: 15px var(--mono); color: var(--blue); background: transparent; border: 0; border-bottom: 1px solid var(--ink); padding: 3px 2px; }
+  .fill input { width: 100%; min-width: 0; }
+  .fill input.bad { border-bottom: 2px solid var(--red); }
+  .margin-note { grid-column: 2; color: var(--red); font-style: italic; font-size: 15px; margin-top: -2px; }
+  .fill h3 { grid-column: 1 / -1; font-size: 18px; font-weight: 600; margin: 14px 0 0; }
+  .actions { display: flex; gap: 10px; margin-top: 20px; }
+  .actions .sp { flex: 1; }
+
+  .aside-note { border-left: 3px solid var(--blue); padding: 2px 0 2px 16px; }
+  .aside-note p { margin: 0 0 10px; }
+  .aside-note code { font-family: var(--mono); font-size: 13.5px; color: var(--blue); }
+
+  /* Screen 2: experiments */
+  .exp { display: grid; grid-template-columns: 1fr 250px; gap: 30px; padding: 24px 0; border-bottom: 1.5px dashed rgba(30, 42, 72, 0.35); position: relative; }
+  .exp h2 { font-size: 28px; font-weight: 500; margin: 0 0 8px; }
+  .exp dl { display: grid; grid-template-columns: 110px 1fr; gap: 4px 14px; margin: 0; }
+  .exp dt { color: var(--pencil); font-style: italic; }
+  .exp dd { margin: 0; }
+  .exp code { font-family: var(--mono); font-size: 13.5px; color: var(--blue); }
+  .caution { color: var(--red); }
+  .result { align-self: center; text-align: center; }
+  .stamp { display: inline-block; border: 3px solid var(--red); color: var(--red); padding: 6px 16px 4px; transform: rotate(-4deg); border-radius: 4px; }
+  .stamp b { display: block; font-size: 46px; line-height: 1; font-weight: 600; }
+  .stamp span { font-size: 15px; font-style: italic; }
+  .pending { color: var(--pencil); font-style: italic; }
+  .tally { font-family: var(--mono); font-size: 13px; color: var(--blue); letter-spacing: 1px; margin-top: 8px; word-break: break-all; }
+  .tally s { color: var(--red); text-decoration: none; }
+
+  @media (max-width: 860px) {
+    .sheet { max-width: calc(100vw - 16px); padding: 26px 20px 30px 44px; }
+    .sheet::before { left: 30px; }
+    .dividers, .gutter { display: none; }
+    .entry, .exp { grid-template-columns: 1fr; }
+    .table-wrap { overflow-x: auto; }
+    .head h1 { font-size: 34px; }
+  }
+</style>
+</head>
+<body>
+
+<p class="caption"><strong>Mockup C: Engineering notebook.</strong> Screen 1: the users list as a ruled page, the selected user filled in below. Static picture.</p>
+
+<div class="sheet">
+  <nav class="dividers"><a class="on" href="#">Users</a><a href="#">Experiments</a></nav>
+
+  <div class="head">
+    <h1>Users</h1>
+    <div class="who">demo token, <b>42:17</b> left<br>users-admin-api-98o8.onrender.com</div>
+  </div>
+  <p class="note">Demo only: all data is fake and resets every night at 08:00 UTC.</p>
+
+  <div class="tools">
+    <label class="line-input">Search name or email<input value=""></label>
+    <label class="tick"><input type="checkbox"> Include deleted</label>
+    <button class="btn solid">New user</button>
+  </div>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Last name, sorted</th><th>First name</th><th>Email</th></tr></thead>
+    <tbody>
+      <tr><td>Lee</td><td>Carter</td><td class="d">carter.lee@example.com</td></tr>
+      <tr><td>Lewis</td><td>Levi</td><td class="d">levi.lewis@example.com</td></tr>
+      <tr><td>Lopez</td><td>Mason</td><td class="d">mason.lopez@example.com</td></tr>
+      <tr><td>Martin</td><td>Jackson</td><td class="d">jackson.martin@example.com</td></tr>
+      <tr><td>Martinez</td><td>Ethan</td><td class="d">ethan.martinez@example.com</td></tr>
+      <tr><td>Miller</td><td>Sophia</td><td class="d">sophia.miller@example.com</td></tr>
+      <tr><td>Moore</td><td>Aiden</td><td class="d">aiden.moore@example.com</td></tr>
+      <tr><td>Nelson</td><td>Naomi</td><td class="d">naomi.nelson@example.com</td></tr>
+      <tr class="sel"><td>O'Brien</td><td>Nora</td><td class="d">nora.obrien@example.com</td></tr>
+      <tr><td>Perez</td><td>Ella</td><td class="d">ella.perez@example.com</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="pager"><span>45 users, page 2 of 3</span><span><button class="btn">Previous</button> <button class="btn">Next</button></span></div>
+
+  <section class="entry">
+    <div>
+      <h2>Nora O'Brien</h2>
+      <div class="sub">version 3, updated 2026-09-13 10:42</div>
+      <div class="fill">
+        <span>First name</span><input value="Nora">
+        <span>Last name</span><input value="O'Brien">
+        <span>Email</span><input value="nora.obrien@example.com">
+        <span>Date of birth</span><input value="1988-04-12">
+        <h3>Phones</h3>
+        <span>Mobile, primary</span><input value="(305) 555-0130">
+        <span>Work</span><input class="bad" value="(105) 555-0131">
+        <p class="margin-note">Area code can't start with 0 or 1.</p>
+        <h3>Addresses</h3>
+        <span>Home, primary</span><input value="1420 Brickell Ave, Miami, FL 33101">
+      </div>
+      <div class="actions"><button class="btn solid">Save changes</button><button class="btn">Cancel</button><span class="sp"></span><button class="btn red">Delete user</button></div>
+    </div>
+    <div class="aside-note">
+      <p>Saving sends the whole user back with <code>If-Match: "3"</code>. If someone saved first, the API answers <code>412</code> and nothing is overwritten.</p>
+      <p>The API checks the phone number, not this page. The note in red is the API's own message, shown next to the field it named.</p>
+    </div>
+  </section>
+</div>
+
+<p class="caption"><strong>Screen 2: Experiments.</strong> Each check is written as a claim and a prediction, then run. Two have run; the rest wait.</p>
+
+<div class="sheet">
+  <nav class="dividers"><a href="#">Users</a><a class="on" href="#">Experiments</a></nav>
+  <div class="head">
+    <h1>Experiments</h1>
+    <div class="who">demo token, <b>40:55</b> left<br>users-admin-api-98o8.onrender.com</div>
+  </div>
+  <p class="note">Each experiment sends real requests. The same claims are proven by the automated tests named in each entry.</p>
+
+  <article class="exp">
+    <div>
+      <h2>Flood the API</h2>
+      <dl>
+        <dt>Claim</dt><dd>One visitor gets 100 requests a minute, counted before the token is checked.</dd>
+        <dt>Method</dt><dd>Send 105 list requests in a row.</dd>
+        <dt>Predict</dt><dd>100 answered, then <code>429</code> with <code>Retry-After</code>.</dd>
+        <dt>Careful</dt><dd class="caution">This blocks you for the rest of the minute, Swagger included.</dd>
+        <dt>Tests</dt><dd><code>tests/rate-limit/rate-limit.test.ts</code></dd>
+      </dl>
+      <div class="tally">||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| ||||| <s>|||||</s></div>
+    </div>
+    <div class="result"><div class="stamp"><b>429</b><span>as predicted, retry in 38 s</span></div></div>
+  </article>
+
+  <article class="exp">
+    <div>
+      <h2>Save a stale copy</h2>
+      <dl>
+        <dt>Claim</dt><dd>Two admins editing the same user can't overwrite each other.</dd>
+        <dt>Method</dt><dd>Load Nora O'Brien twice. Save the first copy, then the second.</dd>
+        <dt>Predict</dt><dd><code>200</code>, then <code>412</code>; the second change is not saved.</dd>
+        <dt>Tests</dt><dd><code>tests/bad-calls/versions.test.ts</code></dd>
+      </dl>
+    </div>
+    <div class="result"><div class="stamp"><b>412</b><span>as predicted</span></div></div>
+  </article>
+
+  <article class="exp">
+    <div>
+      <h2>Forge a token</h2>
+      <dl>
+        <dt>Claim</dt><dd>Editing a token's contents breaks its signature.</dd>
+        <dt>Method</dt><dd>Take the demo token, change the role, keep the old signature.</dd>
+        <dt>Predict</dt><dd><code>401</code>.</dd>
+        <dt>Tests</dt><dd><code>tests/security/tokens.test.ts</code></dd>
+      </dl>
+    </div>
+    <div class="result"><p class="pending">Not run yet</p><button class="btn solid">Run experiment</button></div>
+  </article>
+
+  <article class="exp">
+    <div>
+      <h2>SQL in the search box</h2>
+      <dl>
+        <dt>Claim</dt><dd>Search text is data, never part of the query.</dd>
+        <dt>Method</dt><dd>Search for <code>'; DROP TABLE users;--</code></dd>
+        <dt>Predict</dt><dd><code>200</code>, no matches, and all 45 users still there.</dd>
+        <dt>Tests</dt><dd><code>tests/security/injection.test.ts</code></dd>
+      </dl>
+    </div>
+    <div class="result"><p class="pending">Not run yet</p><button class="btn solid">Run experiment</button></div>
+  </article>
+</div>
+
+</body>
+</html>

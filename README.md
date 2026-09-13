@@ -4,13 +4,18 @@ A REST API for managing users, their phones, and their addresses. It is built **
 
 I'm building it as a portfolio piece and as an honest record of how a real API gets started: the questions, the tradeoffs, the mistakes, and how I work with an AI assistant without handing it the wheel.
 
-**Try it live:** [users-admin-api-98o8.onrender.com/docs](https://users-admin-api-98o8.onrender.com/docs). Call `POST /demo/token`, paste the token into **Authorize**, and try every operation. Without the token, every call gets `401`. All data is fake and resets every night at 08:00 UTC.
+## Start here
+
+| You have | Do this |
+|---|---|
+| **2 minutes: try the API** | 1. Open [Swagger UI](https://users-admin-api-98o8.onrender.com/docs) · 2. **Demo** → `POST /demo/token` → **Try it out** → **Execute** · 3. Copy `token` · 4. **Authorize** (top right) → paste · 5. Try any operation. Without the token, every call gets `401`. All data is fake and resets every night at 08:00 UTC. |
+| **10 minutes: see how I think** | Read the [journal](project/docs/journal.md): the project step by step, including where I pushed back on the AI. |
 
 ## Status
 
 | Stage | State |
 |---|---|
-| Design decisions | ✅ Logged (12 topics) |
+| Design decisions | ✅ Logged (13 topics) |
 | OpenAPI spec | ✅ All 6 operations, passes lint (v0.1.0) |
 | First vertical slice | ✅ Create user works end to end (tests green, callable from Swagger UI) |
 | List users | ✅ Search, sort, paging (tests green, callable from Swagger UI) |
@@ -21,7 +26,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Tests | ✅ 263 green; see [Tests](#tests) below |
 | Storage | ✅ PostgreSQL 18 via Drizzle; locally a real server run from `node_modules` (`embedded-postgres`); hosted on Render Postgres, reached over Render's private network with SSL |
 | Hosting | ✅ [Live on Render](https://users-admin-api-98o8.onrender.com/docs): the API serves its own Swagger page; demo token, 50 starting users, 200-user limit, nightly reset; rate limit checked from outside |
-| Admin web client | ⏳ Next, on Netlify |
+| Admin web client | ⏳ In progress, as a Render static site: look picked from [5 mockups](project/docs/decisions/13-web-client.md#look-and-feel-the-engineering-notebook-2026-09-13) (with screenshots); Vite + React + TypeScript |
 
 Details: [PROGRESS.md](PROGRESS.md)
 
