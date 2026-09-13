@@ -14,7 +14,8 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | List users | ✅ Search, sort, paging (tests green, callable from Swagger UI) |
 | Get one user | ✅ Basic and detailed views (tests green, callable from Swagger UI) |
 | Update user | ✅ Whole-user replace with optimistic locking (tests green, callable from Swagger UI) |
-| Other 2 operations | 🔴 In progress: tests first, then code, one operation at a time |
+| Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
+| Restore user | 🔴 In progress: the last of the 6 operations |
 | Hosting | ⏳ Later: docs page on Netlify, API on Render |
 
 Details: [PROGRESS.md](PROGRESS.md)

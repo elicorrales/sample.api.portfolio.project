@@ -29,11 +29,12 @@ export class MemoryUsersRepository implements UsersRepository {
     return true;
   }
 
-  async list({ search, sort, order, page, pageSize }: ListQuery) {
+  async list({ search, sort, order, page, pageSize, includeDeleted }: ListQuery) {
     const term = search?.toLowerCase();
     const matches = [...this.users.values()].filter(
       (user) =>
-        !term || [user.firstName, user.lastName, user.email].some((value) => value.toLowerCase().includes(term)),
+        (includeDeleted || !user.deletedAt) &&
+        (!term || [user.firstName, user.lastName, user.email].some((value) => value.toLowerCase().includes(term))),
     );
 
     // Sort field in the requested direction (ignoring case), then first name and id ascending,

@@ -19,7 +19,8 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | **List users** | `GET /v1/users`: search, sort (ignoring case; tie-breakers always ascending), paging, page past the end → empty page. Tried from Swagger UI. |
 | **Get one user** | `GET /v1/users/{userId}`: basic (default) or `view=detailed`, `ETag`; unknown id → `404`. Express's automatic ETags turned off. |
 | **Update user** | `PUT /v1/users/{userId}` with `If-Match`: whole-user replace, version bump, same email allowed; `412` stale, `428` missing. Tried from Swagger UI. |
-| Happy-path tests | **11 green:** `users.create.test.ts` (2), `users.list.test.ts` (5), `users.get.test.ts` (2), `users.update.test.ts` (2). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
+| **Delete user** | `DELETE /v1/users/{userId}` with `If-Match` → `204`; sets `deletedAt`, bumps version; hidden unless `includeDeleted=true` (list and get); update of a deleted user → `404`. Tried from Swagger UI. |
+| Happy-path tests | **14 green:** `users.create.test.ts` (2), `users.list.test.ts` (5), `users.get.test.ts` (2), `users.update.test.ts` (2), `users.delete.test.ts` (3). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`). Installs, tests, and servers run on the laptop (the VM is memory-limited). |
 | Root README | Entry point for recruiters, employers, and devs: status, AI collaboration, reading order, run commands, links to my other work |
 
@@ -29,8 +30,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 
    | # | Operation | Test |
    |---|---|---|
-   | 8 | Delete | **Next.** Hidden from list/get; visible with `includeDeleted`. Also add then: update of a deleted user → `404` |
-   | 9 | Restore | Back in the list, phones and addresses intact |
+   | 9 | Restore | **Next.** `POST /v1/users/{id}/restore` (no `If-Match`) → `200`, version 3; back in get and list, phones and addresses intact |
    | — | Workflow | Create → list → get → edit → delete → restore, same user |
 
    Notes for bad calls: unknown query parameters (`?foo=1`) are ignored for now (400 instead?) · add a test that lists and errors carry no `ETag` · not-a-UUID id → 400, unknown id → 404 · confirm the order of checks on update (428/412 before body 400, then 404, 412, 409)

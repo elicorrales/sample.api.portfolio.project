@@ -25,9 +25,11 @@ export function usersRoutes(service: UsersService) {
 
   router.get("/:userId", async (req, res) => {
     const { userId } = parseOrThrow(userIdParamsSchema, req.params, "userId");
-    const { view } = parseOrThrow(getQuerySchema, req.query, "query");
-    const user = await service.get(userId);
-    res.set("ETag", `"${user.version}"`).json(view === "detailed" ? toDetailedView(user) : toBasicView(user));
+    const { view, includeDeleted } = parseOrThrow(getQuerySchema, req.query, "query");
+    const user = await service.get(userId, includeDeleted);
+    res
+      .set("ETag", `"${user.version}"`)
+      .json(view === "detailed" ? toDetailedView(user, includeDeleted) : toBasicView(user, includeDeleted));
   });
 
   router.put("/:userId", async (req, res) => {
@@ -36,6 +38,13 @@ export function usersRoutes(service: UsersService) {
     const input = parseOrThrow(userInputSchema, req.body, "body");
     const user = await service.update(userId, expectedVersion, input);
     res.set("ETag", `"${user.version}"`).json(toDetailedView(user));
+  });
+
+  router.delete("/:userId", async (req, res) => {
+    const { userId } = parseOrThrow(userIdParamsSchema, req.params, "userId");
+    const expectedVersion = versionFromIfMatch(req.get("If-Match"));
+    await service.delete(userId, expectedVersion);
+    res.status(204).end();
   });
 
   return router;

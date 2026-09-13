@@ -36,6 +36,7 @@ export interface User {
 export interface UsersRepository {
   // Matches ignoring case, and includes deleted users (emails are never reused).
   findByEmail(email: string): Promise<User | undefined>;
+  // Includes deleted users; the service decides whether to hide them.
   findById(id: string): Promise<User | undefined>;
   insert(user: User): Promise<void>;
   // Saves only if the stored version is still `expectedVersion`; returns false otherwise.

@@ -98,6 +98,9 @@ export const userInputSchema = z
 
 export type UserInput = z.infer<typeof userInputSchema>;
 
+// Query-string booleans arrive as the text "true" or "false".
+const includeDeleted = z.enum(["true", "false"]).transform((value) => value === "true").default(false);
+
 // Query string for listing users. Values arrive as text, so numbers are converted.
 export const listQuerySchema = z.object({
   search: z.string().min(1).max(100).optional(),
@@ -105,6 +108,7 @@ export const listQuerySchema = z.object({
   order: z.enum(["asc", "desc"]).default("asc"),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  includeDeleted,
 });
 
 export type ListQuery = z.infer<typeof listQuerySchema>;
@@ -114,4 +118,5 @@ export const userIdParamsSchema = z.object({ userId: z.uuid() });
 
 export const getQuerySchema = z.object({
   view: z.enum(["basic", "detailed"]).default("basic"),
+  includeDeleted,
 });

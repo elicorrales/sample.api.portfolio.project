@@ -93,6 +93,8 @@ Keeping date of birth out of the basic view is also a privacy benefit.
 |---|---|---|---|
 | Saving with the email the user already has | Allowed: the uniqueness check skips the user being edited | Otherwise every save of an unchanged email would conflict with itself | suggested |
 | A save where nothing changed | Version still goes up | Simple: the server doesn't compare every field. The other admin just reloads. | suggested |
+| Does delete bump the version? | Yes | It's a change: a page still holding the old version can't save over a deleted user | suggested |
+| Does restore need `If-Match`? | No | A deleted user can't be edited, so there's nothing to overwrite. If two admins both restore, the second gets `409` (not deleted). | suggested |
 
 ## Delete
 

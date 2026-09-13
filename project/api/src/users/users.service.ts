@@ -24,9 +24,10 @@ export class UsersService {
     return user;
   }
 
-  async get(id: string): Promise<User> {
+  // A deleted user is "not found" unless asked for.
+  async get(id: string, includeDeleted = false): Promise<User> {
     const user = await this.repository.findById(id);
-    if (!user) throw notFoundProblem("No user with this id");
+    if (!user || (user.deletedAt && !includeDeleted)) throw notFoundProblem("No user with this id");
     return user;
   }
 
@@ -48,11 +49,22 @@ export class UsersService {
     return updated;
   }
 
+  // Marks the user as deleted; nothing is removed, so it can be restored.
+  // Deleting an already-deleted user is "not found". Delete is a change, so the version goes up.
+  async delete(id: string, expectedVersion: number): Promise<void> {
+    const current = await this.get(id);
+    if (current.version !== expectedVersion) throw versionOutOfDate();
+
+    const now = new Date().toISOString();
+    const deleted: User = { ...current, deletedAt: now, version: current.version + 1, updatedAt: now };
+    if (!(await this.repository.replace(deleted, expectedVersion))) throw versionOutOfDate();
+  }
+
   // A page past the end is not an error: it has no items but still reports the real totals.
   async list(query: ListQuery) {
     const { items, totalItems } = await this.repository.list(query);
     return {
-      items: items.map(toBasicView),
+      items: items.map((user) => toBasicView(user, query.includeDeleted)),
       page: query.page,
       pageSize: query.pageSize,
       totalItems,
@@ -103,11 +115,12 @@ function sortByPrimaryThenType<T extends Phone | Address>(items: T[], typeOrder:
 }
 
 // The basic view: what lists show. No date of birth, phones, or addresses.
-export function toBasicView({ id, firstName, lastName, email }: User) {
-  return { id, firstName, lastName, email };
+// `deletedAt` appears only when the caller asked to include deleted users.
+export function toBasicView({ id, firstName, lastName, email, deletedAt }: User, includeDeleted = false) {
+  return { id, firstName, lastName, email, ...(includeDeleted && { deletedAt }) };
 }
 
-// The detailed view. `deletedAt` is left out; it only appears when including deleted users.
-export function toDetailedView({ deletedAt: _deletedAt, ...user }: User) {
-  return user;
+// The detailed view: everything, with the same `deletedAt` rule.
+export function toDetailedView({ deletedAt, ...user }: User, includeDeleted = false) {
+  return { ...user, ...(includeDeleted && { deletedAt }) };
 }
