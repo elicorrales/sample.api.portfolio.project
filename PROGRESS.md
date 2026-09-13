@@ -26,6 +26,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | **Security tests** | **60 green** in `tests/security/` (tokens 23, auth-first 12, injection 8, leaks 6, CORS 9, body size 2). Found and fixed 2 holes: tokens without `exp` were accepted; `X-Powered-By: Express` was sent. Also: auth now runs before the body is read; oversized body → `413`; `bearer` in any case. **192 tests total.** |
 | **Rate-limit tests** | **12 green** in `tests/rate-limit/`. `shared/rate-limit.ts`: 100/min per IP, fixed window, before auth, after CORS; `trustProxy` option (default 0). Checked by hand with a `curl` loop. **204 tests total.** |
 | **Database** | PostgreSQL via **Drizzle** on **PGlite** (decision 11). Tables `users`, `user_phones`, `user_addresses`; migration `api/migrations/0000_create_users.sql`. In-memory repository removed. **All 204 tests green on PostgreSQL**, one file at a time (`maxWorkers: 1`, ~50 s; parallel runs froze the laptop). `npm run dev` saves to `project/.data/`; checked in Swagger that data survives a restart. |
+| **Integrity tests** | **14 green** in `tests/integrity/` (races 6, isolation 2, rollback 2, database rules 4). Races forced with `tests/helpers/racing-repository.ts`; mid-save failure via a temporary trigger. **Found 1 bug:** a same-email race got `500`, now `409` (`EmailTakenError`). **Open:** server logs include query values (names, emails); decide before hosting (decision 11). **218 tests total**, ~65 s. |
 | Test showcase | [`project/docs/testing.md`](project/docs/testing.md) (every category, most important first, with example cases) and a Tests section near the top of the README |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`). Installs, tests, and servers run on the laptop (the VM is memory-limited). |
 | Root README | Entry point for recruiters, employers, and devs: status, AI collaboration, reading order, run commands, links to my other work |
@@ -33,23 +34,28 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 ## Next steps
 
 1. **Next: pick one** (not yet chosen):
-   - **Integrity tests on PGlite:** the checks one connection can do. For example, the database rules themselves (one primary, one per type, unique email) and what the API returns if one is hit. Today a database rule violation would surface as a `500`. Start by walking through the test list together.
-   - **Native PostgreSQL** (stage 3): needed for truly simultaneous saves
-   - **Hosting:** docs page on Netlify, API on Render. Needs: a hosted PostgreSQL (Render, Neon, or Supabase; their free tiers expire or sleep), a way for visitors to get a token (decision 05), and `trustProxy` set for Render (decision 10, row 27)
+   - **Native PostgreSQL** (stage 3): truly simultaneous connections for the integrity tests
+   - **Hosting:** docs page on Netlify, API on Render. Needs:
+     - a hosted PostgreSQL (Render, Neon, or Supabase; their free tiers expire or sleep)
+     - a way for visitors to get a token (decision 05)
+     - `trustProxy` set for Render (decision 10, row 27)
+     - **personal data kept out of server logs** (decision 11, open)
+   - **Performance tests:** the last test category; needs a load-testing tool (k6 or autocannon)
 2. Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
 3. **Maybe later:** mutation testing (e.g. Stryker) to check the tests catch deliberately broken code; speeding up the suite (each file spends ~2 s starting PGlite)
-4. **Later:** performance tests; admin web client
+4. **Later:** admin web client
 5. **Once the docs page is on Netlify:** add this API to the [projects landing page](https://all-my-projects-landing-page.netlify.app/), and add the live docs link to `README.md` (it has local-only instructions for now)
 
 ## Useful commands (from `project/`)
 
 | Command | Does |
 |---|---|
-| `npm test` | Run all tests once (~50 s, one file at a time) |
+| `npm test` | Run all tests once (~65 s, one file at a time) |
 | `npm run test:bad-calls` | Only the bad-call tests |
 | `npm run test:happy-path` | Only the happy-path and workflow tests |
 | `npm run test:security` | Only the security tests |
 | `npm run test:rate-limit` | Only the rate-limit tests |
+| `npm run test:integrity` | Only the integrity tests |
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |

@@ -93,3 +93,34 @@ The goal was that no test would change, since only storage changed. **203 of 204
 - **Fix:** `sortByPrimaryThenType` moved next to the `Phone` and `Address` types in `users.repository.ts`; the service sorts with it before saving, and the PostgreSQL repository after loading. 204 green.
 
 No test assertions changed. Two test files changed one setup line each, to get their app from the shared `testApp()` helper.
+
+## Integrity tests (2026-09-13)
+
+With a real database, integrity tests became possible. PGlite runs one query at a time, but the API **checks, then saves** in separate steps ("is this email free?" → insert), so two requests can both pass the check before either saves. That race is real on PGlite.
+
+**Origin:** suggested; I agreed with all four
+
+| # | Question | Choice | Why |
+|---|---|---|---|
+| 14 | Making two requests overlap | A test-only `RacingRepository` **holds each request right after its check until both arrive**, then releases them together | Firing two requests and hoping they overlap would pass or fail by luck |
+| 15 | Where the duplicate-email database error becomes `409` | The PostgreSQL repository throws a named `EmailTakenError`; the service turns it into `409` | The repository stays free of HTTP; any other database error still becomes a `500` |
+| 16 | Proving a failed save changes nothing | A **PostgreSQL trigger**, added only by the test, refuses addresses in `Failtown`. Addresses are saved last, so the failure lands mid-save | A real transaction and a real rollback, not a mock |
+| 17 | Testing the database's own rules with raw SQL | **Allowed, as an exception** to "through the API only" | The API can't send that data; the tests prove the database protects it anyway if the code ever has a bug |
+
+### What the tests found
+
+**3 of 14 failed, exactly as predicted:** two creates with the same email at once, the same with different case, and changing one user's email to one being created at that moment. Each time, one request got **`500` instead of `409`**. The database did its job (its unique index refused the second save, so no duplicate was ever stored), but nothing translated that refusal into the error a client understands. Fixed with rows 15 above: 218 green.
+
+The other 11 passed at once: the version check inside `UPDATE ... WHERE version = ...`, the transactions, and the database rules were already right.
+
+### Found along the way: personal data in server logs (open)
+
+The red run printed the failed database error, and **Drizzle's error includes the full query with its values**: names, emails, dates of birth. Nothing reaches callers (responses stay `"Something went wrong"`, [security D1](../testing.md#d-data-leaks-6-tests-leakstestts)), but logs holding personal data become a privacy problem once the API is hosted and logs are kept.
+
+| Option | Effect |
+|---|---|
+| Log only the error's type, PostgreSQL code, and constraint name | Enough to debug; no values |
+| A logging library with redaction (e.g. `pino` with `redact`) | Structured logs; sensitive fields removed by name |
+| Leave as is | Fine locally; not once hosted |
+
+**Status:** not yet decided. **To decide at the hosting step,** before real logs exist. **Origin:** suggested (spotted in the test output); I asked that it be recorded and showcased

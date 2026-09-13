@@ -15,6 +15,7 @@
     "test:happy-path": "vitest run tests/happy-path tests/workflow",
     "test:security": "vitest run tests/security",
     "test:rate-limit": "vitest run tests/rate-limit",
+    "test:integrity": "vitest run tests/integrity",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint:spec": "npx --yes @redocly/cli@2.52.1 lint api/openapi.yaml",

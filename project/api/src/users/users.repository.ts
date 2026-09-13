@@ -17,6 +17,14 @@ export interface Address {
   primary: boolean;
 }
 
+// Thrown by insert and replace when another user already has the email (ignoring case).
+// The service checks first, but two requests at once can both pass that check; storage has the final word.
+export class EmailTakenError extends Error {
+  constructor() {
+    super("Another user already has this email");
+  }
+}
+
 // The order phones and addresses are always kept in: primary first, then the order the admin
 // form shows the types (phones mobile, home, work; addresses home, work, mailing).
 // The service sorts before saving; storage that doesn't keep list order sorts again when loading.

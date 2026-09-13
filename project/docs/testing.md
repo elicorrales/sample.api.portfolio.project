@@ -2,7 +2,7 @@
 
 **What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, attacks, and floods all fail the right way, with a clear error and no damage.
 
-**Last updated:** 2026-09-13 · **204 tests, all green, running against real PostgreSQL** (PGlite)
+**Last updated:** 2026-09-13 · **218 tests, all green, running against real PostgreSQL** (PGlite)
 
 ## By category
 
@@ -12,7 +12,7 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 |---|---|---|---|---|---|
 | **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error | **115** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
 | **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks, and other origins are blocked | **60** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
-| **Integrity** | Two admins at once can't corrupt data or silently overwrite each other | — | ⏳ Planned (needs a real database) | | |
+| **Integrity** | Two admins at once can't corrupt data or silently overwrite each other; a failed save changes nothing; the database refuses bad data even if the code lets it through | **14** | ✅ Green (true simultaneous connections wait for native PostgreSQL) | [`tests/integrity/`](../tests/integrity/) | `npm run test:integrity` |
 | **Rate limiting** | Too many requests get `429` with `Retry-After`, not a slow or crashed server; token-guessing floods and faked IPs are stopped too | **12** | ✅ Green | [`tests/rate-limit/`](../tests/rate-limit/) | `npm run test:rate-limit` |
 | **Performance** | Search and paging stay fast with many users | — | ⏳ Planned (separate load-test tool) | | |
 | Happy path + workflow | Each operation works, and they work together in one admin session | 17 | ✅ Green | [`tests/happy-path/`](../tests/happy-path/), [`tests/workflow/`](../tests/workflow/) | `npm run test:happy-path` |
@@ -162,6 +162,60 @@ And three corrections:
 
 See [journal row 31](journal.md).
 
+## Integrity: 14 tests
+
+The API **checks, then saves**, in separate steps. Two requests can both pass the check ("is this email free?", "is this still version 1?") before either one saves. These tests force exactly that, every run: a test-only repository holds both requests right after their check, then releases them together ([decision 03](decisions/03-test-strategy.md#how-the-integrity-tests-are-written)).
+
+### A. Two requests at once: 6 tests ([`races.test.ts`](../tests/integrity/races.test.ts))
+
+| Race | Result |
+|---|---|
+| **Two creates with the same email** | One `201`, one `409`; exactly one user saved |
+| Same, as `Ann@Example.com` and `ann@example.com` | One `201`, one `409` |
+| **User B's email changed to one being created at that moment** | One of them `409`; exactly one user has the email |
+| **Two admins save the same user from version 1** | One `200`, one `412`; version is 2, not 3; the saved user is the winner's |
+| An update and a delete from the same version | One wins, the other `412`; exactly one of the two changes happened |
+| Two restores of the same user | One `200`, one `409`; the version goes up once |
+
+### B. One user never touches another: 2 tests ([`isolation.test.ts`](../tests/integrity/isolation.test.ts))
+
+| Case | Result |
+|---|---|
+| Replace A's phones and addresses | B's are exactly as created (a missing `WHERE user_id = ...` would have wiped them) |
+| Delete, then restore A | B unchanged, and listed the whole time |
+
+### C. A failed save changes nothing: 2 tests ([`rollback.test.ts`](../tests/integrity/rollback.test.ts))
+
+A trigger added by the test makes PostgreSQL refuse any address in `Failtown`. Addresses are saved last, so the failure lands **mid-save**, after the user and phones were already written.
+
+| Case | Result |
+|---|---|
+| An update fails while saving addresses | `500`; name, version, phones, and addresses **exactly as before** |
+| A create fails while saving addresses | `500`; **no half-saved user**; the same email works on the next try |
+
+### D. The database's own rules: 4 tests ([`database-rules.test.ts`](../tests/integrity/database-rules.test.ts))
+
+The last line of defense if the code ever has a bug. The API can't send this data, so these tests write SQL directly: the one agreed exception to "through the API only."
+
+| Raw insert | Database's answer |
+|---|---|
+| A second primary phone | Refused (unique violation) |
+| A second mobile phone | Refused (one per type) |
+| Phone type `fax` | Refused (check constraint) |
+| `ANN@Example.com` when `ann@example.com` exists | Refused (unique index on `lower(email)`) |
+
+## What the integrity tests found
+
+Failures predicted in advance: **3 of 14 failed, exactly the predicted ones.** One was a **real bug**:
+
+- **Two requests with the same email at once got `500` instead of `409`.** Both passed the "is this email free?" check; the database's unique index then refused the second save, so **no duplicate was ever stored**, but that refusal reached the client as "Something went wrong." The same happened when an email change raced a create. Fixed: the repository recognizes that specific refusal, and the service answers the normal `409`.
+
+The other 11 passed at once. The version check inside the `UPDATE` statement, the transactions, and the database rules were already right.
+
+**Found along the way, not yet fixed:** the failing run printed the database error to the server log, and **that error includes the query's values: names, emails, dates of birth.** Callers never see it (responses stay generic), but a hosted server's logs shouldn't hold personal data. **Plan:** decide before hosting whether to log only the error code and constraint, or use a logging library that removes sensitive fields ([decision 11](decisions/11-database.md#found-along-the-way-personal-data-in-server-logs-open)).
+
+See [journal row 34](journal.md).
+
 ## Rate limiting: 12 tests
 
 100 requests per minute per client IP, counted in fixed one-minute windows ([decision 10](decisions/10-api-conventions.md), rows 23–27). The tests use a limit of 3 and a frozen clock, so they run instantly ([`rate-limit.test.ts`](../tests/rate-limit/rate-limit.test.ts)).
@@ -193,5 +247,5 @@ See [journal row 31](journal.md).
 - **Table-driven.** Similar cases share one test with one line per case, so adding a case is one line.
 - **Isolated.** Each test file gets its own in-memory PostgreSQL (PGlite), emptied before every test; no test depends on another.
 - **Storage-independent.** When storage moved from in-memory to PostgreSQL, all 204 tests ran unchanged. They caught the one real difference: phones came back in the wrong order ([decision 11](decisions/11-database.md#what-the-swap-found)).
-- **One file at a time.** Each database uses about 1.1 GB at its peak; running 7 in parallel froze an 8 GB laptop. The full suite takes about 50 seconds.
+- **One file at a time.** Each database uses about 1.1 GB at its peak; running 7 in parallel froze an 8 GB laptop. The full suite takes about 65 seconds.
 - **Through the API only.** Tests set up data the way an admin would (by calling the API), never by reaching into storage.

@@ -60,6 +60,18 @@
 | No test passes by accident | Every test except "up to the limit" checks that a `429` really happens | Otherwise "allowed again after the window" passes with no limiter at all |
 | Checking by hand | A `curl` loop of 101 requests, not Swagger | Clicking 101 times isn't realistic |
 
+## How the integrity tests are written
+
+**Date:** 2026-09-13 · **Origin:** suggested; I agreed
+
+| Question | Choice | Why |
+|---|---|---|
+| Two requests "at once" | `RacingRepository` (a test helper) wraps the real repository; `holdUntil("findByEmail", 2)` holds calls until 2 arrive, then releases both | The race happens every run, not by timing luck |
+| Which request wins | Not fixed, so tests check the **pair** of statuses (`[201, 409]`) and that exactly one change was saved | Either order is correct; only "both succeed" or "both fail" is wrong |
+| A save failing partway | The test adds a PostgreSQL trigger that refuses one city, then removes it afterward | Real rollback of real rows |
+| The database's own rules | Raw SQL inserts, checked by PostgreSQL error code (`23505` unique, `23514` check) | The only way to reach them; an agreed exception to "through the API only" |
+| Truly simultaneous connections | Not yet | PGlite takes one connection; that's stage 3 (native PostgreSQL) |
+
 ## Stubbing the database
 
 **Question:** Test only the Node layer at first, then all layers later?

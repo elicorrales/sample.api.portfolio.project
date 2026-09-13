@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { conflictProblem, notFoundProblem, preconditionFailedProblem } from "../shared/errors.ts";
-import { sortByPrimaryThenType, type User, type UsersRepository } from "./users.repository.ts";
+import { EmailTakenError, sortByPrimaryThenType, type User, type UsersRepository } from "./users.repository.ts";
 import { ADDRESS_TYPES, PHONE_TYPES, type ListQuery, type UserInput } from "./users.schema.ts";
 
 // Business rules. Knows nothing about HTTP; only talks to the repository interface.
@@ -20,7 +20,7 @@ export class UsersService {
       deletedAt: null,
     };
 
-    await this.repository.insert(user);
+    await this.repository.insert(user).catch(emailTakenAsConflict);
     return user;
   }
 
@@ -45,7 +45,7 @@ export class UsersService {
     };
 
     // The repository re-checks the version as it saves, in case another save got in between.
-    if (!(await this.repository.replace(updated, expectedVersion))) throw versionOutOfDate();
+    if (!(await this.repository.replace(updated, expectedVersion).catch(emailTakenAsConflict))) throw versionOutOfDate();
     return updated;
   }
 
@@ -98,6 +98,13 @@ export class UsersService {
 }
 
 const notDeleted = () => conflictProblem("This user isn't deleted");
+
+// checkEmailIsFree can pass for two requests at once; storage then refuses the second save.
+// That request gets the same 409 it would have gotten a moment later.
+function emailTakenAsConflict(error: unknown): never {
+  if (error instanceof EmailTakenError) throw conflictProblem("A user with this email already exists");
+  throw error;
+}
 
 const versionOutOfDate = () => preconditionFailedProblem("This user changed since it was loaded; reload and try again");
 

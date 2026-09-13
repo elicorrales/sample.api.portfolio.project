@@ -16,7 +16,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Update user | ✅ Whole-user replace with optimistic locking (tests green, callable from Swagger UI) |
 | Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
 | Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
-| Tests | ✅ 204 green; see [Tests](#tests) below |
+| Tests | ✅ 218 green; see [Tests](#tests) below |
 | Storage | ✅ PostgreSQL via Drizzle, running in PGlite (tests and local); a PostgreSQL server at hosting time |
 | Hosting | ⏳ Later: docs page on Netlify, API on Render |
 
@@ -24,13 +24,13 @@ Details: [PROGRESS.md](PROGRESS.md)
 
 ## Tests
 
-**What the API refuses matters more than what it accepts.** Most of the suite proves that bad input, stale versions, conflicts, wrong paths, forged tokens, and attacks fail the right way.
+**What the API refuses matters more than what it accepts.** Most of the suite proves that bad input, stale versions, conflicts, wrong paths, forged tokens, attacks, and colliding requests fail the right way.
 
 | Category | What it proves | Tests | Status |
 |---|---|---|---|
 | **Bad calls** | Every kind of client mistake gets the right status and an error naming the field: `José` → 400, stale version → 412, deleted user's email → 409, `<script>` never echoed back | **115** | ✅ |
 | **Security** | Forged tokens (`alg: none`, edited role, no expiry) → 401; no token → 401 before anything else is checked; SQL in `search`/`sort` does nothing; a forced crash leaks no SQL or file paths; look-alike origins get no CORS. **Found 2 real holes**, now fixed | **60** | ✅ |
-| **Integrity** | Two admins at once can't corrupt or silently overwrite data | — | ⏳ Planned |
+| **Integrity** | Two requests forced to collide: same email → one `201`, one `409`; same version → one `200`, one `412`, saved once; a save failing midway leaves nothing half-written. **Found 1 real bug** (`500` instead of `409` in a race), now fixed | **14** | ✅ |
 | **Rate limiting** | Over 100 requests a minute → `429` with `Retry-After`; token-guessing floods and faked IP headers are stopped too; a blocked create saves nothing | **12** | ✅ |
 | **Performance** | Search and paging stay fast at scale | — | ⏳ Planned |
 | Happy path + workflow | Each operation works, and they work together | 17 | ✅ |
@@ -41,7 +41,7 @@ Details: [PROGRESS.md](PROGRESS.md)
 
 - **Spec before code.** The contract ([`openapi.yaml`](project/api/openapi.yaml)) was written and linted before any endpoint existed.
 - **Tests before code.** Each test is written first and must fail for the right reason before any code is written to pass it.
-- **187 bad-call, security, and rate-limit tests vs 17 happy-path.** Most of the work is proving what the API refuses ([tests](project/docs/testing.md)).
+- **201 bad-call, security, integrity, and rate-limit tests vs 17 happy-path.** Most of the work is proving what the API refuses ([tests](project/docs/testing.md)).
 - **Storage swapped, tests unchanged.** Moving from in-memory storage to PostgreSQL changed no test; the tests caught the one behavior that differed ([decision 11](project/docs/decisions/11-database.md#what-the-swap-found)).
 - **Decisions on paper.** Every choice records the question, the options, what was picked, and why ([decision log](project/docs/decisions/README.md)).
 - **A visible AI trail.** See below.
@@ -86,10 +86,11 @@ npm test
 
 | Command (from `project/`) | Does |
 |---|---|
-| `npm test` | Run all tests once (about 50 s; one file at a time, since each starts its own PostgreSQL) |
+| `npm test` | Run all tests once (about 65 s; one file at a time, since each starts its own PostgreSQL) |
 | `npm run test:bad-calls` | Run only the bad-call tests |
 | `npm run test:security` | Run only the security tests |
 | `npm run test:rate-limit` | Run only the rate-limit tests |
+| `npm run test:integrity` | Run only the integrity tests |
 | `npm run test:happy-path` | Run only the happy-path and workflow tests |
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |

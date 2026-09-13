@@ -1,7 +1,14 @@
 import { and, asc, desc, eq, ilike, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import type { Database } from "../shared/database.ts";
-import { type Address, type Phone, sortByPrimaryThenType, type User, type UsersRepository } from "./users.repository.ts";
+import {
+  type Address,
+  EmailTakenError,
+  type Phone,
+  sortByPrimaryThenType,
+  type User,
+  type UsersRepository,
+} from "./users.repository.ts";
 import { ADDRESS_TYPES, type ListQuery, PHONE_TYPES } from "./users.schema.ts";
 import { userAddresses, userPhones, users } from "./users.table.ts";
 
@@ -23,28 +30,32 @@ export class PgUsersRepository implements UsersRepository {
   }
 
   async insert(user: User) {
-    await this.db.transaction(async (tx) => {
-      await tx.insert(users).values(toUserRow(user));
-      await insertPhonesAndAddresses(tx, user);
-    });
+    await this.db
+      .transaction(async (tx) => {
+        await tx.insert(users).values(toUserRow(user));
+        await insertPhonesAndAddresses(tx, user);
+      })
+      .catch(rethrowEmailTaken);
   }
 
   async replace(user: User, expectedVersion: number) {
-    return this.db.transaction(async (tx) => {
-      // Saves only if the version is still the one the caller loaded; one statement, so two saves can't both win.
-      const saved = await tx
-        .update(users)
-        .set(toUserRow(user))
-        .where(and(eq(users.id, user.id), eq(users.version, expectedVersion)))
-        .returning({ id: users.id });
-      if (saved.length === 0) return false;
+    return this.db
+      .transaction(async (tx) => {
+        // Saves only if the version is still the one the caller loaded; one statement, so two saves can't both win.
+        const saved = await tx
+          .update(users)
+          .set(toUserRow(user))
+          .where(and(eq(users.id, user.id), eq(users.version, expectedVersion)))
+          .returning({ id: users.id });
+        if (saved.length === 0) return false;
 
-      // Phones and addresses have no ids, so the whole set is replaced.
-      await tx.delete(userPhones).where(eq(userPhones.userId, user.id));
-      await tx.delete(userAddresses).where(eq(userAddresses.userId, user.id));
-      await insertPhonesAndAddresses(tx, user);
-      return true;
-    });
+        // Phones and addresses have no ids, so the whole set is replaced.
+        await tx.delete(userPhones).where(eq(userPhones.userId, user.id));
+        await tx.delete(userAddresses).where(eq(userAddresses.userId, user.id));
+        await insertPhonesAndAddresses(tx, user);
+        return true;
+      })
+      .catch(rethrowEmailTaken);
   }
 
   async list({ search, sort, order, page, pageSize, includeDeleted }: ListQuery) {
@@ -120,6 +131,14 @@ export class PgUsersRepository implements UsersRepository {
 }
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+
+// The unique index on lower(email) refused the save (PostgreSQL error 23505). Drizzle wraps the
+// database's error, so it's in `cause`. Anything else is a real failure and passes through.
+function rethrowEmailTaken(error: unknown): never {
+  const dbError = (error as { cause?: { code?: string; constraint?: string } }).cause;
+  if (dbError?.code === "23505" && dbError.constraint === "users_email_unique") throw new EmailTakenError();
+  throw error;
+}
 
 async function insertPhonesAndAddresses(tx: Transaction, user: User) {
   if (user.phones.length > 0) {

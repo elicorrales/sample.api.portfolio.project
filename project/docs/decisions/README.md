@@ -42,6 +42,7 @@ These docs are written in my voice: **I / my / mine** means me, the project auth
 ## Open items
 
 - Pick how public demo visitors get an admin token (05)
+- Keep personal data out of server logs before hosting (11)
 - Confirm the folder layout (06)
 - Write the OpenAPI file from the reviewed [plain-language operations list](../spec/operations.md) and the [API conventions](10-api-conventions.md)
 
