@@ -48,6 +48,18 @@
 | Injection with in-memory storage | Write the tests anyway (`%`, `_`, `' OR '1'='1'`, SQL in `sort`) | They pass trivially today; they start to matter when PostgreSQL arrives |
 | Run order | Same as bad calls: all tests first, predict the failures, run red, change the code | 49 of 60 passed at once; the 11 failures were exactly the predicted ones |
 
+## How the rate-limit tests are written
+
+**Date:** 2026-09-13 · **Origin:** suggested; I agreed
+
+| Question | Choice | Why |
+|---|---|---|
+| Waiting for a window to end | **Fake only `Date`** (`vi.useFakeTimers({ toFake: ["Date"] })`) and jump the clock: 12:00:00, 12:00:30, 12:01:00 | Tests run instantly and `Retry-After` is exact. Faking all timers would stall Supertest |
+| The limit in tests | `createApp({ rateLimit: { limit: 3, windowSeconds: 60 } })` | 3 requests reach the limit; 100 would be slow and noisy |
+| Two different clients | Trust 1 proxy and send different `X-Forwarded-For` values | Supertest always connects from the same address |
+| No test passes by accident | Every test except "up to the limit" checks that a `429` really happens | Otherwise "allowed again after the window" passes with no limiter at all |
+| Checking by hand | A `curl` loop of 101 requests, not Swagger | Clicking 101 times isn't realistic |
+
 ## Stubbing the database
 
 **Question:** Test only the Node layer at first, then all layers later?

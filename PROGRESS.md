@@ -24,15 +24,15 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | Happy-path tests | **17 green, happy path complete:** `tests/happy-path/` (16: create 2, list 5, get 2, update 2, delete 3, restore 2) and `tests/workflow/admin-session.test.ts` (1: one admin session, ETags passed step to step). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
 | **Bad-call tests** | **115 green** in `tests/bad-calls/` (body 64, query 18, ids 9, versions 8, conflicts 4, paths 12). Unknown query params → 400; unknown path → 404; wrong method → 405 + `Allow`; unknown fields named. **132 tests total.** |
 | **Security tests** | **60 green** in `tests/security/` (tokens 23, auth-first 12, injection 8, leaks 6, CORS 9, body size 2). Found and fixed 2 holes: tokens without `exp` were accepted; `X-Powered-By: Express` was sent. Also: auth now runs before the body is read; oversized body → `413`; `bearer` in any case. **192 tests total.** |
+| **Rate-limit tests** | **12 green** in `tests/rate-limit/`. `shared/rate-limit.ts`: 100/min per IP, fixed window, before auth, after CORS; `trustProxy` option (default 0). Checked by hand with a `curl` loop. **204 tests total.** |
 | Test showcase | [`project/docs/testing.md`](project/docs/testing.md) (every category, most important first, with example cases) and a Tests section near the top of the README |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`). Installs, tests, and servers run on the laptop (the VM is memory-limited). |
 | Root README | Entry point for recruiters, employers, and devs: status, AI collaboration, reading order, run commands, links to my other work |
 
 ## Next steps
 
-1. **Next: pick one** (not yet chosen):
-   - **Rate limiting:** too many requests → `429` with `Retry-After`. Runs on the current app.
-   - **Database path:** PGlite (real PostgreSQL inside Node), needed for integrity tests. The injection tests start to matter here.
+1. **Next: the database path** (the only non-happy category left that runs without new tools). PGlite (real PostgreSQL inside Node) behind the existing `UsersRepository` interface; run the whole suite against it. Unlocks integrity tests, and makes the injection tests meaningful. Start by walking through the questions together (schema, migrations, how tests get a fresh database).
+   - **At hosting time:** set `trustProxy` for Render (decision 10, row 27)
 2. Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
 3. **Maybe later:** mutation testing (e.g. Stryker) to check the tests catch deliberately broken code
 4. **Later:** PGlite → native PostgreSQL; integrity and performance tests; admin web client; hosting (Netlify docs page, Render API)
@@ -46,6 +46,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | `npm run test:bad-calls` | Only the bad-call tests |
 | `npm run test:happy-path` | Only the happy-path and workflow tests |
 | `npm run test:security` | Only the security tests |
+| `npm run test:rate-limit` | Only the rate-limit tests |
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |

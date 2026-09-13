@@ -1,8 +1,8 @@
 # Tests
 
-**What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, and attacks all fail the right way, with a clear error and no damage.
+**What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, attacks, and floods all fail the right way, with a clear error and no damage.
 
-**Last updated:** 2026-09-13 · **192 tests, all green**
+**Last updated:** 2026-09-13 · **204 tests, all green**
 
 ## By category
 
@@ -13,7 +13,7 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 | **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error | **115** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
 | **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks, and other origins are blocked | **60** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
 | **Integrity** | Two admins at once can't corrupt data or silently overwrite each other | — | ⏳ Planned (needs a real database) | | |
-| **Rate limiting** | Too many requests get `429`, not a slow or crashed server | — | ⏳ Planned | | |
+| **Rate limiting** | Too many requests get `429` with `Retry-After`, not a slow or crashed server; token-guessing floods and faked IPs are stopped too | **12** | ✅ Green | [`tests/rate-limit/`](../tests/rate-limit/) | `npm run test:rate-limit` |
 | **Performance** | Search and paging stay fast with many users | — | ⏳ Planned (separate load-test tool) | | |
 | Happy path + workflow | Each operation works, and they work together in one admin session | 17 | ✅ Green | [`tests/happy-path/`](../tests/happy-path/), [`tests/workflow/`](../tests/workflow/) | `npm run test:happy-path` |
 
@@ -161,6 +161,29 @@ And three corrections:
 - **`bearer` in lowercase was refused**, though the HTTP standard allows it. Now accepted.
 
 See [journal row 31](journal.md).
+
+## Rate limiting: 12 tests
+
+100 requests per minute per client IP, counted in fixed one-minute windows ([decision 10](decisions/10-api-conventions.md), rows 23–27). The tests use a limit of 3 and a frozen clock, so they run instantly ([`rate-limit.test.ts`](../tests/rate-limit/rate-limit.test.ts)).
+
+| Case | Result |
+|---|---|
+| Up to the limit | Normal responses |
+| One over | `429`, Problem Details, `Retry-After: 60` |
+| At 12:00:59 / at 12:01:00 | `Retry-After: 1` / allowed again |
+| Blocked at 12:00:30 | `Retry-After: 30` (counts down to the window's end) |
+| **3 guessed tokens, then a 4th** | `429`, not `401`: guessing floods are stopped before any token is checked |
+| **3 guesses, then a valid admin token** from the same client | Still `429` |
+| **A create while blocked** | `429`, and **nothing is saved** |
+| Two clients behind a trusted proxy | Separate limits: A is blocked, B isn't |
+| **A faked `X-Forwarded-For`** (no proxy trusted) | Ignored: still `429` |
+| **A fake address added in front of the real one** (1 proxy trusted) | Only the address the proxy added counts: still `429` |
+| A `429` sent to the allowed web page | Has CORS headers and exposes `Retry-After`, so the page can say "try again in 30 seconds" |
+| 5 browser preflights (`OPTIONS`), then 3 requests | Preflights don't count; the 4th request is blocked |
+
+**By hand:** 101 requests with `curl` gave `100 401` and `1 429`. The next request showed `Retry-After: 17` at 04:18:43, exactly the 17 seconds left in the window.
+
+**1 of 12 passed at once**, as predicted. Only "up to the limit" can pass without a limiter; every other test checks that a `429` really happens. See [journal row 32](journal.md).
 
 ## How the tests are written
 

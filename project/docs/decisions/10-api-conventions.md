@@ -159,6 +159,18 @@ Planning the security tests raised these:
 | 21 | A body over 100 KB | `400` "must be valid JSON" (as it was), or `413` | **`413` "Request body must be 100 KB or smaller"** | The old message was misleading: the JSON was fine, just too big | suggested |
 | 22 | `X-Powered-By: Express` header | Keep (Express default), or remove | **Remove** | Found by the tests: it tells attackers which framework, and its known flaws, to try | suggested (found by the tests) |
 
+Planning the rate-limit tests raised these (2026-09-13):
+
+| # | Question | Options | Choice | Why | Origin |
+|---|---|---|---|---|---|
+| 23 | Count requests per what? | Per IP address, per admin (token), or both | **Per IP, checked before auth** | Floods of bad tokens are stopped cheaply, before any token is verified | suggested |
+| 24 | Counting method | Fixed window, sliding window, or token bucket | **Fixed window** (e.g. 12:00:00–12:00:59) | Simplest to explain and test. Known weakness: up to 2× the limit across a window edge | suggested |
+| 25 | The limit | | **100 per minute**, set through `createApp()` | Normal Swagger or web client use never gets near it; tests use 3 | suggested |
+| 26 | Library or hand-written | `express-rate-limit`, or about 30 lines of our own | **Hand-written** (`shared/rate-limit.ts`) | Same reason as CORS: it's clear what it does | suggested |
+| 27 | Trust `X-Forwarded-For` for the client IP? | Always, never, or a set number of proxies | **0 proxies by default**, with a `trustProxy` option | Trusting it blindly lets anyone fake a new IP to get a fresh limit. The Render setting is decided at hosting time ([05](05-hosting.md)) | suggested |
+
+Where it sits: CORS → **rate limit** → auth. After CORS, so preflights don't count and a `429` still has the CORS headers a web page needs to read `Retry-After`.
+
 Row 20 still holds, with one clarification: the token is checked **before the body is even read** ([04](04-admin-vs-self-service.md#auth-details-security-tests)).
 
 Lint command (pinned version): `npx @redocly/cli@2.52.1 lint project/api/openapi.yaml`. The remaining warnings are expected: unused components until endpoints exist, and a note that the server is `localhost`.

@@ -2,6 +2,7 @@ import express from "express";
 import { requireAdmin } from "./shared/auth.ts";
 import { cors } from "./shared/cors.ts";
 import { errorHandler, ProblemError, sendProblem } from "./shared/errors.ts";
+import { type RateLimitOptions, rateLimit } from "./shared/rate-limit.ts";
 import { MemoryUsersRepository } from "./users/users.repository.memory.ts";
 import type { UsersRepository } from "./users/users.repository.ts";
 import { usersRoutes } from "./users/users.routes.ts";
@@ -11,13 +12,27 @@ export interface AppOptions {
   jwtSecret: string;
   corsOrigins?: string[];
   usersRepository?: UsersRepository;
+  // Requests allowed per client IP in each fixed window.
+  rateLimit?: RateLimitOptions;
+  // How many proxies in front of the app to trust for the client's IP (X-Forwarded-For).
+  // 0 (the default) ignores the header, so a client can't fake a new IP to get a fresh limit.
+  trustProxy?: number;
 }
 
 // Builds the Express app without starting a server, so tests can call it directly.
-// Order matters: CORS (answers preflights) → auth → JSON body → routes → 404 → errors.
+// Order matters: CORS (answers preflights) → rate limit → auth → JSON body → routes → 404 → errors.
+// The rate limit comes before auth, so floods of bad tokens are stopped cheaply. It comes after CORS,
+// so preflights don't count, and a 429 still carries CORS headers the web page needs to read it.
 // Auth comes before the body is read, so a caller without a token learns nothing, not even that their JSON is bad.
-export function createApp({ jwtSecret, corsOrigins = [], usersRepository = new MemoryUsersRepository() }: AppOptions) {
+export function createApp({
+  jwtSecret,
+  corsOrigins = [],
+  usersRepository = new MemoryUsersRepository(),
+  rateLimit: rateLimitOptions = { limit: 100, windowSeconds: 60 },
+  trustProxy = 0,
+}: AppOptions) {
   const app = express();
+  app.set("trust proxy", trustProxy);
   // Express would otherwise add its own body-hash ETag to every response. Our ETag is the
   // user's version (for If-Match), so only routes that return a user set one.
   app.set("etag", false);
@@ -25,6 +40,7 @@ export function createApp({ jwtSecret, corsOrigins = [], usersRepository = new M
   app.disable("x-powered-by");
 
   app.use(cors(corsOrigins));
+  app.use(rateLimit(rateLimitOptions));
   app.use(requireAdmin(jwtSecret));
   app.use(express.json({ limit: "100kb" }));
 
