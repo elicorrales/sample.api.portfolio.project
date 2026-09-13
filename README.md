@@ -16,17 +16,32 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Update user | ✅ Whole-user replace with optimistic locking (tests green, callable from Swagger UI) |
 | Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
 | Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
-| Happy-path tests | ✅ 17 green, including a full admin-session workflow |
-| Bad-call tests | 🔴 Next |
+| Tests | ✅ 132 green; see [Tests](#tests) below |
 | Storage | In memory for now; PostgreSQL later |
 | Hosting | ⏳ Later: docs page on Netlify, API on Render |
 
 Details: [PROGRESS.md](PROGRESS.md)
 
+## Tests
+
+**What the API refuses matters more than what it accepts.** Most of the suite proves that bad input, stale versions, conflicts, and wrong paths fail the right way.
+
+| Category | What it proves | Tests | Status |
+|---|---|---|---|
+| **Bad calls** | Every kind of client mistake gets the right status and an error naming the field: `José` → 400, stale version → 412, deleted user's email → 409, `<script>` never echoed back | **115** | ✅ |
+| **Security** | Tokens, roles, injection, data leaks | — | ⏳ Planned |
+| **Integrity** | Two admins at once can't corrupt or silently overwrite data | — | ⏳ Planned |
+| **Rate limiting** | Floods get `429` | — | ⏳ Planned |
+| **Performance** | Search and paging stay fast at scale | — | ⏳ Planned |
+| Happy path + workflow | Each operation works, and they work together | 17 | ✅ |
+
+**The full showcase,** with example cases for every group and what the tests found: [project/docs/testing.md](project/docs/testing.md)
+
 ## What's worth a look
 
 - **Spec before code.** The contract ([`openapi.yaml`](project/api/openapi.yaml)) was written and linted before any endpoint existed.
 - **Tests before code.** Each test is written first and must fail for the right reason before any code is written to pass it.
+- **115 bad-call tests vs 17 happy-path.** Most of the work is proving what the API refuses ([tests](project/docs/testing.md)).
 - **Decisions on paper.** Every choice records the question, the options, what was picked, and why ([decision log](project/docs/decisions/README.md)).
 - **A visible AI trail.** See below.
 
@@ -50,7 +65,7 @@ Suggested reading order if you want to see how a project starts:
 | 2 | Why things are the way they are | [Decision log](project/docs/decisions/README.md) |
 | 3 | What the API does, in plain language | [Operations list](project/docs/spec/operations.md) |
 | 4 | The formal contract | [OpenAPI spec](project/api/openapi.yaml) · [docs page](website/api-docs/index.html) |
-| 5 | The tests | [`project/tests/`](project/tests/) |
+| 5 | The tests, and what they prove | [Test showcase](project/docs/testing.md) · [`project/tests/`](project/tests/) |
 | 6 | The code | [`project/api/src/`](project/api/src/) |
 
 ## Tech stack
@@ -71,6 +86,8 @@ npm test
 | Command (from `project/`) | Does |
 |---|---|
 | `npm test` | Run all tests once |
+| `npm run test:bad-calls` | Run only the bad-call tests |
+| `npm run test:happy-path` | Run only the happy-path and workflow tests |
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |
