@@ -31,7 +31,7 @@ Writing this list surfaced a few new questions; see [Questions raised while writ
 |---|---|
 | **Give** | First name, last name, email, date of birth · phones · addresses |
 | **Get back** | The new user (detailed view), including id, version, and timestamps |
-| **Fails when** | Any field is missing or invalid · a name uses anything but A–Z, spaces, hyphens, periods, or `'` · phone or address rules broken (see [below](#phones-and-addresses-part-of-the-user)) · date of birth is in the future or the user is under 18 · email is already used by any user, **including deleted ones** (the message suggests restoring) |
+| **Fails when** | Any field is missing or invalid · a name uses anything but A–Z, spaces, hyphens, periods, or `'` · phone or address rules broken (see [below](#phones-and-addresses-part-of-the-user)) · date of birth is in the future or the user is under 18 · email is already used by any user, **including deleted ones** (the message suggests restoring) · the server's user limit is reached, if it has one (**deleted users count**; the hosted demo allows 200) |
 
 ### 2. List users
 

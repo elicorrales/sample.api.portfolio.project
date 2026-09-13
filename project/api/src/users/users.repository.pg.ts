@@ -7,10 +7,15 @@ import {
   type Phone,
   sortByPrimaryThenType,
   type User,
+  UserLimitError,
   type UsersRepository,
 } from "./users.repository.ts";
 import { ADDRESS_TYPES, type ListQuery, PHONE_TYPES } from "./users.schema.ts";
 import { userAddresses, userPhones, users } from "./users.table.ts";
+
+// A PostgreSQL advisory lock is just an agreed number. Creates under a user limit, and adding the demo's starting
+// users, take this one, so each counts the users only after the other has finished.
+export const USER_COUNT_LOCK = 7_302_001;
 
 // PostgreSQL storage. Every value goes in as a query parameter, never pasted into the SQL text.
 export class PgUsersRepository implements UsersRepository {
@@ -33,13 +38,40 @@ export class PgUsersRepository implements UsersRepository {
     return (await this.withPhonesAndAddresses(rows))[0];
   }
 
-  async insert(user: User) {
+  async insert(user: User, maxUsers?: number) {
     await this.db
       .transaction(async (tx) => {
+        if (maxUsers !== undefined) {
+          // Held until this transaction ends, so a second create waits here and then counts this one's user.
+          await tx.execute(sql`SELECT pg_advisory_xact_lock(${USER_COUNT_LOCK}::bigint)`);
+          const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` }).from(users);
+          if (count >= maxUsers) throw new UserLimitError();
+        }
         await tx.insert(users).values(toUserRow(user));
         await insertPhonesAndAddresses(tx, user);
       })
       .catch(rethrowEmailTaken);
+  }
+
+  // For the demo's starting users: adds them only if no users exist at all, deleted ones included.
+  async insertAllIfEmpty(all: User[]) {
+    return this.db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${USER_COUNT_LOCK}::bigint)`);
+      const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` }).from(users);
+      if (count > 0) return false;
+      await insertUsers(tx, all);
+      return true;
+    });
+  }
+
+  // For the demo's nightly reset: every user replaced by `all`, in one transaction, so a failure changes nothing.
+  // TRUNCATE locks the whole table until the transaction ends, so a create arriving meanwhile waits for it.
+  async replaceAll(all: User[]) {
+    await this.db.transaction(async (tx) => {
+      // CASCADE also empties user_phones and user_addresses.
+      await tx.execute(sql`TRUNCATE users CASCADE`);
+      await insertUsers(tx, all);
+    });
   }
 
   async replace(user: User, expectedVersion: number) {
@@ -142,6 +174,18 @@ function rethrowEmailTaken(error: unknown): never {
   const dbError = (error as { cause?: { code?: string; constraint?: string } }).cause;
   if (dbError?.code === "23505" && dbError.constraint === "users_email_unique") throw new EmailTakenError();
   throw error;
+}
+
+// Many users in three statements (users, phones, addresses), not three per user.
+async function insertUsers(tx: Transaction, all: User[]) {
+  if (all.length === 0) return;
+  await tx.insert(users).values(all.map(toUserRow));
+  const phones = all.flatMap((user) => user.phones.map(({ number, type, primary }) => ({ userId: user.id, number, type, isPrimary: primary })));
+  const addresses = all.flatMap((user) =>
+    user.addresses.map(({ primary, ...address }) => ({ userId: user.id, ...address, isPrimary: primary })),
+  );
+  if (phones.length > 0) await tx.insert(userPhones).values(phones);
+  if (addresses.length > 0) await tx.insert(userAddresses).values(addresses);
 }
 
 async function insertPhonesAndAddresses(tx: Transaction, user: User) {

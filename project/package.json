@@ -13,6 +13,7 @@
   "scripts": {
     "start": "node api/src/server.ts",
     "dev": "JWT_SECRET=dev-only-secret-not-for-production-use node scripts/dev.ts",
+    "dev:demo": "JWT_SECRET=dev-only-secret-not-for-production-use DEMO_MODE=true MAX_USERS=200 node scripts/dev.ts",
     "token": "JWT_SECRET=dev-only-secret-not-for-production-use node scripts/dev-token.ts",
     "test": "vitest run",
     "test:bad-calls": "vitest run tests/bad-calls",

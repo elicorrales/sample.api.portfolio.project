@@ -2,7 +2,7 @@
 
 **What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, attacks, and floods all fail the right way, with a clear error and no damage.
 
-**Last updated:** 2026-09-13 · **245 tests, all green, running against a real PostgreSQL 18 server**
+**Last updated:** 2026-09-13 · **263 tests, all green, running against a real PostgreSQL 18 server**
 
 ## By category
 
@@ -10,15 +10,15 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 
 | Category | What it proves | Tests | Status | Folder | Run it (from `project/`) |
 |---|---|---|---|---|---|
-| **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error, including mistakes in the server's own settings | **129** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
-| **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks (to callers and to the server's own log), and other origins are blocked; only the docs are public | **73** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
-| **Integrity** | Two admins at once can't corrupt data or silently overwrite each other; a failed save changes nothing; the database refuses bad data even if the code lets it through | **14** | ✅ Green (on a real PostgreSQL server, with truly simultaneous connections) | [`tests/integrity/`](../tests/integrity/) | `npm run test:integrity` |
+| **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error, including mistakes in the server's own settings | **132** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
+| **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks (to callers and to the server's own log), and other origins are blocked; only the docs (and, on the demo, a 1-hour token) are public | **78** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
+| **Integrity** | Two admins at once can't corrupt data or silently overwrite each other; a failed save changes nothing; the database refuses bad data even if the code lets it through; the demo's nightly reset is all or nothing | **24** | ✅ Green (on a real PostgreSQL server, with truly simultaneous connections) | [`tests/integrity/`](../tests/integrity/) | `npm run test:integrity` |
 | **Rate limiting** | Too many requests get `429` with `Retry-After`, not a slow or crashed server; token-guessing floods and faked IPs are stopped too | **12** | ✅ Green | [`tests/rate-limit/`](../tests/rate-limit/) | `npm run test:rate-limit` |
 | **Performance** | Search and paging stay fast with many users | — | ⏳ Planned (separate load-test tool) | | |
 | **Encryption** | Personal fields are stored encrypted: the raw database row never holds the plain value, a wrong key fails loudly, and data saved under an old key still reads after rotation | — | 📝 Designed, not built ([decision 12](decisions/12-encryption.md#if-this-project-continued)) | | |
 | Happy path + workflow | Each operation works, and they work together in one admin session | 17 | ✅ Green | [`tests/happy-path/`](../tests/happy-path/), [`tests/workflow/`](../tests/workflow/) | `npm run test:happy-path` |
 
-## Bad calls: 129 tests
+## Bad calls: 132 tests
 
 Every error uses the same format ([Problem Details](decisions/10-api-conventions.md#pushback-problem-details-is-json)) and names the field at fault, so a web form can show the message next to the right input.
 
@@ -62,7 +62,7 @@ Every error uses the same format ([Problem Details](decisions/10-api-conventions
 | **Stale version** | Admin A saves; admin B saves with the version from before A's save | `412`, and A's change is still there |
 | Malformed | `1` without quotes, `W/"1"`, `*`, `"one"` | `412` |
 
-### E. Conflicts: 4 tests ([`conflicts.test.ts`](../tests/bad-calls/conflicts.test.ts))
+### E. Conflicts: 7 tests ([`conflicts.test.ts`](../tests/bad-calls/conflicts.test.ts))
 
 | Case | Result |
 |---|---|
@@ -70,6 +70,9 @@ Every error uses the same format ([Problem Details](decisions/10-api-conventions
 | Create with a **deleted** user's email | `409`, suggesting restore instead |
 | Change a user's email to another user's | `409` |
 | Restore a user who isn't deleted | `409` |
+| **User limit** (3 in the test, 200 on the demo): 3 users, one deleted, then a create | `409` `/problems/user-limit`; still 3 users (**deleted users count**) |
+| At the limit: update, delete, restore | Still work: they add no users |
+| 2 of 3, then a create | `201`: the last spot fits exactly |
 
 ### F. Paths and headers: 12 tests ([`paths.test.ts`](../tests/bad-calls/paths.test.ts))
 
@@ -99,7 +102,7 @@ Written before the code changes, they ran red first: 112 of 127 passed at once, 
 
 See [journal row 30](journal.md).
 
-## Security: 73 tests
+## Security: 78 tests
 
 Every `401` looks the same (`"A valid admin token is required"`, `WWW-Authenticate: Bearer`), whatever the reason, so an attacker learns nothing from trying.
 
@@ -177,6 +180,20 @@ The API serves its own Swagger UI page, so the docs and the spec need no token. 
 
 **Found while writing them:** supertest, like a browser, resolves `..` and `%2e%2e` **before sending**, so the path-trick tests would have asked for `/package.json` and proven nothing. They now send the path exactly as written. **Found in a check before running them:** serving the whole package folder also served Swagger's sample Petstore page; the docs now serve only an allowlist of 2 files.
 
+### H. Demo token: 5 tests ([`demo-token.test.ts`](../tests/security/demo-token.test.ts))
+
+On the hosted demo, `POST /demo/token` gives any visitor a 1-hour admin token, so they can try the API in Swagger and **watch auth work**: refused without it, allowed with it, refused again once it expires.
+
+| Case | Result |
+|---|---|
+| Demo mode on, no token | `200`: an admin token, `expiresIn: 3600`, the fake-data note, `Cache-Control: no-store` |
+| That token on `GET /v1/users` | `200` |
+| **The same token at 59 min 59 s, then at 1 h 0 min 1 s** (fake clock) | `200`, then `401` |
+| **Demo mode off** (the default) | `401` like any unknown path; no token, and no hint that the address exists |
+| `GET` instead of `POST` | `405`, `Allow: POST` |
+
+**I asked whether `no-store` protects anything,** since a browser can ignore it. It's a request, not a lock: it stops well-behaved caches (a shared computer's browser cache, a company proxy, a CDN) from keeping a copy to hand to someone else. The real protection is the 1-hour expiry and HTTPS. Token responses must send it anyway (OAuth, RFC 6749 §5.1).
+
 ## What the security tests found
 
 Written before the code changes, with the failures predicted in advance: **49 of 60 passed at once**, and the 11 failures were exactly the predicted ones. Two were **real holes**:
@@ -192,11 +209,11 @@ And three corrections:
 
 See [journal row 31](journal.md). The log tests came later: 3 written and run red first, each failing as predicted ([journal row 39](journal.md)).
 
-## Integrity: 14 tests
+## Integrity: 24 tests
 
 The API **checks, then saves**, in separate steps. Two requests can both pass the check ("is this email free?", "is this still version 1?") before either one saves. These tests force exactly that, every run: a test-only repository holds both requests right after their check, then releases them together ([decision 03](decisions/03-test-strategy.md#how-the-integrity-tests-are-written)).
 
-### A. Two requests at once: 6 tests ([`races.test.ts`](../tests/integrity/races.test.ts))
+### A. Two requests at once: 7 tests ([`races.test.ts`](../tests/integrity/races.test.ts))
 
 | Race | Result |
 |---|---|
@@ -206,6 +223,9 @@ The API **checks, then saves**, in separate steps. Two requests can both pass th
 | **Two admins save the same user from version 1** | One `200`, one `412`; version is 2, not 3; the saved user is the winner's |
 | An update and a delete from the same version | One wins, the other `412`; exactly one of the two changes happened |
 | Two restores of the same user | One `200`, one `409`; the version goes up once |
+| **Two creates at once with room for only one more** | One `201`, one `409` user-limit; exactly 3 users, not 4 |
+
+**The user-limit race is forced differently.** The count happens inside the save, where the racing repository can't reach, so a temporary trigger makes each insert pause for 0.3 s. Without a lock, both requests count 2 and both save. A PostgreSQL advisory lock makes the second one wait and count 3. **Proven by breaking it:** with the lock line commented out, this test failed (`201, 201`, 4 users); put back, it passed.
 
 ### B. One user never touches another: 2 tests ([`isolation.test.ts`](../tests/integrity/isolation.test.ts))
 
@@ -233,6 +253,21 @@ The last line of defense if the code ever has a bug. The API can't send this dat
 | A second mobile phone | Refused (one per type) |
 | Phone type `fax` | Refused (check constraint) |
 | `ANN@Example.com` when `ann@example.com` exists | Refused (unique index on `lower(email)`) |
+
+### E. The demo's data: 9 tests ([`demo-data.test.ts`](../tests/integrity/demo-data.test.ts))
+
+The hosted demo starts with 50 fake users and goes back to exactly those **every night at 08:00 UTC**, so it never needs anyone to clean up after visitors.
+
+| Case | Result |
+|---|---|
+| The 50 starting users | 5 deleted, unique `@example.com` emails, and **every one passes the same validation as a real create** |
+| An empty database at startup | Added: 45 listed over 3 pages, 50 with deleted ones |
+| One user already there, even a deleted one | Nothing added |
+| A visitor adds a user, vandalizes a name, deletes someone; then the reset | Exactly the 50 starting users again |
+| **A reset that fails midway** (a test-only trigger refuses the 30th user, after the tables were emptied) | The data from before is untouched, phones and addresses included |
+| Time until the next reset at 07:59:59, 08:00:00, 09:00, 23:30 | 1 s, 24 h, 23 h, 8.5 h |
+
+**Dropped from the plan, on purpose:** a test that a create waits for a reset. Emptying the table (`TRUNCATE`) already locks it until the reset finishes, so a test of an extra lock could never fail.
 
 ## What the integrity tests found
 

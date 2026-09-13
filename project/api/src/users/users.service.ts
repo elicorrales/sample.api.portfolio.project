@@ -1,30 +1,27 @@
 import { randomUUID } from "node:crypto";
-import { conflictProblem, notFoundProblem, preconditionFailedProblem } from "../shared/errors.ts";
-import { EmailTakenError, sortByPrimaryThenType, type User, type UsersRepository } from "./users.repository.ts";
+import { conflictProblem, notFoundProblem, preconditionFailedProblem, ProblemError } from "../shared/errors.ts";
+import { EmailTakenError, sortByPrimaryThenType, type User, UserLimitError, type UsersRepository } from "./users.repository.ts";
 import { ADDRESS_TYPES, PHONE_TYPES, type ListQuery, type UserInput } from "./users.schema.ts";
 
 // Business rules. Knows nothing about HTTP; only talks to the repository interface.
 export class UsersService {
   private readonly repository: UsersRepository;
+  // Most users stored, deleted ones included; undefined means no limit.
+  private readonly maxUsers: number | undefined;
 
-  constructor(repository: UsersRepository) {
+  constructor(repository: UsersRepository, maxUsers?: number) {
     this.repository = repository;
+    this.maxUsers = maxUsers;
   }
 
   async create(input: UserInput): Promise<User> {
     await this.checkEmailIsFree(input.email);
 
-    const now = new Date().toISOString();
-    const user: User = {
-      id: randomUUID(),
-      ...userContents(input),
-      version: 1,
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-    };
-
-    await this.repository.insert(user).catch(emailTakenAsConflict);
+    const user = buildNewUser(input, new Date().toISOString());
+    await this.repository.insert(user, this.maxUsers).catch((error: unknown) => {
+      if (error instanceof UserLimitError) throw userLimitProblem(this.maxUsers as number);
+      return emailTakenAsConflict(error);
+    });
     return user;
   }
 
@@ -110,7 +107,15 @@ function emailTakenAsConflict(error: unknown): never {
   throw error;
 }
 
+const userLimitProblem = (maxUsers: number) =>
+  new ProblemError(409, "/problems/user-limit", "User limit reached", `This server stores at most ${maxUsers} users, including deleted ones`);
+
 const versionOutOfDate = () => preconditionFailedProblem("This user changed since it was loaded; reload and try again");
+
+// A new user from validated input: version 1, not deleted. Used by create and by the demo's starting users.
+export function buildNewUser(input: UserInput, now: string): User {
+  return { id: randomUUID(), ...userContents(input), version: 1, createdAt: now, updatedAt: now, deletedAt: null };
+}
 
 // The saved fields that come from the form, shared by create and update.
 function userContents(input: UserInput) {

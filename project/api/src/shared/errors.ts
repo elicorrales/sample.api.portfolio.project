@@ -1,4 +1,4 @@
-import type { ErrorRequestHandler, Response } from "express";
+import type { ErrorRequestHandler, RequestHandler, Response } from "express";
 
 // Problem Details (RFC 9457). Messages never include stack traces, SQL, or file paths.
 
@@ -43,6 +43,15 @@ export const notFoundProblem = (detail: string) => new ProblemError(404, "/probl
 export const preconditionFailedProblem = (detail: string) =>
   new ProblemError(412, "/problems/version-mismatch", "Version out of date", detail);
 
+// A known path called with a method it doesn't support. `Allow` tells the client which ones it does.
+export function methodNotAllowed(allow: string): RequestHandler {
+  return (req) => {
+    throw new ProblemError(405, "/problems/method-not-allowed", "Method not allowed", `${req.method} isn't supported here`, undefined, {
+      Allow: allow,
+    });
+  };
+}
+
 export const preconditionRequiredProblem = () =>
   new ProblemError(428, "/problems/version-required", "Version required", "Send the If-Match header with the version you loaded");
 
@@ -65,7 +74,7 @@ export function sendProblem(res: Response, instance: string, problem: ProblemErr
 // Messages are left out (Drizzle's includes the query's values), and so is PostgreSQL's `detail`
 // (e.g. "Key (email)=(...) already exists"). The path has no query string, so no search terms.
 // The stack keeps only its "at ..." lines, since its first lines repeat the message.
-function safeLogFields(method: string, path: string, err: unknown) {
+export function safeLogFields(method: string, path: string, err: unknown) {
   const error = err as { name?: string; stack?: string; code?: string; constraint?: string; cause?: unknown };
   const database = (error?.cause ?? error) as { code?: string; constraint?: string } | undefined;
   return {

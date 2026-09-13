@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
 import { PgUsersRepository } from "../../api/src/users/users.repository.pg.ts";
@@ -134,5 +135,37 @@ describe("integrity: two requests at once", () => {
     expect(statuses(first, second)).toEqual([200, 409]);
     const saved = await client.get(`/v1/users/${ann.id}`).set("Authorization", auth);
     expect(saved.headers.etag).toBe('"3"');
+  });
+
+  it("A7. two creates at once with room for only one more → one 201, one 409 user-limit, and exactly 3 users", async () => {
+    const client = request(testApp({ maxUsers: 3 }));
+    const auth = `Bearer ${await adminToken()}`;
+    await createUser(client);
+    await createUser(client);
+
+    // Each save pauses inside its insert, after counting the users. Without a lock, both requests count 2
+    // before either insert finishes, and both save. The count happens inside the insert, where the racing
+    // repository can't reach, so a temporary trigger makes the pause instead.
+    await testDatabase.execute(sql`
+      CREATE FUNCTION pause_insert() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        PERFORM pg_sleep(0.3);
+        RETURN NEW;
+      END $$`);
+    await testDatabase.execute(sql`CREATE TRIGGER pause_insert BEFORE INSERT ON users FOR EACH ROW EXECUTE FUNCTION pause_insert()`);
+    try {
+      const [first, second] = await Promise.all([
+        client.post("/v1/users").set("Authorization", auth).send(userInput()),
+        client.post("/v1/users").set("Authorization", auth).send(userInput()),
+      ]);
+
+      expect(statuses(first, second)).toEqual([201, 409]);
+      expect([first.body.type, second.body.type]).toContain("/problems/user-limit");
+      const all = await client.get("/v1/users?includeDeleted=true").set("Authorization", auth);
+      expect(all.body.totalItems).toBe(3);
+    } finally {
+      await testDatabase.execute(sql`DROP TRIGGER pause_insert ON users`);
+      await testDatabase.execute(sql`DROP FUNCTION pause_insert`);
+    }
   });
 });

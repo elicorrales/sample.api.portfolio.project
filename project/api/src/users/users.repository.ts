@@ -25,6 +25,13 @@ export class EmailTakenError extends Error {
   }
 }
 
+// Thrown by insert when the user limit is already reached (deleted users count).
+export class UserLimitError extends Error {
+  constructor() {
+    super("The user limit is reached");
+  }
+}
+
 // The order phones and addresses are always kept in: primary first, then the order the admin
 // form shows the types (phones mobile, home, work; addresses home, work, mailing).
 // The service sorts before saving; storage that doesn't keep list order sorts again when loading.
@@ -55,7 +62,9 @@ export interface UsersRepository {
   findByEmail(email: string): Promise<User | undefined>;
   // Includes deleted users; the service decides whether to hide them.
   findById(id: string): Promise<User | undefined>;
-  insert(user: User): Promise<void>;
+  // With `maxUsers`, refuses (UserLimitError) when that many users are already stored, deleted ones included.
+  // Counting and saving must be one step, or two creates at once could both fit into the last spot.
+  insert(user: User, maxUsers?: number): Promise<void>;
   // Saves only if the stored version is still `expectedVersion`; returns false otherwise.
   // With a database this is one statement (UPDATE ... WHERE version = ...), so two saves can't both win.
   replace(user: User, expectedVersion: number): Promise<boolean>;

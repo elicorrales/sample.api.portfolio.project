@@ -40,9 +40,9 @@ export class RacingRepository implements UsersRepository {
     return this.real.findById(id);
   }
 
-  async insert(user: User) {
+  async insert(user: User, maxUsers?: number) {
     await this.gate("insert");
-    return this.real.insert(user);
+    return this.real.insert(user, maxUsers);
   }
 
   async replace(user: User, expectedVersion: number) {

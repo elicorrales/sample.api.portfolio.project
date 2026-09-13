@@ -11,10 +11,14 @@ info:
     A portfolio project built **design-first**: this contract is written and reviewed
     before any server code exists.
 
-    Status: all 6 operations work, on in-memory storage for now (PostgreSQL later).
+    Status: all 6 operations work, stored in PostgreSQL.
+
+    **Demo only: all data is fake and resets every night at 08:00 UTC.**
+
+    **Trying it on the hosted demo:** call `POST /demo/token` below, copy the `token`, click **Authorize**, and paste it. Calls without it get `401`, which is auth doing its job.
 
     ## Conventions
-    - **Auth:** every operation requires an admin token (`Authorization: Bearer <JWT>`) with an expiry (`exp`). Auth is checked first: without a valid token, every request gets `401` (or `403` for a non-admin), whatever else is wrong with it.
+    - **Auth:** every operation requires an admin token (`Authorization: Bearer <JWT>`) with an expiry (`exp`). The only exceptions are this docs page, the spec, and the demo token. Auth is checked first: without a valid token, every request gets `401` (or `403` for a non-admin), whatever else is wrong with it.
     - **Body size:** request bodies over 100 KB return `413`.
     - **Errors:** all errors use Problem Details (RFC 9457), `application/problem+json`.
     - **Whole user:** phones and addresses are part of the user. Create and update send all of them; there are no separate phone or address endpoints.
@@ -26,6 +30,8 @@ info:
     - **Unknown paths and methods:** an unknown path returns `404`; a known path with an unsupported method returns `405` with an `Allow` header.
 
 tags:
+  - name: Demo
+    description: Only on the hosted demo. Get a 1-hour admin token to try the API.
   - name: Users
     description: Create, list, update, delete, and restore users, including their phones and addresses.
 
@@ -37,6 +43,38 @@ security:
   - adminToken: []
 
 paths:
+  /demo/token:
+    post:
+      tags: [Demo]
+      operationId: getDemoToken
+      summary: Get a demo admin token
+      description: |
+        **Only when the server runs in demo mode** (the hosted demo). Anywhere else this path doesn't exist, so without a token it answers `401` like any other path.
+        No token or body needed. The token is an admin token that expires after 1 hour; paste it into **Authorize**.
+        Demo only: all data is fake and resets every night at 08:00 UTC.
+      security: []
+      responses:
+        "200":
+          description: "A new admin token. Never cached (`Cache-Control: no-store`)."
+          headers:
+            Cache-Control:
+              description: Always `no-store`, so no browser or proxy keeps a copy of the token.
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DemoToken"
+        "405":
+          description: A method other than `POST`. The `Allow` header lists `POST`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
   /v1/users:
     post:
       tags: [Users]
@@ -46,6 +84,7 @@ paths:
         Email must not belong to any user, **including deleted ones** (emails are never reused).
         Date of birth must not be in the future, and the user must be 18 or older.
         Phones and addresses: 1–3 of each, one per type, exactly one primary (see `UserInput`).
+        If the server has a user limit and it's reached (deleted users count), the create is refused with `409` and type `/problems/user-limit`.
       requestBody:
         required: true
         content:
@@ -71,7 +110,26 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
         "409":
-          $ref: "#/components/responses/Conflict"
+          description: The email is already used, or the server's user limit is reached.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+              examples:
+                emailTaken:
+                  summary: Email already used
+                  value:
+                    type: /problems/conflict
+                    title: Conflict
+                    status: 409
+                    detail: A deleted user has this email; restore that user instead
+                userLimit:
+                  summary: User limit reached
+                  value:
+                    type: /problems/user-limit
+                    title: User limit reached
+                    status: 409
+                    detail: This server stores at most 200 users, including deleted ones
         "413":
           $ref: "#/components/responses/PayloadTooLarge"
         "429":
@@ -257,6 +315,26 @@ components:
       description: A JWT whose `role` claim is `admin`.
 
   schemas:
+    DemoToken:
+      type: object
+      additionalProperties: false
+      required: [token, tokenType, expiresIn, note]
+      properties:
+        token:
+          type: string
+          description: A JWT with the `admin` role.
+          example: eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiYWRtaW4ifQ.signature
+        tokenType:
+          type: string
+          const: Bearer
+        expiresIn:
+          type: integer
+          description: Seconds until the token stops working.
+          const: 3600
+        note:
+          type: string
+          example: "Demo only: all data is fake and resets every night at 08:00 UTC"
+
     Uuid:
       type: string
       format: uuid

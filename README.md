@@ -16,7 +16,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Update user | ✅ Whole-user replace with optimistic locking (tests green, callable from Swagger UI) |
 | Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
 | Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
-| Tests | ✅ 245 green; see [Tests](#tests) below |
+| Tests | ✅ 263 green; see [Tests](#tests) below |
 | Storage | ✅ PostgreSQL 18 via Drizzle; locally a real server run from `node_modules` (`embedded-postgres`), hosted later through `DATABASE_URL` |
 | Hosting | ⏳ Next: API and its Swagger page on Render (docs stay on GitHub) |
 
@@ -28,9 +28,9 @@ Details: [PROGRESS.md](PROGRESS.md)
 
 | Category | What it proves | Tests | Status |
 |---|---|---|---|
-| **Bad calls** | Every kind of client mistake gets the right status and an error naming the field: `José` → 400, stale version → 412, deleted user's email → 409, `<script>` never echoed back; a typo in the server's settings (`DEMO_MODE=yes`) stops it from starting | **129** | ✅ |
-| **Security** | Forged tokens (`alg: none`, edited role, no expiry) → 401; no token → 401 before anything else is checked; SQL in `search`/`sort` does nothing; a forced crash leaks no SQL or file paths, and **the server's own log holds no names or emails**; look-alike origins get no CORS; the public docs can't be used to reach other files. **Found 2 real holes**, now fixed | **73** | ✅ |
-| **Integrity** | Two requests forced to collide: same email → one `201`, one `409`; same version → one `200`, one `412`, saved once; a save failing midway leaves nothing half-written. **Found 1 real bug** (`500` instead of `409` in a race), now fixed | **14** | ✅ |
+| **Bad calls** | Every kind of client mistake gets the right status and an error naming the field: `José` → 400, stale version → 412, deleted user's email → 409, `<script>` never echoed back; a typo in the server's settings (`DEMO_MODE=yes`) stops it from starting; a full demo refuses new users | **132** | ✅ |
+| **Security** | Forged tokens (`alg: none`, edited role, no expiry) → 401; no token → 401 before anything else is checked; SQL in `search`/`sort` does nothing; a forced crash leaks no SQL or file paths, and **the server's own log holds no names or emails**; look-alike origins get no CORS; the public docs can't be used to reach other files; a demo token stops working after 1 hour, and doesn't exist outside demo mode. **Found 2 real holes**, now fixed | **78** | ✅ |
+| **Integrity** | Two requests forced to collide: same email → one `201`, one `409`; same version → one `200`, one `412`, saved once; a save failing midway leaves nothing half-written; two creates racing for the last spot → exactly one saved (**checked by deleting the lock and watching the test fail**); the demo's nightly reset that fails midway changes nothing. **Found 1 real bug** (`500` instead of `409` in a race), now fixed | **24** | ✅ |
 | **Rate limiting** | Over 100 requests a minute → `429` with `Retry-After`; token-guessing floods and faked IP headers are stopped too; a blocked create saves nothing | **12** | ✅ |
 | **Performance** | Search and paging stay fast at scale | — | ⏳ Planned |
 | **Encryption** | Personal fields are stored encrypted (the raw database row never holds the plain value); a wrong key fails loudly; rotated keys still read old data. Designed, not built: [decision 12](project/docs/decisions/12-encryption.md) explains why and what it would take | — | 📝 Designed only |
@@ -99,6 +99,7 @@ npm test
 | `npm run lint:spec` | Lint the OpenAPI spec |
 | `npm start` | Start the API the way Render does (plain `node`; needs `JWT_SECRET` and `DATABASE_URL`) |
 | `npm run dev` | Start the API on port 3000 with auto-restart (starts a local PostgreSQL too; data saved in `project/.data/postgres`, kept between restarts) |
+| `npm run dev:demo` | Same, in demo mode, as on Render: 50 starting users on an empty database, `POST /demo/token`, a 200-user limit, nightly reset |
 | `npm run db:generate` | Write a new SQL migration after changing the tables |
 | `npm run token` | Print an admin token for Swagger UI's **Authorize** button |
 

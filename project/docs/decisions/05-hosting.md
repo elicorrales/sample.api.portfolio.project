@@ -230,6 +230,8 @@ These demo safeguards double as security and rate-limit tests ([03](03-test-stra
 
 **Origin:** picked (the bonus is mine)
 
+**As built:** `POST /demo/token`, outside `/v1`, mounted before auth and only in demo mode; with demo mode off it answers `401` like any unknown path. Response: `{ token, tokenType: "Bearer", expiresIn: 3600, note }` with `Cache-Control: no-store`. The token is signed by the same `signAdminToken()` as `npm run token`. In the spec it has its own **Demo** tag at the top, with no lock icon. **I asked for the plan in simpler words first,** then recognized it as this question's option A. **I also asked whether `no-store` is real protection,** since a browser can ignore it: it isn't a lock, only a request that well-behaved caches (browser disk, company proxy, CDN) obey, so they don't keep a copy to hand to someone else. The 1-hour expiry and HTTPS are the real protection; OAuth requires the header on token responses anyway. 5 security tests; 254 green.
+
 ### Demo data: 50 starting users and a 200-user cap (2026-09-13)
 
 **I asked for both:** create a batch of users on first startup, so the web client has at least 2 pages to show, and cap the total at 200.
@@ -258,6 +260,8 @@ These demo safeguards double as security and rate-limit tests ([03](03-test-stra
 
 **Origin:** mine (50 users, the 200 cap); the details were suggested and I agreed
 
+**Cap as built:** only creates are limited; update, delete, and restore add no rows. Checks on create: body `400` → email `409` → limit `409`. The repository counts and inserts in one transaction holding advisory lock `USER_COUNT_LOCK` (the nightly reset will take the same lock). The race test couldn't use the racing repository, since the count is inside the insert; a temporary trigger pauses each insert for 0.3 s instead. **I checked the race test by breaking the code:** with the lock line commented out, it failed (`201, 201`, 4 users); restored, it passed. 249 green.
+
 ### Keeping the demo healthy without me: a nightly reset (2026-09-13)
 
 **Goal (mine):** the hosted demo must never need me to fix it.
@@ -283,5 +287,7 @@ These demo safeguards double as security and rate-limit tests ([03](03-test-stra
 **Tests (integrity):** make changes, run the reset → exactly the 50 starting users; a create during the reset waits, then counts correctly. The timer line itself isn't tested.
 
 **Accepted downside:** anyone using the demo at 08:00 UTC loses their changes.
+
+**As built:** `api/src/demo/`. The 50 starting users are generated in a fixed order from hand-written lists (shared last names, `O'Brien`, `Smith-Jones`, `St. Clair`, 3 phone formats, numbers in the 555-0100 to 0199 range reserved for fiction) and go through **the same validation and building code as a real create**. Phones and addresses are 1–3 each, not 0–3 as first planned: the API's own rules require at least one. The reset is `TRUNCATE` plus inserts in one transaction. **Changed from the plan: no advisory lock on the reset.** `TRUNCATE` already locks the table until the reset commits, so a create waits anyway, and a test of an extra lock could never fail; after my lock-removal check on the cap, the AI dropped that claim rather than keep an untestable one. A failed reset is logged with safe fields and changes nothing. `npm run dev:demo` runs demo mode locally. 9 integrity tests; 263 green; tried locally: 45 users over 3 pages.
 
 **Origin:** changed (the AI's first proposal, which I turned down, then came back to with a reason: no upkeep, and the right hour for US visitors)

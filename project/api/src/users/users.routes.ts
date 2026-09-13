@@ -1,7 +1,8 @@
-import { Router, type RequestHandler } from "express";
+import { Router } from "express";
 import type { z } from "zod";
 import {
   type FieldError,
+  methodNotAllowed,
   ProblemError,
   preconditionFailedProblem,
   preconditionRequiredProblem,
@@ -77,15 +78,6 @@ export function usersRoutes(service: UsersService) {
     .all(methodNotAllowed("POST"));
 
   return router;
-}
-
-// A known path called with a method it doesn't support. `Allow` tells the client which ones it does.
-function methodNotAllowed(allow: string): RequestHandler {
-  return (req) => {
-    throw new ProblemError(405, "/problems/method-not-allowed", "Method not allowed", `${req.method} isn't supported here`, undefined, {
-      Allow: allow,
-    });
-  };
 }
 
 // If-Match carries the ETag the client loaded, e.g. "3". Missing → 428; anything else that
