@@ -11,7 +11,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Design decisions | ✅ Logged (10 topics) |
 | OpenAPI spec | ✅ All 6 operations, passes lint (v0.1.0) |
 | First vertical slice | ✅ Create user works end to end (tests green, callable from Swagger UI) |
-| List users | ✅ Search, sort, paging (tests green) |
+| List users | ✅ Search, sort, paging (tests green, callable from Swagger UI) |
 | Other 4 operations | 🔴 In progress: tests first, then code, one operation at a time |
 | Hosting | ⏳ Later: docs page on Netlify, API on Render |
 
