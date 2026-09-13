@@ -10,8 +10,8 @@ Getting ready to host, I noticed we had never discussed encryption. The API stor
 
 | Layer | Protects against | How | In this project |
 |---|---|---|---|
-| **In transit** | Someone reading traffic between the browser, the API, and the database | HTTPS to the API; SSL on the database connection | Comes with hosting: Render serves HTTPS automatically, and hosted PostgreSQL providers require SSL. A setting, not code |
-| **At rest, disk level** | A stolen disk, or a leaked backup file | The database provider encrypts the storage underneath PostgreSQL | Left to the provider; **to verify** when choosing one (Render, Neon, or Supabase) |
+| **In transit** | Someone reading traffic between the browser, the API, and the database | HTTPS to the API; SSL on the database connection | Comes with hosting: Render serves HTTPS automatically. The API reaches the database over Render's private network with SSL (`sslmode=no-verify`: encrypted, but the self-signed certificate isn't checked), and outside access to the database is off ([05](05-hosting.md#connecting-the-api-to-the-database-2026-09-13)). A setting, not code |
+| **At rest, disk level** | A stolen disk, or a leaked backup file | The database provider encrypts the storage underneath PostgreSQL | Left to the provider. **Verified:** Render Postgres encrypts data and backups with AES-256 (chosen in [05](05-hosting.md#database-provider-and-plans-2026-09-13)) |
 | **At rest, field level** | Someone who gets into the database itself, or a copy of its data | The API encrypts chosen fields (e.g. AES-256-GCM) before saving, and decrypts them after loading | **Not done.** Reasons below |
 
 ## Why field-level encryption isn't done

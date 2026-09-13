@@ -169,6 +169,8 @@ Planning the rate-limit tests raised these (2026-09-13):
 | 26 | Library or hand-written | `express-rate-limit`, or about 30 lines of our own | **Hand-written** (`shared/rate-limit.ts`) | Same reason as CORS: it's clear what it does | suggested |
 | 27 | Trust `X-Forwarded-For` for the client IP? | Always, never, or a set number of proxies | **0 proxies by default**, with a `trustProxy` option | Trusting it blindly lets anyone fake a new IP to get a fresh limit. The Render setting is decided at hosting time ([05](05-hosting.md)) | suggested |
 
+**Row 27 at hosting time (2026-09-13):** the hop count comes from a `TRUST_PROXY` environment variable (default 0), so a wrong value is fixed in Render's settings with no code change. Several Render users report 1 hop, but the AI couldn't confirm that in Render's docs, and Cloudflare in front of Render might add one. **Choice: deploy with `TRUST_PROXY=1` and measure** with `curl`: after 100 calls, one more with a fake `X-Forwarded-For` must still get `429` (a fresh limit would mean too many hops trusted), and a second device on another network must still get through (the same limit for everyone would mean too few). **Origin:** picked
+
 Where it sits: CORS → **rate limit** → auth. After CORS, so preflights don't count and a `429` still has the CORS headers a web page needs to read `Retry-After`.
 
 Row 20 still holds, with one clarification: the token is checked **before the body is even read** ([04](04-admin-vs-self-service.md#auth-details-security-tests)).

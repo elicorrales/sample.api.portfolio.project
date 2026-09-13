@@ -123,7 +123,34 @@ The red run printed the failed database error, and **Drizzle's error includes th
 | A logging library with redaction (e.g. `pino` with `redact`) | Structured logs; sensitive fields removed by name |
 | Leave as is | Fine locally; not once hosted |
 
-**Status:** not yet decided. **To decide at the hosting step,** before real logs exist. **Origin:** suggested (spotted in the test output); I asked that it be recorded and showcased
+**Origin:** suggested (spotted in the test output); I asked that it be recorded and showcased
+
+**Decided at the hosting step (2026-09-13):**
+
+| Option | Result |
+|---|---|
+| **A. Log only safe parts:** error name, PostgreSQL code, constraint name, stack, and no message | **Chosen**, with a security test (data leaks group) that forces a database error and checks that no email, name, or date of birth is logged |
+| A+. A, plus a **request id** in each error log line, returned to the caller | Good practice; **documented, not built** (I need to finish the portfolio) |
+| B. A logging library with redaction (`pino`) | Overkill for one log line |
+| C. Leave as is | Out: personal data would sit in Render's logs |
+
+**Question I asked:** logs shouldn't show unsafe data, but they exist for troubleshooting, so how would a real product get both? By logging **pointers to the data, not the data itself**:
+
+| Technique | What it adds |
+|---|---|
+| Log ids, not values (`userId: 42`) | Engineers look up the record through database access that is limited and audited |
+| Request id, sent back to the caller | "Error, ref `abc123`" leads straight to that request's log lines (A+ above) |
+| Structured (JSON) logs | Searchable fields; easy redaction by field name |
+| Allowlist of safe fields, not a blocklist | New fields stay out of the logs until marked safe |
+| Keyed hash (HMAC) of the email | Shows "same person" across requests without the email |
+| Log levels | Debug detail stays off in production; turned on in staging with fake data |
+| Reproduce with fake data | What the race tests did: found the `500` with no real user involved |
+| Error tracking (e.g. Sentry) with scrubbing | Groups and alerts on errors; removes data before storing |
+| Limited log access and retention | Few readers, audited, deleted after a set number of days |
+
+Under privacy laws such as GDPR, logs holding personal data are personal data too; a deletion request would have to reach them. Not logging it avoids that.
+
+**Origin:** picked (A+ and the list came from my question)
 
 ## Stage 3: a real PostgreSQL server (2026-09-13)
 

@@ -34,17 +34,17 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 
 ## Next steps
 
-1. **Next: host the API on Render** (chosen 2026-09-13). The Swagger page is served by the API at `/docs`; the journal, decisions, and test showcase stay on GitHub, with the README as the entry point (decision 05, revised). Walk through these questions together first:
-   - Hosted PostgreSQL 18: Render, Neon, or Supabase (check current free-tier limits and expiry; confirm at-rest encryption, decision 12)
-   - `DATABASE_URL` with SSL; HTTPS only (decision 12)
-   - How demo visitors get a token (decision 05, open)
-   - Personal data kept out of server logs (decision 11, open)
-   - `trustProxy` for Render (decision 10, row 27)
-   - How the API runs there: `tsx`, or compiled first (Node's built-in TypeScript support can't run constructor parameter properties)
-   - Serving the Swagger page at `/docs`, and what happens to `website/` and `netlify.toml`
-   - Demo data: fake-data notice and a scheduled reset (decision 05)
+1. **Next: host the API on Render.** All 8 hosting questions are decided (journal row 37, decision 05). Build them in this order, each one red → green, then deploy:
+   1. **Run on plain Node:** rewrite 2 constructors, add `erasableSyntaxOnly`; start with `node api/src/server.ts`. No new tests; the 218 must stay green
+   2. **Safe error logs:** log only error name, PostgreSQL code, constraint, stack; security test proving no personal data is logged (decision 11)
+   3. **Swagger in the API:** `/docs` (`swagger-ui-dist`) and `/openapi.yaml` without a token, spec `servers: /`; delete `website/api-docs/` and `netlify.toml` (`website/` stays for the web client); update README and PROGRESS instructions
+   4. **Settings from env vars:** `TRUST_PROXY` (default 0), `DEMO_MODE`, `MAX_USERS`
+   5. **200-user cap:** `409` `/problems/user-limit`, deleted users included; advisory lock; bad-call and integrity (race) tests; spec first
+   6. **Demo token:** `POST /demo/token`, 1-hour token, only when `DEMO_MODE` is on; spec first
+   7. **Starting users, nightly reset, notice:** 50 users when the table is empty (never in tests); reset at 08:00 UTC under the same lock; "Demo only: all data is fake and resets every night at 08:00 UTC" on `/docs` and in the token response; integrity tests
+   8. **Deploy:** Render project with Starter web service + Postgres Basic-256mb (PostgreSQL 18), internal URL + `?sslmode=no-verify`, external database access off; then measure `TRUST_PROXY` with `curl` and a second device
 2. **Then: the admin web client**
-3. **Skipped on purpose; note in the README as next steps if the project continued:** performance tests; field-level encryption (decision 12); mutation testing (e.g. Stryker)
+3. **Skipped on purpose; note in the README as next steps if the project continued:** performance tests; field-level encryption (decision 12); mutation testing (e.g. Stryker); request ids in logs and the other logging practices (decision 11)
 4. Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
 
 ## Useful commands (from `project/`)
