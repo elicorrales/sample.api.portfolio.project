@@ -10,8 +10,8 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 |---|---|
 | Design decisions | ✅ Logged (10 topics) |
 | OpenAPI spec | ✅ All 6 operations, passes lint (v0.1.0) |
-| Tests | 🔴 In progress: the first test runs and fails as intended |
-| Real code | ⏳ Next, once the tests are written |
+| First vertical slice | ✅ Create user works end to end (tests green, callable from Swagger UI) |
+| Other 5 operations | 🔴 In progress: tests first, then code, one operation at a time |
 | Hosting | ⏳ Later: docs page on Netlify, API on Render |
 
 Details: [PROGRESS.md](PROGRESS.md)
@@ -67,9 +67,10 @@ npm test
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |
-| `npm run dev` | Start the API on port 3000 |
+| `npm run dev` | Start the API on port 3000 (in-memory data, lost on restart) |
+| `npm run token` | Print an admin token for Swagger UI's **Authorize** button |
 
-To view the docs page, run `python3 -m http.server 8080` from the repo root, then open `http://localhost:8080/website/api-docs/`.
+To try the API from the docs page: run `npm run dev`; in another terminal, run `python3 -m http.server 8080` from the repo root; open `http://localhost:8080/website/api-docs/`; click **Authorize** and paste the output of `npm run token`.
 
 ## More of my work
 

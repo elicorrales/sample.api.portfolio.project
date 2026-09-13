@@ -32,7 +32,7 @@ These docs are written in my voice: **I / my / mine** means me, the project auth
 | 03 | [Test strategy](03-test-strategy.md) | Decided |
 | 04 | [Admin API vs self-service](04-admin-vs-self-service.md) | Decided |
 | 05 | [Hosting and public demo](05-hosting.md) | Partly decided |
-| 06 | [Code layering and folders](06-layering.md) | Proposed |
+| 06 | [Code layering and folders](06-layering.md) | Decided |
 | 07 | [Users](07-users.md) | Decided |
 | 08 | [Phones and addresses](08-phones-addresses.md) | Decided |
 | 09 | [Docs, memory, and capturing the process](09-docs-and-process.md) | Decided |

@@ -8,7 +8,8 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "tsx watch api/src/server.ts",
+    "dev": "JWT_SECRET=dev-only-secret-not-for-production-use CORS_ORIGINS=http://localhost:8080 tsx watch api/src/server.ts",
+    "token": "JWT_SECRET=dev-only-secret-not-for-production-use tsx scripts/dev-token.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -16,7 +17,8 @@
   },
   "dependencies": {
     "express": "5.2.1",
-    "jose": "6.2.12"
+    "jose": "6.2.12",
+    "zod": "4.6.4"
   },
   "devDependencies": {
     "@types/express": "5.0.6",

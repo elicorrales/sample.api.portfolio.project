@@ -1,6 +1,6 @@
 # 06 — Code layering and folders
 
-**Date:** 2026-09-12 · **Status:** Proposed
+**Date:** 2026-09-12 · **Status:** Decided (at the first vertical slice)
 
 ## Context
 
@@ -75,3 +75,26 @@ project/tests/
 **Tests are grouped by category, not by feature,** because each category spans users, phones, and addresses.
 
 **Origin:** suggested, based on my own Countryside layout
+
+## As built (first vertical slice: create user)
+
+**Choice:** the proposal above, with these changes. **Origin:** suggested; I approved the tree before building
+
+| Change | Why |
+|---|---|
+| No `phones/` or `addresses/` folders | They're part of the user ([08 revision](08-phones-addresses.md#revision-one-user-form-one-save)) |
+| In-memory repository in `src/users/users.repository.memory.ts`, not `tests/fakes/` | The local server uses it too, until the real database arrives; server code shouldn't import from `tests/` |
+| `shared/cors.ts` added | Hand-written, about 20 lines, instead of the `cors` package, so it's clear what CORS does |
+| `scripts/dev-token.ts` added | Prints an admin token for Swagger UI (`npm run token`) |
+
+```
+project/
+  api/src/
+    app.ts        server.ts
+    users/        users.routes.ts · users.service.ts · users.repository.ts · users.repository.memory.ts · users.schema.ts
+    shared/       auth.ts · cors.ts · errors.ts
+  scripts/        dev-token.ts
+  tests/          happy-path/ · helpers/
+```
+
+**How the app gets its settings:** `createApp()` takes the JWT secret, allowed CORS origins, and repository as arguments. Tests pass a test secret and get a fresh in-memory repository; `server.ts` reads them from environment variables and refuses to start without `JWT_SECRET`.

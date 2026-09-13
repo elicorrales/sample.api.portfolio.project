@@ -1,22 +1,39 @@
 import express from "express";
+import { requireAdmin } from "./shared/auth.ts";
+import { cors } from "./shared/cors.ts";
+import { errorHandler, ProblemError, sendProblem } from "./shared/errors.ts";
+import { MemoryUsersRepository } from "./users/users.repository.memory.ts";
+import type { UsersRepository } from "./users/users.repository.ts";
+import { usersRoutes } from "./users/users.routes.ts";
+import { UsersService } from "./users/users.service.ts";
+
+export interface AppOptions {
+  jwtSecret: string;
+  corsOrigins?: string[];
+  usersRepository?: UsersRepository;
+}
 
 // Builds the Express app without starting a server, so tests can call it directly.
-// Skeleton: every request answers 501 until real routes exist.
-export function createApp() {
+// Order matters: CORS (answers preflights) → JSON body → auth → routes → 501 → errors.
+export function createApp({ jwtSecret, corsOrigins = [], usersRepository = new MemoryUsersRepository() }: AppOptions) {
   const app = express();
 
+  app.use(cors(corsOrigins));
+  app.use(express.json({ limit: "100kb" }));
+  app.use(requireAdmin(jwtSecret));
+
+  app.use("/v1/users", usersRoutes(new UsersService(usersRepository)));
+
+  // Operations not built yet.
   app.use((req, res) => {
-    res
-      .status(501)
-      .type("application/problem+json")
-      .json({
-        type: "/problems/not-implemented",
-        title: "Not implemented",
-        status: 501,
-        detail: `${req.method} ${req.path} is not implemented yet`,
-        instance: req.path,
-      });
+    sendProblem(
+      res,
+      req.path,
+      new ProblemError(501, "/problems/not-implemented", "Not implemented", `${req.method} ${req.path} is not implemented yet`),
+    );
   });
+
+  app.use(errorHandler);
 
   return app;
 }
