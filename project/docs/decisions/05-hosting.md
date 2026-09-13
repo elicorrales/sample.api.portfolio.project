@@ -16,6 +16,15 @@ Start local, then host on services I already use.
 | Portfolio pages | Netlify | `website/` |
 | Web client (later) | Netlify | Needs CORS enabled on the API |
 
+### Revised at hosting time (2026-09-13)
+
+| Piece | Before | Now | Why |
+|---|---|---|---|
+| Swagger UI | Static page on Netlify, then `/docs` | **Served by the API at `/docs` on Render** | One URL, "Try it out" works, no CORS for the docs |
+| Portfolio pages (journal, decisions, test showcase) | Netlify (`website/`) | **GitHub**, with the README as the entry point | GitHub already renders the markdown; nothing extra to host |
+
+**Origin:** mine
+
 ## Viewing the spec before the API exists
 
 **Question:** How do I (and employers) see the OpenAPI spec while it's being written?

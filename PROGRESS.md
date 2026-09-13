@@ -8,7 +8,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 
 | Area | State |
 |---|---|
-| Design decisions | Logged in `project/docs/decisions/` (01–11) |
+| Design decisions | Logged in `project/docs/decisions/` (01–12) |
 | Plain-language operations | `project/docs/spec/operations.md` (6 operations; was 16 before the "one user form, one save" revision) |
 | OpenAPI spec | `project/api/openapi.yaml`: all 6 operations; phones and addresses are part of the user; passes lint; version 0.1.0 (1.0.0 once the web client proves it) |
 | Docs page | `website/api-docs/index.html` (Swagger UI) |
@@ -34,17 +34,18 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 
 ## Next steps
 
-1. **Next: pick one** (not yet chosen):
-   - **Hosting:** docs page on Netlify, API on Render. Needs:
-     - a hosted PostgreSQL 18 (Render, Neon, or Supabase; their free tiers expire or sleep), with SSL in `DATABASE_URL`
-     - a way for visitors to get a token (decision 05)
-     - `trustProxy` set for Render (decision 10, row 27)
-     - **personal data kept out of server logs** (decision 11, open)
-   - **Performance tests:** the last test category; needs a load-testing tool (k6 or autocannon)
-2. Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
-3. **Maybe later:** mutation testing (e.g. Stryker) to check the tests catch deliberately broken code; running test files in parallel again (measure memory first)
-4. **Later:** admin web client
-5. **Once the docs page is on Netlify:** add this API to the [projects landing page](https://all-my-projects-landing-page.netlify.app/), and add the live docs link to `README.md` (it has local-only instructions for now)
+1. **Next: host the API on Render** (chosen 2026-09-13). The Swagger page is served by the API at `/docs`; the journal, decisions, and test showcase stay on GitHub, with the README as the entry point (decision 05, revised). Walk through these questions together first:
+   - Hosted PostgreSQL 18: Render, Neon, or Supabase (check current free-tier limits and expiry; confirm at-rest encryption, decision 12)
+   - `DATABASE_URL` with SSL; HTTPS only (decision 12)
+   - How demo visitors get a token (decision 05, open)
+   - Personal data kept out of server logs (decision 11, open)
+   - `trustProxy` for Render (decision 10, row 27)
+   - How the API runs there: `tsx`, or compiled first (Node's built-in TypeScript support can't run constructor parameter properties)
+   - Serving the Swagger page at `/docs`, and what happens to `website/` and `netlify.toml`
+   - Demo data: fake-data notice and a scheduled reset (decision 05)
+2. **Then: the admin web client**
+3. **Skipped on purpose; note in the README as next steps if the project continued:** performance tests; field-level encryption (decision 12); mutation testing (e.g. Stryker)
+4. Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
 
 ## Useful commands (from `project/`)
 

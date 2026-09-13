@@ -8,7 +8,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 
 | Stage | State |
 |---|---|
-| Design decisions | ✅ Logged (11 topics) |
+| Design decisions | ✅ Logged (12 topics) |
 | OpenAPI spec | ✅ All 6 operations, passes lint (v0.1.0) |
 | First vertical slice | ✅ Create user works end to end (tests green, callable from Swagger UI) |
 | List users | ✅ Search, sort, paging (tests green, callable from Swagger UI) |
@@ -18,7 +18,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
 | Tests | ✅ 218 green; see [Tests](#tests) below |
 | Storage | ✅ PostgreSQL 18 via Drizzle; locally a real server run from `node_modules` (`embedded-postgres`), hosted later through `DATABASE_URL` |
-| Hosting | ⏳ Later: docs page on Netlify, API on Render |
+| Hosting | ⏳ Next: API and its Swagger page on Render (docs stay on GitHub) |
 
 Details: [PROGRESS.md](PROGRESS.md)
 
@@ -43,6 +43,7 @@ Details: [PROGRESS.md](PROGRESS.md)
 - **Tests before code.** Each test is written first and must fail for the right reason before any code is written to pass it.
 - **201 bad-call, security, integrity, and rate-limit tests vs 17 happy-path.** Most of the work is proving what the API refuses ([tests](project/docs/testing.md)).
 - **Storage swapped twice, tests unchanged.** In-memory → PGlite → a real PostgreSQL server; no test changed, and the tests caught the one behavior that differed ([decision 11](project/docs/decisions/11-database.md#what-the-swap-found)).
+- **Encryption, thought through but not built.** What protects user data in transit and at rest, why field-level encryption would break search and the unique email rule, and what doing it properly would take ([decision 12](project/docs/decisions/12-encryption.md)).
 - **Decisions on paper.** Every choice records the question, the options, what was picked, and why ([decision log](project/docs/decisions/README.md)).
 - **A visible AI trail.** See below.
 

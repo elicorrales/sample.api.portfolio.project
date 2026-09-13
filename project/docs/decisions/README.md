@@ -38,6 +38,7 @@ These docs are written in my voice: **I / my / mine** means me, the project auth
 | 09 | [Docs, memory, and capturing the process](09-docs-and-process.md) | Decided |
 | 10 | [API conventions (mapping operations to HTTP)](10-api-conventions.md) | Decided |
 | 11 | [Database (Drizzle + PostgreSQL)](11-database.md) | Decided |
+| 12 | [Encrypting user data](12-encryption.md) | Decided: documented, not built |
 
 ## Open items
 
