@@ -17,6 +17,9 @@ export interface AppOptions {
 // Order matters: CORS (answers preflights) → JSON body → auth → routes → 501 → errors.
 export function createApp({ jwtSecret, corsOrigins = [], usersRepository = new MemoryUsersRepository() }: AppOptions) {
   const app = express();
+  // Express would otherwise add its own body-hash ETag to every response. Our ETag is the
+  // user's version (for If-Match), so only routes that return a user set one.
+  app.set("etag", false);
 
   app.use(cors(corsOrigins));
   app.use(express.json({ limit: "100kb" }));

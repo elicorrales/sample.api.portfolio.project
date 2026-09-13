@@ -1,8 +1,8 @@
 import { Router } from "express";
 import type { z } from "zod";
 import { validationProblem } from "../shared/errors.ts";
-import { listQuerySchema, userInputSchema } from "./users.schema.ts";
-import { toDetailedView, type UsersService } from "./users.service.ts";
+import { getQuerySchema, listQuerySchema, userIdParamsSchema, userInputSchema } from "./users.schema.ts";
+import { toBasicView, toDetailedView, type UsersService } from "./users.service.ts";
 
 // HTTP layer: parse the request, call the service, shape the response.
 export function usersRoutes(service: UsersService) {
@@ -21,6 +21,13 @@ export function usersRoutes(service: UsersService) {
   router.get("/", async (req, res) => {
     const query = parseOrThrow(listQuerySchema, req.query, "query");
     res.json(await service.list(query));
+  });
+
+  router.get("/:userId", async (req, res) => {
+    const { userId } = parseOrThrow(userIdParamsSchema, req.params, "userId");
+    const { view } = parseOrThrow(getQuerySchema, req.query, "query");
+    const user = await service.get(userId);
+    res.set("ETag", `"${user.version}"`).json(view === "detailed" ? toDetailedView(user) : toBasicView(user));
   });
 
   return router;

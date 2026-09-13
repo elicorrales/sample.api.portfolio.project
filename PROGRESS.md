@@ -17,7 +17,8 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | Code layout | Decision 06 decided: feature folders, layer in the filename (`users.routes.ts` → `users.service.ts` → `users.repository.ts`) |
 | **Vertical slice: create user** | `POST /v1/users` works end to end: Zod validation, rules, in-memory repository, JWT auth, CORS, Problem Details errors. The other 5 operations answer `501`. Tried live from Swagger UI: `201`, then `409` on the same email. |
 | **List users** | `GET /v1/users`: search, sort (ignoring case; tie-breakers always ascending), paging, page past the end → empty page. Tried from Swagger UI. |
-| Happy-path tests | **7 green:** `users.create.test.ts` (2), `users.list.test.ts` (5). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
+| **Get one user** | `GET /v1/users/{userId}`: basic (default) or `view=detailed`, `ETag`; unknown id → `404`. Express's automatic ETags turned off. |
+| Happy-path tests | **9 green:** `users.create.test.ts` (2), `users.list.test.ts` (5), `users.get.test.ts` (2). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`). Installs, tests, and servers run on the laptop (the VM is memory-limited). |
 | Root README | Entry point for recruiters, employers, and devs: status, AI collaboration, reading order, run commands, links to my other work |
 
@@ -27,14 +28,13 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 
    | # | Operation | Test |
    |---|---|---|
-   | 5 | Get one | **Next.** Basic (default), then `view=detailed`; `ETag` |
-   | 6 | Update | Change name, replace phones, new primary → version 2 |
+   | 6 | Update | **Next.** Change name, replace phones, new primary → version 2 |
    | 7 | Update | Reduce to 1 phone, no primary marked → automatic primary |
    | 8 | Delete | Hidden from list/get; visible with `includeDeleted` |
    | 9 | Restore | Back in the list, phones and addresses intact |
    | — | Workflow | Create → list → get → edit → delete → restore, same user |
 
-   Open question for bad calls: unknown query parameters (`?foo=1`) are ignored for now; 400 instead?
+   Notes for bad calls: unknown query parameters (`?foo=1`) are ignored for now (400 instead?) · add a test that lists and errors carry no `ETag` · not-a-UUID id → 400, unknown id → 404
 2. **Bad-calls tests** next; walk through the list before writing them
 3. **Later:** PGlite → native PostgreSQL; integrity, security, rate-limit, and performance tests; admin web client; hosting (Netlify docs page, Render API)
 4. **Once the docs page is on Netlify:** add this API to the [projects landing page](https://all-my-projects-landing-page.netlify.app/), and add the live docs link to `README.md` (it has local-only instructions for now)

@@ -24,6 +24,8 @@ export const validationProblem = (errors: FieldError[]) =>
 
 export const conflictProblem = (detail: string) => new ProblemError(409, "/problems/conflict", "Conflict", detail);
 
+export const notFoundProblem = (detail: string) => new ProblemError(404, "/problems/not-found", "Not found", detail);
+
 export function sendProblem(res: Response, instance: string, problem: ProblemError) {
   res
     .status(problem.status)

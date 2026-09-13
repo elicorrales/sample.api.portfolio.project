@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { conflictProblem } from "../shared/errors.ts";
+import { conflictProblem, notFoundProblem } from "../shared/errors.ts";
 import type { Address, Phone, User, UsersRepository } from "./users.repository.ts";
 import { ADDRESS_TYPES, PHONE_TYPES, type ListQuery, type UserInput } from "./users.schema.ts";
 
@@ -36,6 +36,12 @@ export class UsersService {
     };
 
     await this.repository.insert(user);
+    return user;
+  }
+
+  async get(id: string): Promise<User> {
+    const user = await this.repository.findById(id);
+    if (!user) throw notFoundProblem("No user with this id");
     return user;
   }
 

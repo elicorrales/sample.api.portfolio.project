@@ -108,3 +108,10 @@ export const listQuerySchema = z.object({
 });
 
 export type ListQuery = z.infer<typeof listQuerySchema>;
+
+// Path and query for getting one user.
+export const userIdParamsSchema = z.object({ userId: z.uuid() });
+
+export const getQuerySchema = z.object({
+  view: z.enum(["basic", "detailed"]).default("basic"),
+});

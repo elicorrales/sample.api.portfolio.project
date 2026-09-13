@@ -14,6 +14,11 @@ export class MemoryUsersRepository implements UsersRepository {
     return undefined;
   }
 
+  async findById(id: string) {
+    const user = this.users.get(id);
+    return user && structuredClone(user);
+  }
+
   async insert(user: User) {
     this.users.set(user.id, structuredClone(user));
   }
