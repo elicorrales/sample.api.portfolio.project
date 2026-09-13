@@ -101,4 +101,4 @@ All five proposals were accepted as-is. **Origin:** suggested
 | 2 | Does **delete user** require the version I loaded? | Yes | Prevents deleting a user based on an out-of-date screen |
 | 3 | Restoring a user who isn't deleted | Conflict | Tells the caller something is off, instead of silently doing nothing |
 | 4 | Do phones and addresses use **optimistic locking** (version) like users? | ~~Yes~~ **Covered by the user's version** (revision) | ~~Same "no silent overwrite" rule everywhere; one pattern for the web client~~ They're saved as part of the user |
-| 5 | Order of a user's phones and addresses | Primary first, then by type | Predictable display in the web client |
+| 5 | Order of a user's phones and addresses | Primary first, then by type in the listed order (phones: mobile, home, work · addresses: home, work, mailing) | Predictable display in the web client |

@@ -9,7 +9,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Stage | State |
 |---|---|
 | Design decisions | ✅ Logged (10 topics) |
-| OpenAPI spec | ✅ All 16 operations, passes lint (v0.1.0) |
+| OpenAPI spec | ✅ All 6 operations, passes lint (v0.1.0) |
 | Tests | 🔴 In progress: the first test runs and fails as intended |
 | Real code | ⏳ Next, once the tests are written |
 | Hosting | ⏳ Later: docs page on Netlify, API on Render |

@@ -42,4 +42,41 @@ describe("POST /v1/users", () => {
       version: 1,
     });
   });
+
+  it("creates a user with 3 phones and 3 addresses, sorted primary first, then by type", async () => {
+    // Sent out of order, with the primary on neither the first sent nor the first by type.
+    const fullUser = {
+      ...validUser,
+      email: "ana.nguyen@example.com",
+      phones: [
+        { number: "305.555.0003", type: "work", primary: false },
+        { number: "3055550001", type: "mobile", primary: false },
+        { number: "+1 305 555 0002", type: "home", primary: true },
+      ],
+      addresses: [
+        { street: "9 Mail Rd", city: "Miami", state: "FL", zip: "33103", type: "mailing", primary: false },
+        { street: "5 Office Ave", city: "Boston", state: "MA", zip: "02134", type: "work", primary: true },
+        { street: "1 Home Ln", city: "Miami", state: "FL", zip: "33101", type: "home", primary: false },
+      ],
+    };
+
+    const res = await api()
+      .post("/v1/users")
+      .set("Authorization", `Bearer ${await adminToken()}`)
+      .send(fullUser);
+
+    expect(res.status).toBe(201);
+    // Phone type order: mobile, home, work. Address type order: home, work, mailing.
+    expect(res.body.phones).toEqual([
+      { number: "+13055550002", type: "home", primary: true },
+      { number: "+13055550001", type: "mobile", primary: false },
+      { number: "+13055550003", type: "work", primary: false },
+    ]);
+    // No street2 sent → null. ZIP leading zero kept.
+    expect(res.body.addresses).toEqual([
+      { street: "5 Office Ave", street2: null, city: "Boston", state: "MA", zip: "02134", type: "work", primary: true },
+      { street: "1 Home Ln", street2: null, city: "Miami", state: "FL", zip: "33101", type: "home", primary: false },
+      { street: "9 Mail Rd", street2: null, city: "Miami", state: "FL", zip: "33103", type: "mailing", primary: false },
+    ]);
+  });
 });

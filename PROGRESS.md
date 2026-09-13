@@ -9,13 +9,13 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | Area | State |
 |---|---|
 | Design decisions | Logged in `project/docs/decisions/` (01–10) |
-| Plain-language operations | `project/docs/spec/operations.md` (16 operations) |
-| OpenAPI spec | `project/api/openapi.yaml`: all 16 operations; passes lint; version 0.1.0 (1.0.0 once the web client proves it) |
+| Plain-language operations | `project/docs/spec/operations.md` (6 operations; was 16 before the "one user form, one save" revision) |
+| OpenAPI spec | `project/api/openapi.yaml`: all 6 operations; phones and addresses are part of the user; passes lint; version 0.1.0 (1.0.0 once the web client proves it) |
 | Docs page | `website/api-docs/index.html` (Swagger UI) |
 | License | MIT, `LICENSE` |
 | Test setup files | `project/package.json`, `tsconfig.json`, `vitest.config.ts`, `.nvmrc`, `.npmrc` |
 | App skeleton | `project/api/src/app.ts` answers `501` to everything; `server.ts` listens on 3000 |
-| First test | `project/tests/happy-path/users.create.test.ts`: installed and run; red as intended (`expected 501 to be 201`) |
+| First test | `project/tests/happy-path/users.create.test.ts`: sends one phone and one address; installed and run; red as intended (`expected 501 to be 201`) |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`); `ln -s` test passed. Install and tests were run on the laptop. |
 | Root README | Entry point for recruiters, employers, and devs: status, AI collaboration, reading order, run commands, links to my other work |
 

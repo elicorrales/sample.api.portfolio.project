@@ -371,14 +371,14 @@ components:
               type: array
               minItems: 1
               maxItems: 3
-              description: Primary first, then by type.
+              description: Primary first, then by type in this order - mobile, home, work.
               items:
                 $ref: "#/components/schemas/Phone"
             addresses:
               type: array
               minItems: 1
               maxItems: 3
-              description: Primary first, then by type.
+              description: Primary first, then by type in this order - home, work, mailing.
               items:
                 $ref: "#/components/schemas/Address"
             version:
