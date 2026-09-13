@@ -7,3 +7,6 @@ node_modules/
 # Local secrets and generated output
 .env
 coverage/
+
+# Local database saved by `npm run dev` (PGlite)
+.data/

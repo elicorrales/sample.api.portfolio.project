@@ -18,7 +18,7 @@
 |---|---|---|---|
 | Happy path | Does what it's supposed to | Yes | Vitest + Supertest |
 | Bad calls | Missing, invalid, or extra params; wrong paths | Yes | Vitest + Supertest |
-| Integrity / concurrency | No lost updates or race conditions; simultaneous operations | **No** — real races need a real DB | Real Postgres (Docker), concurrent requests |
+| Integrity / concurrency | No lost updates or race conditions; simultaneous operations | **No** — real races need a real DB | ~~Real Postgres (Docker)~~ PGlite for single-connection checks, native PostgreSQL for true concurrency ([database path](#database-path-for-tests)) |
 | Security | Auth, permissions, injection, data leaks | Mostly | Vitest + Supertest |
 | Performance | Speed under load | No | k6 or autocannon, separate from the test suite |
 | Rate limiting | Too many requests → `429` | Yes | Vitest + Supertest |
@@ -90,11 +90,11 @@
 
 **Choice:** a staged path, keeping the real database as late as possible.
 
-| Stage | Database |
-|---|---|
-| 1 | In-memory fakes |
-| 2 | PGlite (real SQL, tiny) |
-| 3 | Remove PGlite; native PostgreSQL install, which also handles the integrity/concurrency tests |
+| Stage | Database | Status |
+|---|---|---|
+| 1 | In-memory fakes | ✅ Done; removed at stage 2 |
+| 2 | PGlite (real SQL, tiny) | ✅ **Done 2026-09-13**, with Drizzle ([11](11-database.md)) |
+| 3 | Remove PGlite; native PostgreSQL install, which also handles the integrity/concurrency tests | ⏳ |
 
 **Origin:** mine (Neon was suggested for concurrency tests; I chose a native install instead)
 

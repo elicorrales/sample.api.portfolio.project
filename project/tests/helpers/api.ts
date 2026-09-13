@@ -1,9 +1,15 @@
 import request from "supertest";
-import { createApp } from "../../api/src/app.ts";
+import { type AppOptions, createApp } from "../../api/src/app.ts";
+import { PgUsersRepository } from "../../api/src/users/users.repository.pg.ts";
+import { testDatabase } from "./database.ts";
 import { TEST_JWT_SECRET } from "./tokens.ts";
 
-// A fresh app per call (with its own in-memory data), so tests never share state.
-// Within one test, call api() once and reuse it: every request then hits the same app and its data.
+// An app wired to this test file's database, with the test secret. Tests override only what they need.
+export function testApp(options: Partial<AppOptions> = {}) {
+  return createApp({ jwtSecret: TEST_JWT_SECRET, usersRepository: new PgUsersRepository(testDatabase), ...options });
+}
+
+// A client for a fresh app. Every call in one test shares the same database, which is emptied before each test.
 export function api() {
-  return request(createApp({ jwtSecret: TEST_JWT_SECRET }));
+  return request(testApp());
 }

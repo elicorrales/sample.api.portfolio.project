@@ -17,6 +17,15 @@ export interface Address {
   primary: boolean;
 }
 
+// The order phones and addresses are always kept in: primary first, then the order the admin
+// form shows the types (phones mobile, home, work; addresses home, work, mailing).
+// The service sorts before saving; storage that doesn't keep list order sorts again when loading.
+export function sortByPrimaryThenType<T extends Phone | Address>(items: T[], typeOrder: readonly string[]): T[] {
+  return [...items].sort(
+    (a, b) => Number(b.primary) - Number(a.primary) || typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type),
+  );
+}
+
 export interface User {
   id: string;
   firstName: string;

@@ -3,7 +3,6 @@ import { requireAdmin } from "./shared/auth.ts";
 import { cors } from "./shared/cors.ts";
 import { errorHandler, ProblemError, sendProblem } from "./shared/errors.ts";
 import { type RateLimitOptions, rateLimit } from "./shared/rate-limit.ts";
-import { MemoryUsersRepository } from "./users/users.repository.memory.ts";
 import type { UsersRepository } from "./users/users.repository.ts";
 import { usersRoutes } from "./users/users.routes.ts";
 import { UsersService } from "./users/users.service.ts";
@@ -11,7 +10,8 @@ import { UsersService } from "./users/users.service.ts";
 export interface AppOptions {
   jwtSecret: string;
   corsOrigins?: string[];
-  usersRepository?: UsersRepository;
+  // Where users are stored. The server passes the PostgreSQL one; tests can pass a broken one.
+  usersRepository: UsersRepository;
   // Requests allowed per client IP in each fixed window.
   rateLimit?: RateLimitOptions;
   // How many proxies in front of the app to trust for the client's IP (X-Forwarded-For).
@@ -27,7 +27,7 @@ export interface AppOptions {
 export function createApp({
   jwtSecret,
   corsOrigins = [],
-  usersRepository = new MemoryUsersRepository(),
+  usersRepository,
   rateLimit: rateLimitOptions = { limit: 100, windowSeconds: 60 },
   trustProxy = 0,
 }: AppOptions) {

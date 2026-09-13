@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { conflictProblem, notFoundProblem, preconditionFailedProblem } from "../shared/errors.ts";
-import type { Address, Phone, User, UsersRepository } from "./users.repository.ts";
+import { sortByPrimaryThenType, type User, type UsersRepository } from "./users.repository.ts";
 import { ADDRESS_TYPES, PHONE_TYPES, type ListQuery, type UserInput } from "./users.schema.ts";
 
 // Business rules. Knows nothing about HTTP; only talks to the repository interface.
@@ -120,12 +120,6 @@ function userContents(input: UserInput) {
 // guaranteed exactly one is marked.
 function withPrimary<T extends { primary?: boolean | undefined }>(items: T[]) {
   return items.map((item) => ({ ...item, primary: items.length === 1 || item.primary === true }));
-}
-
-function sortByPrimaryThenType<T extends Phone | Address>(items: T[], typeOrder: readonly string[]): T[] {
-  return [...items].sort(
-    (a, b) => Number(b.primary) - Number(a.primary) || typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type),
-  );
 }
 
 // The basic view: what lists show. No date of birth, phones, or addresses.

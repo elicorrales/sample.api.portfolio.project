@@ -98,3 +98,31 @@ project/
 ```
 
 **How the app gets its settings:** `createApp()` takes the JWT secret, allowed CORS origins, and repository as arguments. Tests pass a test secret and get a fresh in-memory repository; `server.ts` reads them from environment variables and refuses to start without `JWT_SECRET`.
+
+## As built (database, 2026-09-13)
+
+The in-memory repository was replaced by PostgreSQL ([11](11-database.md)). The layers held: the service didn't change except for one shared sorting rule.
+
+| Change | Why |
+|---|---|
+| `users.repository.memory.ts` deleted | PGlite runs in tests and locally, so the fake isn't needed |
+| `users.repository.pg.ts` added | The PostgreSQL version of the same 5 repository methods |
+| `users.table.ts` added | The tables, in Drizzle's TypeScript; the source for migrations |
+| `shared/database.ts` added | Opens PGlite and applies migrations; the only file that changes for a PostgreSQL server |
+| `api/migrations/` added | Generated SQL migrations plus Drizzle's snapshot (`meta/`) |
+| `sortByPrimaryThenType` moved to `users.repository.ts` | Found by the tests: both the service and the repository need it ([11](11-database.md#what-the-swap-found)) |
+| `tests/helpers/database.ts` added | One database per test file, emptied before each test |
+| `createApp()` requires a repository | No hidden default storage |
+
+```
+project/
+  api/
+    migrations/   0000_create_users.sql · meta/
+    src/
+      app.ts        server.ts
+      users/        users.routes.ts · users.service.ts · users.repository.ts · users.repository.pg.ts · users.table.ts · users.schema.ts
+      shared/       auth.ts · cors.ts · database.ts · errors.ts · rate-limit.ts
+  scripts/        dev-token.ts
+  tests/          happy-path/ · workflow/ · bad-calls/ · security/ · rate-limit/ · helpers/
+  drizzle.config.ts
+```

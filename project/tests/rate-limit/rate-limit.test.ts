@@ -1,8 +1,9 @@
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type AppOptions, createApp } from "../../api/src/app.ts";
+import type { AppOptions } from "../../api/src/app.ts";
+import { testApp } from "../helpers/api.ts";
 import { expectProblem } from "../helpers/problems.ts";
-import { adminToken, TEST_JWT_SECRET } from "../helpers/tokens.ts";
+import { adminToken } from "../helpers/tokens.ts";
 import { userInput } from "../helpers/users.ts";
 
 // Rate limiting. A fixed window per client IP: 3 requests per 60-second window in these tests,
@@ -12,7 +13,7 @@ const windowStart = new Date("2026-01-01T12:00:00Z");
 const at = (seconds: number) => vi.setSystemTime(new Date(windowStart.getTime() + seconds * 1000));
 
 function limitedApp(options: Partial<AppOptions> = {}) {
-  return request(createApp({ jwtSecret: TEST_JWT_SECRET, rateLimit: { limit: 3, windowSeconds: 60 }, ...options }));
+  return request(testApp({ rateLimit: { limit: 3, windowSeconds: 60 }, ...options }));
 }
 
 type Client = ReturnType<typeof limitedApp>;

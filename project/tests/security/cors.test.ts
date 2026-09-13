@@ -1,12 +1,12 @@
 import request from "supertest";
 import { describe, expect, it } from "vitest";
-import { createApp } from "../../api/src/app.ts";
-import { adminToken, TEST_JWT_SECRET } from "../helpers/tokens.ts";
+import { testApp } from "../helpers/api.ts";
+import { adminToken } from "../helpers/tokens.ts";
 
 // E. CORS. Only the listed web pages may call the API from a browser.
 
 const allowed = "https://admin.example.com";
-const client = () => request(createApp({ jwtSecret: TEST_JWT_SECRET, corsOrigins: [allowed] }));
+const client = () => request(testApp({ corsOrigins: [allowed] }));
 
 describe("security: CORS", () => {
   it("E1. an allowed origin gets CORS headers naming exactly that origin", async () => {

@@ -8,7 +8,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 
 | Stage | State |
 |---|---|
-| Design decisions | ✅ Logged (10 topics) |
+| Design decisions | ✅ Logged (11 topics) |
 | OpenAPI spec | ✅ All 6 operations, passes lint (v0.1.0) |
 | First vertical slice | ✅ Create user works end to end (tests green, callable from Swagger UI) |
 | List users | ✅ Search, sort, paging (tests green, callable from Swagger UI) |
@@ -17,7 +17,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
 | Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
 | Tests | ✅ 204 green; see [Tests](#tests) below |
-| Storage | In memory for now; PostgreSQL later |
+| Storage | ✅ PostgreSQL via Drizzle, running in PGlite (tests and local); a PostgreSQL server at hosting time |
 | Hosting | ⏳ Later: docs page on Netlify, API on Render |
 
 Details: [PROGRESS.md](PROGRESS.md)
@@ -42,6 +42,7 @@ Details: [PROGRESS.md](PROGRESS.md)
 - **Spec before code.** The contract ([`openapi.yaml`](project/api/openapi.yaml)) was written and linted before any endpoint existed.
 - **Tests before code.** Each test is written first and must fail for the right reason before any code is written to pass it.
 - **187 bad-call, security, and rate-limit tests vs 17 happy-path.** Most of the work is proving what the API refuses ([tests](project/docs/testing.md)).
+- **Storage swapped, tests unchanged.** Moving from in-memory storage to PostgreSQL changed no test; the tests caught the one behavior that differed ([decision 11](project/docs/decisions/11-database.md#what-the-swap-found)).
 - **Decisions on paper.** Every choice records the question, the options, what was picked, and why ([decision log](project/docs/decisions/README.md)).
 - **A visible AI trail.** See below.
 
@@ -70,7 +71,7 @@ Suggested reading order if you want to see how a project starts:
 
 ## Tech stack
 
-Node.js 24 · TypeScript · Express 5 · Vitest · Supertest · PostgreSQL (planned: in-memory fakes, then PGlite, then native PostgreSQL) · Redocly (spec linting) · Swagger UI (docs page)
+Node.js 24 · TypeScript · Express 5 · Zod · PostgreSQL · Drizzle ORM · PGlite (PostgreSQL inside Node, for tests and local runs) · Vitest · Supertest · Redocly (spec linting) · Swagger UI (docs page)
 
 ## Run it locally
 
@@ -85,7 +86,7 @@ npm test
 
 | Command (from `project/`) | Does |
 |---|---|
-| `npm test` | Run all tests once |
+| `npm test` | Run all tests once (about 50 s; one file at a time, since each starts its own PostgreSQL) |
 | `npm run test:bad-calls` | Run only the bad-call tests |
 | `npm run test:security` | Run only the security tests |
 | `npm run test:rate-limit` | Run only the rate-limit tests |
@@ -93,7 +94,8 @@ npm test
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |
-| `npm run dev` | Start the API on port 3000 (in-memory data, lost on restart) |
+| `npm run dev` | Start the API on port 3000 (data saved in `project/.data/`, kept between restarts) |
+| `npm run db:generate` | Write a new SQL migration after changing the tables |
 | `npm run token` | Print an admin token for Swagger UI's **Authorize** button |
 
 To try the API from the docs page: run `npm run dev`; in another terminal, run `python3 -m http.server 8080` from the repo root; open `http://localhost:8080/website/api-docs/`; click **Authorize** and paste the output of `npm run token`.

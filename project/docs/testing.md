@@ -2,7 +2,7 @@
 
 **What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, attacks, and floods all fail the right way, with a clear error and no damage.
 
-**Last updated:** 2026-09-13 · **204 tests, all green**
+**Last updated:** 2026-09-13 · **204 tests, all green, running against real PostgreSQL** (PGlite)
 
 ## By category
 
@@ -122,7 +122,7 @@ Without a token, a caller can't learn which ids exist, which rules apply, or wha
 | An id of `1' OR '1'='1` | `400` |
 | `"__proto__": {"role": "admin"}` in the body | `400`, and no object in the server gains a `role` |
 
-Storage is in memory today, so these pass easily. They're here for when it becomes PostgreSQL.
+Written when storage was in memory, where they passed easily. **Since the move to PostgreSQL they run against real SQL**: `ILIKE` with escaped wildcards, and every value sent as a query parameter. They still pass.
 
 ### D. Data leaks: 6 tests ([`leaks.test.ts`](../tests/security/leaks.test.ts))
 
@@ -191,5 +191,7 @@ See [journal row 31](journal.md).
 - **Failures predicted.** Before each red run, the AI writes down which tests will fail and why; a surprise means someone misunderstood the code.
 - **Real failures without breaking the app.** A `500` is forced by handing the app a storage layer that throws ([decision 03](decisions/03-test-strategy.md#how-the-security-tests-are-written)).
 - **Table-driven.** Similar cases share one test with one line per case, so adding a case is one line.
-- **Isolated.** Every test gets a fresh app with empty in-memory storage; no test depends on another.
+- **Isolated.** Each test file gets its own in-memory PostgreSQL (PGlite), emptied before every test; no test depends on another.
+- **Storage-independent.** When storage moved from in-memory to PostgreSQL, all 204 tests ran unchanged. They caught the one real difference: phones came back in the wrong order ([decision 11](decisions/11-database.md#what-the-swap-found)).
+- **One file at a time.** Each database uses about 1.1 GB at its peak; running 7 in parallel froze an 8 GB laptop. The full suite takes about 50 seconds.
 - **Through the API only.** Tests set up data the way an admin would (by calling the API), never by reaching into storage.
