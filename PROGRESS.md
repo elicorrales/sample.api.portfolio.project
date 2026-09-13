@@ -1,6 +1,6 @@
 # Progress
 
-**Last updated:** 2026-09-12
+**Last updated:** 2026-09-13
 
 A quick "where are we" for resuming work. The full story is in [`project/docs/journal.md`](project/docs/journal.md), and the decisions are in [`project/docs/decisions/`](project/docs/decisions/README.md).
 
@@ -29,10 +29,17 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 
 ## Next steps
 
-1. **Next category:** pick among security, rate limiting, or the database path (PGlite, needed for integrity tests). Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
-2. **Maybe later:** mutation testing (e.g. Stryker) to check the tests catch deliberately broken code
-3. **Later:** PGlite → native PostgreSQL; integrity, security, rate-limit, and performance tests; admin web client; hosting (Netlify docs page, Render API)
-4. **Once the docs page is on Netlify:** add this API to the [projects landing page](https://all-my-projects-landing-page.netlify.app/), and add the live docs link to `README.md` (it has local-only instructions for now)
+1. **Next: security tests** (chosen 2026-09-13). Nothing new is needed; they run against the current app. Start by walking through the test list together, as with bad calls. Candidate areas to propose:
+   - **Tokens:** none, wrong scheme, malformed, bad signature, expired, a different algorithm (e.g. `alg: none`), missing `role` → `401`; valid token with a non-admin role → `403`. Both helpers already exist in `tests/helpers/tokens.ts`.
+   - **Auth before anything else:** no token on an unknown id, a bad body, or an unknown path still gets `401`, so nothing leaks about what exists. Open question: malformed JSON without a token currently gets `400` (the JSON parser runs before auth).
+   - **Injection:** `%` and `_` in `search` treated as plain characters (decision 07); sort only from the allowed list.
+   - **Data leaks:** no stack traces, SQL, or file paths in errors, including a forced `500`; `401` sends `WWW-Authenticate: Bearer`.
+   - **CORS:** only allowed origins get CORS headers; preflight answered without a token.
+   - **Body size:** over `100kb` → rejected.
+2. **After security:** rate limiting, or the database path (PGlite, needed for integrity tests). Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
+3. **Maybe later:** mutation testing (e.g. Stryker) to check the tests catch deliberately broken code
+4. **Later:** PGlite → native PostgreSQL; integrity and performance tests; admin web client; hosting (Netlify docs page, Render API)
+5. **Once the docs page is on Netlify:** add this API to the [projects landing page](https://all-my-projects-landing-page.netlify.app/), and add the live docs link to `README.md` (it has local-only instructions for now)
 
 ## Useful commands (from `project/`)
 
@@ -56,3 +63,6 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 - Log decisions in `project/docs/decisions/` and a journal row after each step, with origin tags (mine / picked / suggested / changed)
 - Everything installed local to the repo; no global packages
 - I commit and push myself
+- **How each step goes:** walk through the test list and open questions first → the AI writes the tests and **predicts** which fail and why → I run them on my laptop (red) → the AI changes the code → I run them (green) and try it in Swagger UI → the AI updates decisions, a journal row, PROGRESS, README, and the test showcase → I commit
+- **Laptop, not VM:** installs, test runs, and servers run on my laptop; the AI's VM is memory-limited (it writes code, typechecks, and lints)
+- **Showcase what the API refuses:** the non-happy-path test categories get top billing in the README and `project/docs/testing.md`
