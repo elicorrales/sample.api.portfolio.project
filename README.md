@@ -33,6 +33,7 @@ Details: [PROGRESS.md](PROGRESS.md)
 | **Integrity** | Two requests forced to collide: same email → one `201`, one `409`; same version → one `200`, one `412`, saved once; a save failing midway leaves nothing half-written. **Found 1 real bug** (`500` instead of `409` in a race), now fixed | **14** | ✅ |
 | **Rate limiting** | Over 100 requests a minute → `429` with `Retry-After`; token-guessing floods and faked IP headers are stopped too; a blocked create saves nothing | **12** | ✅ |
 | **Performance** | Search and paging stay fast at scale | — | ⏳ Planned |
+| **Encryption** | Personal fields are stored encrypted (the raw database row never holds the plain value); a wrong key fails loudly; rotated keys still read old data. Designed, not built: [decision 12](project/docs/decisions/12-encryption.md) explains why and what it would take | — | 📝 Designed only |
 | Happy path + workflow | Each operation works, and they work together | 17 | ✅ |
 
 **The full showcase,** with example cases for every group and what the tests found: [project/docs/testing.md](project/docs/testing.md)

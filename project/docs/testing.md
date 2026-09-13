@@ -15,6 +15,7 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 | **Integrity** | Two admins at once can't corrupt data or silently overwrite each other; a failed save changes nothing; the database refuses bad data even if the code lets it through | **14** | ✅ Green (on a real PostgreSQL server, with truly simultaneous connections) | [`tests/integrity/`](../tests/integrity/) | `npm run test:integrity` |
 | **Rate limiting** | Too many requests get `429` with `Retry-After`, not a slow or crashed server; token-guessing floods and faked IPs are stopped too | **12** | ✅ Green | [`tests/rate-limit/`](../tests/rate-limit/) | `npm run test:rate-limit` |
 | **Performance** | Search and paging stay fast with many users | — | ⏳ Planned (separate load-test tool) | | |
+| **Encryption** | Personal fields are stored encrypted: the raw database row never holds the plain value, a wrong key fails loudly, and data saved under an old key still reads after rotation | — | 📝 Designed, not built ([decision 12](decisions/12-encryption.md#if-this-project-continued)) | | |
 | Happy path + workflow | Each operation works, and they work together in one admin session | 17 | ✅ Green | [`tests/happy-path/`](../tests/happy-path/), [`tests/workflow/`](../tests/workflow/) | `npm run test:happy-path` |
 
 ## Bad calls: 115 tests
