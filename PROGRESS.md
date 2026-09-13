@@ -21,20 +21,19 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | **Update user** | `PUT /v1/users/{userId}` with `If-Match`: whole-user replace, version bump, same email allowed; `412` stale, `428` missing. Tried from Swagger UI. |
 | **Delete user** | `DELETE /v1/users/{userId}` with `If-Match` → `204`; sets `deletedAt`, bumps version; hidden unless `includeDeleted=true` (list and get); update of a deleted user → `404`. Tried from Swagger UI. |
 | **Restore user** | `POST /v1/users/{userId}/restore` (no `If-Match`) → `200`, version bump; `409` if not deleted. **All 6 operations now work** (in-memory storage). Tried from Swagger UI. |
-| Happy-path tests | **16 green:** `users.create.test.ts` (2), `users.list.test.ts` (5), `users.get.test.ts` (2), `users.update.test.ts` (2), `users.delete.test.ts` (3), `users.restore.test.ts` (2). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
+| Happy-path tests | **17 green, happy path complete:** `tests/happy-path/` (16: create 2, list 5, get 2, update 2, delete 3, restore 2) and `tests/workflow/admin-session.test.ts` (1: one admin session, ETags passed step to step). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`). Installs, tests, and servers run on the laptop (the VM is memory-limited). |
 | Root README | Entry point for recruiters, employers, and devs: status, AI collaboration, reading order, run commands, links to my other work |
 
 ## Next steps
 
-1. **Remaining happy-path tests, one operation at a time** (write red → build → green → try in Swagger):
-
-   | # | Operation | Test |
-   |---|---|---|
-   | — | Workflow | **Next.** Create → list → get → edit → delete → restore, same user |
-
-   Notes for bad calls: unknown query parameters (`?foo=1`) are ignored for now (400 instead?) · add a test that lists and errors carry no `ETag` · not-a-UUID id → 400, unknown id → 404 · confirm the order of checks on update (428/412 before body 400, then 404, 412, 409)
-2. **Bad-calls tests** next; walk through the list before writing them
+1. **Bad-calls tests** (next): walk through the list before writing any. Notes collected so far:
+   - Unknown query parameters (`?foo=1`) are ignored for now: 400 instead?
+   - Lists and errors carry no `ETag`
+   - Not-a-UUID id → 400; unknown id → 404
+   - Confirm the order of checks on update (428/412 before body 400, then 404, 412, 409)
+   - Create with a deleted user's email → 409 suggesting restore; restore an active user → 409
+2. **Maybe later:** mutation testing (e.g. Stryker) to check the tests catch deliberately broken code
 3. **Later:** PGlite → native PostgreSQL; integrity, security, rate-limit, and performance tests; admin web client; hosting (Netlify docs page, Render API)
 4. **Once the docs page is on Netlify:** add this API to the [projects landing page](https://all-my-projects-landing-page.netlify.app/), and add the live docs link to `README.md` (it has local-only instructions for now)
 

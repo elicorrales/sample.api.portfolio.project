@@ -11,7 +11,7 @@ info:
     A portfolio project built **design-first**: this contract is written and reviewed
     before any server code exists.
 
-    Status: work in progress. Endpoints are being added piece by piece.
+    Status: all 6 operations work, on in-memory storage for now (PostgreSQL later).
 
     ## Conventions
     - **Auth:** every operation requires an admin token (`Authorization: Bearer <JWT>`).

@@ -94,7 +94,7 @@ project/
     users/        users.routes.ts · users.service.ts · users.repository.ts · users.repository.memory.ts · users.schema.ts
     shared/       auth.ts · cors.ts · errors.ts
   scripts/        dev-token.ts
-  tests/          happy-path/ · helpers/
+  tests/          happy-path/ · workflow/ · helpers/
 ```
 
 **How the app gets its settings:** `createApp()` takes the JWT secret, allowed CORS origins, and repository as arguments. Tests pass a test secret and get a fresh in-memory repository; `server.ts` reads them from environment variables and refuses to start without `JWT_SECRET`.
