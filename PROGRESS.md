@@ -26,7 +26,8 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | **Security tests** | **60 green** in `tests/security/` (tokens 23, auth-first 12, injection 8, leaks 6, CORS 9, body size 2). Found and fixed 2 holes: tokens without `exp` were accepted; `X-Powered-By: Express` was sent. Also: auth now runs before the body is read; oversized body → `413`; `bearer` in any case. **192 tests total.** |
 | **Rate-limit tests** | **12 green** in `tests/rate-limit/`. `shared/rate-limit.ts`: 100/min per IP, fixed window, before auth, after CORS; `trustProxy` option (default 0). Checked by hand with a `curl` loop. **204 tests total.** |
 | **Database** | PostgreSQL via **Drizzle** on **PGlite** (decision 11). Tables `users`, `user_phones`, `user_addresses`; migration `api/migrations/0000_create_users.sql`. In-memory repository removed. **All 204 tests green on PostgreSQL**, one file at a time (`maxWorkers: 1`, ~50 s; parallel runs froze the laptop). `npm run dev` saves to `project/.data/`; checked in Swagger that data survives a restart. |
-| **Integrity tests** | **14 green** in `tests/integrity/` (races 6, isolation 2, rollback 2, database rules 4). Races forced with `tests/helpers/racing-repository.ts`; mid-save failure via a temporary trigger. **Found 1 bug:** a same-email race got `500`, now `409` (`EmailTakenError`). **Open:** server logs include query values (names, emails); decide before hosting (decision 11). **218 tests total**, ~65 s. |
+| **Integrity tests** | **14 green** in `tests/integrity/` (races 6, isolation 2, rollback 2, database rules 4). Races forced with `tests/helpers/racing-repository.ts`; mid-save failure via a temporary trigger. **Found 1 bug:** a same-email race got `500`, now `409` (`EmailTakenError`). **Open:** server logs include query values (names, emails); decide before hosting (decision 11). **218 tests total.** |
+| **Real PostgreSQL server** | Stage 3 done (decision 11): PGlite removed; `pg` driver; `embedded-postgres` runs PostgreSQL 18 from `node_modules` (no system install). Tests: one server per run (`tests/global-setup.ts`), one database per file copied from a migrated template. **218 green, no test changed, 65 s → 22 s.** `npm run dev` (`scripts/dev.ts`) starts PostgreSQL + API; checked in Swagger that data survives a restart. Hosted, the API only needs `DATABASE_URL`. |
 | Test showcase | [`project/docs/testing.md`](project/docs/testing.md) (every category, most important first, with example cases) and a Tests section near the top of the README |
 | VM symlinks | Enabled for the shared folder on the host (`SharedFoldersEnableSymlinksCreate`). Installs, tests, and servers run on the laptop (the VM is memory-limited). |
 | Root README | Entry point for recruiters, employers, and devs: status, AI collaboration, reading order, run commands, links to my other work |
@@ -34,15 +35,14 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 ## Next steps
 
 1. **Next: pick one** (not yet chosen):
-   - **Native PostgreSQL** (stage 3): truly simultaneous connections for the integrity tests
    - **Hosting:** docs page on Netlify, API on Render. Needs:
-     - a hosted PostgreSQL (Render, Neon, or Supabase; their free tiers expire or sleep)
+     - a hosted PostgreSQL 18 (Render, Neon, or Supabase; their free tiers expire or sleep), with SSL in `DATABASE_URL`
      - a way for visitors to get a token (decision 05)
      - `trustProxy` set for Render (decision 10, row 27)
      - **personal data kept out of server logs** (decision 11, open)
    - **Performance tests:** the last test category; needs a load-testing tool (k6 or autocannon)
 2. Keep [`project/docs/testing.md`](project/docs/testing.md) and the README Tests table updated as each category grows.
-3. **Maybe later:** mutation testing (e.g. Stryker) to check the tests catch deliberately broken code; speeding up the suite (each file spends ~2 s starting PGlite)
+3. **Maybe later:** mutation testing (e.g. Stryker) to check the tests catch deliberately broken code; running test files in parallel again (measure memory first)
 4. **Later:** admin web client
 5. **Once the docs page is on Netlify:** add this API to the [projects landing page](https://all-my-projects-landing-page.netlify.app/), and add the live docs link to `README.md` (it has local-only instructions for now)
 
@@ -50,7 +50,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 
 | Command | Does |
 |---|---|
-| `npm test` | Run all tests once (~65 s, one file at a time) |
+| `npm test` | Run all tests once (~22 s; starts its own PostgreSQL server on port 54329) |
 | `npm run test:bad-calls` | Only the bad-call tests |
 | `npm run test:happy-path` | Only the happy-path and workflow tests |
 | `npm run test:security` | Only the security tests |
@@ -59,7 +59,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |
-| `npm run dev` | Start the API on port 3000 (dev secret; allows the docs page on 8080 via CORS). Data is saved in `project/.data/` and survives restarts; delete that folder to start empty. |
+| `npm run dev` | Start the API on port 3000 (dev secret; allows the docs page on 8080 via CORS). Also starts PostgreSQL on port 54320; data in `project/.data/postgres` survives restarts; delete that folder (with the server stopped) to start empty. |
 | `npm run db:generate` | After changing `users.table.ts`: write the next SQL migration into `api/migrations/` (review it before running) |
 | `npm run token` | Print an admin token (8 hours) to paste into Swagger UI's **Authorize** |
 

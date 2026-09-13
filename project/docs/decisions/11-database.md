@@ -1,6 +1,6 @@
 # 11 — Database
 
-**Date:** 2026-09-13 · **Status:** Decided (built: stage 2 of the [database path](03-test-strategy.md#database-path-for-tests))
+**Date:** 2026-09-13 · **Status:** Decided (built: stages 2 and 3 of the [database path](03-test-strategy.md#database-path-for-tests); PGlite first, then a real PostgreSQL server, [below](#stage-3-a-real-postgresql-server-2026-09-13))
 
 ## Why now
 
@@ -124,3 +124,50 @@ The red run printed the failed database error, and **Drizzle's error includes th
 | Leave as is | Fine locally; not once hosted |
 
 **Status:** not yet decided. **To decide at the hosting step,** before real logs exist. **Origin:** suggested (spotted in the test output); I asked that it be recorded and showcased
+
+## Stage 3: a real PostgreSQL server (2026-09-13)
+
+PGlite ran one connection at a time and used ~1.1 GB per test file. A real PostgreSQL server fixes both, and it's what the hosted API will use.
+
+### Where and how
+
+I asked two things first: does the VM need it, and what's the smallest way?
+
+| Question | Answer | Origin |
+|---|---|---|
+| VM or laptop? | **Laptop only.** Tests and `npm run dev` run there; the VM only writes code, typechecks, and generates migrations, none of which need a database | suggested (my question) |
+| How to run it | **`embedded-postgres`** (dev dependency, 18.4.0-beta.17): real PostgreSQL 18 server binaries (~60 MB) inside `node_modules`, started and stopped from Node | suggested |
+
+| Option | Size | sudo | Runs |
+|---|---|---|---|
+| **`embedded-postgres`** | ~60 MB, inside the repo | No | Only while tests or `npm run dev` run |
+| `apt install postgresql` | System-wide | Yes | Always, as a system service |
+
+**Why:** it keeps my standing rule, everything local to the repo and no global installs ([02](02-stack.md#confirmed-at-test-setup)). It's the same PostgreSQL server; only how it's started differs. The "beta" in its version is the wrapper package's own label; `18.4.0` is the PostgreSQL version.
+
+**Does it carry over to hosting?** I asked. Everything except `embedded-postgres` does: the `pg` driver, Drizzle queries, and SQL migrations are the same. The API only reads `DATABASE_URL`; on Render, the host runs PostgreSQL. Two things to handle then: SSL (hosted databases usually require it) and matching the major version (18).
+
+### Choices
+
+**Origin:** suggested; I agreed
+
+| # | Question | Choice | Why |
+|---|---|---|---|
+| 18 | Keep PGlite? | **Removed** | One database engine to maintain (the plan in [03](03-test-strategy.md#database-path-for-tests)) |
+| 19 | Node driver | **`pg`** (node-postgres) 8.23.0 | The most common; Drizzle supports it directly |
+| 20 | Test isolation | **One server per run** (Vitest global setup, port 54329, temp folder). A **template database** gets the migrations once; each test file copies it into its own database in milliseconds, empties it before each test, and drops it at the end | Real isolation without starting a server per file |
+| 21 | `npm run dev` | `scripts/dev.ts` starts PostgreSQL (port 54320, data in `.data/postgres`), then the API with auto-restart; Ctrl+C stops both | One command, as before; the database survives code-change restarts |
+| 22 | `DATABASE_URL` missing | The server refuses to start (like `JWT_SECRET`); it prints the database host, never the password | A missing setting on the host should fail loudly |
+| 23 | Test files in parallel | **Still one at a time** | 22 s is fine; raising it would need a memory measurement first |
+
+### Result
+
+| | PGlite (stage 2) | PostgreSQL server (stage 3) |
+|---|---|---|
+| Tests | 218 green | **218 green, no test changed** |
+| Suite time | ~65 s | **22 s** |
+| Race tests | Requests forced to overlap, one connection | Same tests, **truly simultaneous connections**; PostgreSQL makes the second save wait for the first, then refuses it |
+
+In Swagger: created a user, stopped `npm run dev` (it stopped immediately), started it again, and the user was still there. After the final Ctrl+C, `postmaster.pid` was gone from `.data/postgres`, which confirms PostgreSQL shut down cleanly rather than being killed.
+
+**Code changes:** `shared/database.ts` (connects through `pg`), `server.ts` (`DATABASE_URL`), `tests/global-setup.ts` and `tests/helpers/database.ts` (server and per-file databases), `scripts/dev.ts`, `vitest.config.ts`. The repository and service didn't change.

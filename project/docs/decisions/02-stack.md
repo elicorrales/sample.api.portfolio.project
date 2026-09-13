@@ -10,7 +10,9 @@
 | Express | Web server framework | Defines routes like `GET /users` |
 | PostgreSQL | Database | Data is relational: 1 user → many phones and addresses |
 | ~~Prisma~~ **Drizzle** | Database access and migrations | Easier queries and schema changes. **Changed to Drizzle** after checking Prisma against this project's needs ([11](11-database.md#how-the-code-talks-to-the-database)) |
-| PGlite | PostgreSQL running inside Node | Real SQL in tests and local runs, with no database server to install ([03](03-test-strategy.md#database-path-for-tests)) |
+| ~~PGlite~~ | ~~PostgreSQL running inside Node~~ | Used for stage 2, then removed ([11](11-database.md#stage-3-a-real-postgresql-server-2026-09-13)) |
+| `pg` | PostgreSQL driver for Node | Connects to any PostgreSQL server through `DATABASE_URL`, locally or hosted |
+| `embedded-postgres` | Runs a real PostgreSQL server from `node_modules` (dev only) | Tests and `npm run dev` get PostgreSQL with no system install ([11](11-database.md#stage-3-a-real-postgresql-server-2026-09-13)) |
 | Zod | Validates incoming data | Rejects bad requests before they reach the database |
 | JWT | Auth tokens | Proves the caller is an admin |
 | OpenAPI / Swagger | Spec plus interactive docs | One contract for docs, tests, and validation |

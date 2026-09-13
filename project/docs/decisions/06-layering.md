@@ -126,3 +126,28 @@ project/
   tests/          happy-path/ · workflow/ · bad-calls/ · security/ · rate-limit/ · helpers/
   drizzle.config.ts
 ```
+
+## As built (real PostgreSQL server, 2026-09-13)
+
+Stage 3 ([11](11-database.md#stage-3-a-real-postgresql-server-2026-09-13)). The repository, service, and routes didn't change.
+
+| Change | Why |
+|---|---|
+| `shared/database.ts` connects with `pg` to a `DATABASE_URL` | It no longer starts anything; locally or hosted, it just connects |
+| `server.ts` requires `DATABASE_URL` | Fails loudly if the setting is missing |
+| `scripts/dev.ts` added | `npm run dev` starts PostgreSQL (`embedded-postgres`), then the API |
+| `tests/global-setup.ts` added | One PostgreSQL server per test run, plus a migrated template database |
+| `tests/helpers/database.ts` | Each test file copies the template into its own database |
+
+```
+project/
+  api/
+    migrations/   0000_create_users.sql · meta/
+    src/
+      app.ts        server.ts
+      users/        users.routes.ts · users.service.ts · users.repository.ts · users.repository.pg.ts · users.table.ts · users.schema.ts
+      shared/       auth.ts · cors.ts · database.ts · errors.ts · rate-limit.ts
+  scripts/        dev.ts · dev-token.ts
+  tests/          global-setup.ts · happy-path/ · workflow/ · bad-calls/ · security/ · integrity/ · rate-limit/ · helpers/
+  drizzle.config.ts
+```

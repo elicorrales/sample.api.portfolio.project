@@ -1,17 +1,17 @@
 import { fileURLToPath } from "node:url";
-import { PGlite } from "@electric-sql/pglite";
-import { drizzle } from "drizzle-orm/pglite";
-import { migrate } from "drizzle-orm/pglite/migrator";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import pg from "pg";
 
-// Stage 2 of the database path (decision 03): PGlite, real PostgreSQL running inside Node.
-// Moving to a PostgreSQL server later changes this file, not the repository.
+// Stage 3 of the database path (decision 03): a real PostgreSQL server.
+// This file only connects. On the laptop, `embedded-postgres` runs the server (tests and `npm run dev`);
+// when hosted, the host does. Either way the API just needs DATABASE_URL.
 
 const migrationsFolder = fileURLToPath(new URL("../../migrations", import.meta.url));
 
-// Opens the database and applies any migrations it hasn't had yet.
-// With a folder, the data is saved there; without one, it lives in memory until the process ends.
-export async function openDatabase(dataDir?: string) {
-  const db = drizzle({ client: new PGlite(dataDir) });
+// Connects and applies any migrations the database hasn't had yet.
+export async function openDatabase(connectionString: string) {
+  const db = drizzle({ client: new pg.Pool({ connectionString }) });
   await migrate(db, { migrationsFolder });
   return db;
 }

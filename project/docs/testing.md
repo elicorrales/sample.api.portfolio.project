@@ -2,7 +2,7 @@
 
 **What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, attacks, and floods all fail the right way, with a clear error and no damage.
 
-**Last updated:** 2026-09-13 · **218 tests, all green, running against real PostgreSQL** (PGlite)
+**Last updated:** 2026-09-13 · **218 tests, all green, running against a real PostgreSQL 18 server**
 
 ## By category
 
@@ -12,7 +12,7 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 |---|---|---|---|---|---|
 | **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error | **115** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
 | **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks, and other origins are blocked | **60** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
-| **Integrity** | Two admins at once can't corrupt data or silently overwrite each other; a failed save changes nothing; the database refuses bad data even if the code lets it through | **14** | ✅ Green (true simultaneous connections wait for native PostgreSQL) | [`tests/integrity/`](../tests/integrity/) | `npm run test:integrity` |
+| **Integrity** | Two admins at once can't corrupt data or silently overwrite each other; a failed save changes nothing; the database refuses bad data even if the code lets it through | **14** | ✅ Green (on a real PostgreSQL server, with truly simultaneous connections) | [`tests/integrity/`](../tests/integrity/) | `npm run test:integrity` |
 | **Rate limiting** | Too many requests get `429` with `Retry-After`, not a slow or crashed server; token-guessing floods and faked IPs are stopped too | **12** | ✅ Green | [`tests/rate-limit/`](../tests/rate-limit/) | `npm run test:rate-limit` |
 | **Performance** | Search and paging stay fast with many users | — | ⏳ Planned (separate load-test tool) | | |
 | Happy path + workflow | Each operation works, and they work together in one admin session | 17 | ✅ Green | [`tests/happy-path/`](../tests/happy-path/), [`tests/workflow/`](../tests/workflow/) | `npm run test:happy-path` |
@@ -245,7 +245,7 @@ See [journal row 34](journal.md).
 - **Failures predicted.** Before each red run, the AI writes down which tests will fail and why; a surprise means someone misunderstood the code.
 - **Real failures without breaking the app.** A `500` is forced by handing the app a storage layer that throws ([decision 03](decisions/03-test-strategy.md#how-the-security-tests-are-written)).
 - **Table-driven.** Similar cases share one test with one line per case, so adding a case is one line.
-- **Isolated.** Each test file gets its own in-memory PostgreSQL (PGlite), emptied before every test; no test depends on another.
-- **Storage-independent.** When storage moved from in-memory to PostgreSQL, all 204 tests ran unchanged. They caught the one real difference: phones came back in the wrong order ([decision 11](decisions/11-database.md#what-the-swap-found)).
-- **One file at a time.** Each database uses about 1.1 GB at its peak; running 7 in parallel froze an 8 GB laptop. The full suite takes about 65 seconds.
+- **Isolated.** One PostgreSQL server per run; each test file gets its own database in it (copied from a migrated template in milliseconds), emptied before every test. No test depends on another.
+- **Storage-independent.** When storage moved from in-memory to PGlite, and again to a real PostgreSQL server, the tests ran unchanged. They caught the one real difference: phones came back in the wrong order ([decision 11](decisions/11-database.md#what-the-swap-found)).
+- **One file at a time.** With PGlite, each file used about 1.1 GB and running 7 in parallel froze an 8 GB laptop. The shared server is far lighter, but the suite still runs one file at a time, in about 22 seconds.
 - **Through the API only.** Tests set up data the way an admin would (by calling the API), never by reaching into storage.

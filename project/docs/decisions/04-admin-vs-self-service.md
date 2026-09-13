@@ -48,7 +48,7 @@ Who owns the data?
 - Saving one user never changes another user's phones or addresses
 - Deleting a user hides their phones and addresses
 
-**Built 2026-09-13:** 14 tests in `tests/integrity/`, on PGlite ([11](11-database.md#integrity-tests-2026-09-13)); see the [test showcase](../testing.md#integrity-14-tests). The first two ideas are covered by forcing the race; truly simultaneous database connections wait for native PostgreSQL.
+**Built 2026-09-13:** 14 tests in `tests/integrity/`, on PGlite ([11](11-database.md#integrity-tests-2026-09-13)); see the [test showcase](../testing.md#integrity-14-tests). The first two ideas are covered by forcing the race; since stage 3, those races also run on a real PostgreSQL server with truly simultaneous connections.
 
 ## Security tests
 

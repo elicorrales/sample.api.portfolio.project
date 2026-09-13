@@ -18,7 +18,7 @@
 |---|---|---|---|
 | Happy path | Does what it's supposed to | Yes | Vitest + Supertest |
 | Bad calls | Missing, invalid, or extra params; wrong paths | Yes | Vitest + Supertest |
-| Integrity / concurrency | No lost updates or race conditions; simultaneous operations | **No** — real races need a real DB | ~~Real Postgres (Docker)~~ PGlite for single-connection checks, native PostgreSQL for true concurrency ([database path](#database-path-for-tests)) |
+| Integrity / concurrency | No lost updates or race conditions; simultaneous operations | **No** — real races need a real DB | ~~Real Postgres (Docker)~~ A real PostgreSQL server via `embedded-postgres` ([database path](#database-path-for-tests)) |
 | Security | Auth, permissions, injection, data leaks | Mostly | Vitest + Supertest |
 | Performance | Speed under load | No | k6 or autocannon, separate from the test suite |
 | Rate limiting | Too many requests → `429` | Yes | Vitest + Supertest |
@@ -70,7 +70,7 @@
 | Which request wins | Not fixed, so tests check the **pair** of statuses (`[201, 409]`) and that exactly one change was saved | Either order is correct; only "both succeed" or "both fail" is wrong |
 | A save failing partway | The test adds a PostgreSQL trigger that refuses one city, then removes it afterward | Real rollback of real rows |
 | The database's own rules | Raw SQL inserts, checked by PostgreSQL error code (`23505` unique, `23514` check) | The only way to reach them; an agreed exception to "through the API only" |
-| Truly simultaneous connections | Not yet | PGlite takes one connection; that's stage 3 (native PostgreSQL) |
+| Truly simultaneous connections | ~~Not yet~~ **Yes, since stage 3** | The same race tests now run on a real PostgreSQL server with separate connections, and still pass |
 
 ## Stubbing the database
 
@@ -106,7 +106,7 @@
 |---|---|---|
 | 1 | In-memory fakes | ✅ Done; removed at stage 2 |
 | 2 | PGlite (real SQL, tiny) | ✅ **Done 2026-09-13**, with Drizzle ([11](11-database.md)) |
-| 3 | Remove PGlite; native PostgreSQL install, which also handles the integrity/concurrency tests | ⏳ |
+| 3 | Remove PGlite; native PostgreSQL install, which also handles the integrity/concurrency tests | ✅ **Done 2026-09-13**, via `embedded-postgres` instead of a system install ([11](11-database.md#stage-3-a-real-postgresql-server-2026-09-13)) |
 
 **Origin:** mine (Neon was suggested for concurrency tests; I chose a native install instead)
 

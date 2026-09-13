@@ -8,7 +8,7 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "JWT_SECRET=dev-only-secret-not-for-production-use CORS_ORIGINS=http://localhost:8080 DATA_DIR=.data tsx watch api/src/server.ts",
+    "dev": "JWT_SECRET=dev-only-secret-not-for-production-use CORS_ORIGINS=http://localhost:8080 tsx scripts/dev.ts",
     "token": "JWT_SECRET=dev-only-secret-not-for-production-use tsx scripts/dev-token.ts",
     "test": "vitest run",
     "test:bad-calls": "vitest run tests/bad-calls",
@@ -22,17 +22,19 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
-    "@electric-sql/pglite": "0.5.8",
     "drizzle-orm": "0.45.2",
     "express": "5.2.1",
     "jose": "6.2.12",
+    "pg": "8.23.0",
     "zod": "4.6.4"
   },
   "devDependencies": {
     "@types/express": "5.0.6",
     "@types/node": "24.13.4",
+    "@types/pg": "8.23.1",
     "@types/supertest": "7.2.1",
     "drizzle-kit": "0.31.10",
+    "embedded-postgres": "18.4.0-beta.17",
     "supertest": "7.2.2",
     "tsx": "4.23.13",
     "typescript": "7.0.2",

@@ -11,22 +11,28 @@ if (!jwtSecret) {
   process.exit(1);
 }
 
+// No fallback database either: silently using some default would hide a missing setting when hosted.
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error("DATABASE_URL is not set. For local development, use `npm run dev`.");
+  process.exit(1);
+}
+
 const corsOrigins = (process.env.CORS_ORIGINS ?? "").split(",").filter(Boolean);
 
-// A folder keeps the data between restarts. Without one, the data is in memory and lost when the server stops.
-const dataDir = process.env.DATA_DIR;
-const db = await openDatabase(dataDir);
+const db = await openDatabase(databaseUrl);
 
 const server = createApp({ jwtSecret, corsOrigins, usersRepository: new PgUsersRepository(db) }).listen(port, () => {
+  const { host, pathname } = new URL(databaseUrl); // printed without the password
   console.log(`API listening on http://localhost:${port}`);
   console.log(`CORS allowed origins: ${corsOrigins.join(", ") || "(none)"}`);
-  console.log(`Data: ${dataDir ? `saved in ${dataDir}` : "in memory (lost on stop)"}`);
+  console.log(`Database: ${host}${pathname}`);
 });
 
-// Close the database cleanly on Ctrl+C or a restart, so its files are never left half-written.
+// On Ctrl+C or a restart: stop taking requests, then close the database connections.
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => {
     server.close();
-    void db.$client.close().then(() => process.exit(0));
+    void db.$client.end().then(() => process.exit(0));
   });
 }

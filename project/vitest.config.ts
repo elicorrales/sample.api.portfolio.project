@@ -3,8 +3,10 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["tests/**/*.test.ts"],
-    // Each test file starts its own PGlite (~1.1 GB at peak). With the default (one worker per core),
-    // 7 at once used up an 8 GB laptop's memory and froze it. One at a time: slower (~50 s), but safe.
+    // Starts one PostgreSQL server for the whole run; each test file gets its own database in it.
+    globalSetup: ["tests/global-setup.ts"],
+    // One test file at a time. With PGlite, each file used ~1.1 GB and 7 at once froze the laptop
+    // (decision 11). A shared PostgreSQL server should use far less; measure before raising this.
     maxWorkers: 1,
   },
 });
