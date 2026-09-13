@@ -1,4 +1,5 @@
 import express from "express";
+import { docsRoutes } from "./docs/docs.routes.ts";
 import { requireAdmin } from "./shared/auth.ts";
 import { cors } from "./shared/cors.ts";
 import { errorHandler, ProblemError, sendProblem } from "./shared/errors.ts";
@@ -20,7 +21,7 @@ export interface AppOptions {
 }
 
 // Builds the Express app without starting a server, so tests can call it directly.
-// Order matters: CORS (answers preflights) → rate limit → auth → JSON body → routes → 404 → errors.
+// Order matters: CORS (answers preflights) → rate limit → public docs → auth → JSON body → routes → 404 → errors.
 // The rate limit comes before auth, so floods of bad tokens are stopped cheaply. It comes after CORS,
 // so preflights don't count, and a 429 still carries CORS headers the web page needs to read it.
 // Auth comes before the body is read, so a caller without a token learns nothing, not even that their JSON is bad.
@@ -41,6 +42,7 @@ export function createApp({
 
   app.use(cors(corsOrigins));
   app.use(rateLimit(rateLimitOptions));
+  app.use(docsRoutes());
   app.use(requireAdmin(jwtSecret));
   app.use(express.json({ limit: "100kb" }));
 

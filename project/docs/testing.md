@@ -2,7 +2,7 @@
 
 **What the API refuses matters more than what it accepts.** Anyone can show that valid input works. Most of this test suite proves the opposite: bad input, stale versions, conflicts, wrong paths, forged tokens, attacks, and floods all fail the right way, with a clear error and no damage.
 
-**Last updated:** 2026-09-13 · **221 tests, all green, running against a real PostgreSQL 18 server**
+**Last updated:** 2026-09-13 · **231 tests, all green, running against a real PostgreSQL 18 server**
 
 ## By category
 
@@ -11,7 +11,7 @@ Most important first. The categories come from [decision 03](decisions/03-test-s
 | Category | What it proves | Tests | Status | Folder | Run it (from `project/`) |
 |---|---|---|---|---|---|
 | **Bad calls** | Every kind of client mistake is rejected with the right status and a useful error | **115** | ✅ Green | [`tests/bad-calls/`](../tests/bad-calls/) | `npm run test:bad-calls` |
-| **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks (to callers and to the server's own log), and other origins are blocked | **63** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
+| **Security** | Forged, expired, or missing tokens get nothing; auth runs before anything else; injection, data leaks (to callers and to the server's own log), and other origins are blocked; only the docs are public | **73** | ✅ Green | [`tests/security/`](../tests/security/) | `npm run test:security` |
 | **Integrity** | Two admins at once can't corrupt data or silently overwrite each other; a failed save changes nothing; the database refuses bad data even if the code lets it through | **14** | ✅ Green (on a real PostgreSQL server, with truly simultaneous connections) | [`tests/integrity/`](../tests/integrity/) | `npm run test:integrity` |
 | **Rate limiting** | Too many requests get `429` with `Retry-After`, not a slow or crashed server; token-guessing floods and faked IPs are stopped too | **12** | ✅ Green | [`tests/rate-limit/`](../tests/rate-limit/) | `npm run test:rate-limit` |
 | **Performance** | Search and paging stay fast with many users | — | ⏳ Planned (separate load-test tool) | | |
@@ -87,7 +87,7 @@ Written before the code changes, they ran red first: 112 of 127 passed at once, 
 
 See [journal row 30](journal.md).
 
-## Security: 63 tests
+## Security: 73 tests
 
 Every `401` looks the same (`"A valid admin token is required"`, `WWW-Authenticate: Bearer`), whatever the reason, so an attacker learns nothing from trying.
 
@@ -150,6 +150,20 @@ Written when storage was in memory, where they passed easily. **Since the move t
 |---|---|
 | A body over 100 KB | `413` "Request body must be 100 KB or smaller" |
 | A body just under 100 KB | Read normally, then `400` for the 90,000-character name |
+
+### G. Public docs: 10 tests ([`public-docs.test.ts`](../tests/security/public-docs.test.ts))
+
+The API serves its own Swagger UI page, so the docs and the spec need no token. These tests prove that opening them opened nothing else.
+
+| Case | Result |
+|---|---|
+| `/docs`, Swagger UI's CSS and JavaScript, `/openapi.yaml`, with no token | `200`; the spec served is exactly the file in the repo |
+| The spec's server | `/`, so **Try it out** calls whichever address served the page |
+| **Path tricks** sent raw, as an attacker's client can (`/docs/../../package.json`, `%2e%2e`, `..%2f`) | Never another file |
+| Other files in the Swagger UI package (its sample `index.html`, its `package.json`) | Not served: only the 2 files the page needs are on the list |
+| `/v1/users` with no token | Still `401` |
+
+**Found while writing them:** supertest, like a browser, resolves `..` and `%2e%2e` **before sending**, so the path-trick tests would have asked for `/package.json` and proven nothing. They now send the path exactly as written. **Found in a check before running them:** serving the whole package folder also served Swagger's sample Petstore page; the docs now serve only an allowlist of 2 files.
 
 ## What the security tests found
 

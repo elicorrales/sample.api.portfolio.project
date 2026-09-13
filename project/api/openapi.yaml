@@ -30,8 +30,8 @@ tags:
     description: Create, list, update, delete, and restore users, including their phones and addresses.
 
 servers:
-  - url: http://localhost:3000
-    description: Local development
+  - url: /
+    description: Wherever this page is served from (your laptop or Render)
 
 security:
   - adminToken: []

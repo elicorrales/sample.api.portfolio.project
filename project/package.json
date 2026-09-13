@@ -4,12 +4,15 @@
   "private": true,
   "license": "MIT",
   "type": "module",
+  "scarfSettings": {
+    "enabled": false
+  },
   "engines": {
     "node": ">=24 <25"
   },
   "scripts": {
     "start": "node api/src/server.ts",
-    "dev": "JWT_SECRET=dev-only-secret-not-for-production-use CORS_ORIGINS=http://localhost:8080 node scripts/dev.ts",
+    "dev": "JWT_SECRET=dev-only-secret-not-for-production-use node scripts/dev.ts",
     "token": "JWT_SECRET=dev-only-secret-not-for-production-use node scripts/dev-token.ts",
     "test": "vitest run",
     "test:bad-calls": "vitest run tests/bad-calls",
@@ -27,6 +30,7 @@
     "express": "5.2.1",
     "jose": "6.2.12",
     "pg": "8.23.0",
+    "swagger-ui-dist": "5.32.15",
     "zod": "4.6.4"
   },
   "devDependencies": {

@@ -16,7 +16,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Update user | ✅ Whole-user replace with optimistic locking (tests green, callable from Swagger UI) |
 | Delete user | ✅ Marked as deleted; visible with `includeDeleted` (tests green, callable from Swagger UI) |
 | Restore user | ✅ Brings back a deleted user (tests green, callable from Swagger UI) |
-| Tests | ✅ 221 green; see [Tests](#tests) below |
+| Tests | ✅ 231 green; see [Tests](#tests) below |
 | Storage | ✅ PostgreSQL 18 via Drizzle; locally a real server run from `node_modules` (`embedded-postgres`), hosted later through `DATABASE_URL` |
 | Hosting | ⏳ Next: API and its Swagger page on Render (docs stay on GitHub) |
 
@@ -29,7 +29,7 @@ Details: [PROGRESS.md](PROGRESS.md)
 | Category | What it proves | Tests | Status |
 |---|---|---|---|
 | **Bad calls** | Every kind of client mistake gets the right status and an error naming the field: `José` → 400, stale version → 412, deleted user's email → 409, `<script>` never echoed back | **115** | ✅ |
-| **Security** | Forged tokens (`alg: none`, edited role, no expiry) → 401; no token → 401 before anything else is checked; SQL in `search`/`sort` does nothing; a forced crash leaks no SQL or file paths, and **the server's own log holds no names or emails**; look-alike origins get no CORS. **Found 2 real holes**, now fixed | **63** | ✅ |
+| **Security** | Forged tokens (`alg: none`, edited role, no expiry) → 401; no token → 401 before anything else is checked; SQL in `search`/`sort` does nothing; a forced crash leaks no SQL or file paths, and **the server's own log holds no names or emails**; look-alike origins get no CORS; the public docs can't be used to reach other files. **Found 2 real holes**, now fixed | **73** | ✅ |
 | **Integrity** | Two requests forced to collide: same email → one `201`, one `409`; same version → one `200`, one `412`, saved once; a save failing midway leaves nothing half-written. **Found 1 real bug** (`500` instead of `409` in a race), now fixed | **14** | ✅ |
 | **Rate limiting** | Over 100 requests a minute → `429` with `Retry-After`; token-guessing floods and faked IP headers are stopped too; a blocked create saves nothing | **12** | ✅ |
 | **Performance** | Search and paging stay fast at scale | — | ⏳ Planned |
@@ -67,7 +67,7 @@ Suggested reading order if you want to see how a project starts:
 | 1 | The story, step by step | [Journal](project/docs/journal.md) |
 | 2 | Why things are the way they are | [Decision log](project/docs/decisions/README.md) |
 | 3 | What the API does, in plain language | [Operations list](project/docs/spec/operations.md) |
-| 4 | The formal contract | [OpenAPI spec](project/api/openapi.yaml) · [docs page](website/api-docs/index.html) |
+| 4 | The formal contract | [OpenAPI spec](project/api/openapi.yaml) (the API serves it as Swagger UI at `/docs`) |
 | 5 | The tests, and what they prove | [Test showcase](project/docs/testing.md) · [`project/tests/`](project/tests/) |
 | 6 | The code | [`project/api/src/`](project/api/src/) |
 
@@ -97,11 +97,12 @@ npm test
 | `npm run test:watch` | Re-run tests on file changes |
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |
-| `npm run dev` | Start the API on port 3000 (starts a local PostgreSQL too; data saved in `project/.data/postgres`, kept between restarts) |
+| `npm start` | Start the API the way Render does (plain `node`; needs `JWT_SECRET` and `DATABASE_URL`) |
+| `npm run dev` | Start the API on port 3000 with auto-restart (starts a local PostgreSQL too; data saved in `project/.data/postgres`, kept between restarts) |
 | `npm run db:generate` | Write a new SQL migration after changing the tables |
 | `npm run token` | Print an admin token for Swagger UI's **Authorize** button |
 
-To try the API from the docs page: run `npm run dev`; in another terminal, run `python3 -m http.server 8080` from the repo root; open `http://localhost:8080/website/api-docs/`; click **Authorize** and paste the output of `npm run token`.
+To try the API from its docs page: run `npm run dev`; open `http://localhost:3000/docs`; click **Authorize** and paste the output of `npm run token`.
 
 ## More of my work
 

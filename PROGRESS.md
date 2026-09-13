@@ -11,7 +11,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | Design decisions | Logged in `project/docs/decisions/` (01–12) |
 | Plain-language operations | `project/docs/spec/operations.md` (6 operations; was 16 before the "one user form, one save" revision) |
 | OpenAPI spec | `project/api/openapi.yaml`: all 6 operations; phones and addresses are part of the user; passes lint; version 0.1.0 (1.0.0 once the web client proves it) |
-| Docs page | `website/api-docs/index.html` (Swagger UI) |
+| Docs page | Served by the API: Swagger UI at `/docs` (from `swagger-ui-dist`), the spec at `/openapi.yaml`; no token needed |
 | License | MIT, `LICENSE` |
 | Test setup files | `project/package.json`, `tsconfig.json`, `vitest.config.ts`, `.nvmrc`, `.npmrc` |
 | Code layout | Decision 06 decided: feature folders, layer in the filename (`users.routes.ts` → `users.service.ts` → `users.repository.ts`) |
@@ -23,7 +23,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | **Restore user** | `POST /v1/users/{userId}/restore` (no `If-Match`) → `200`, version bump; `409` if not deleted. **All 6 operations now work** (in-memory storage). Tried from Swagger UI. |
 | Happy-path tests | **17 green, happy path complete:** `tests/happy-path/` (16: create 2, list 5, get 2, update 2, delete 3, restore 2) and `tests/workflow/admin-session.test.ts` (1: one admin session, ETags passed step to step). Helper `tests/helpers/users.ts` (`createUser`, `userInput`) |
 | **Bad-call tests** | **115 green** in `tests/bad-calls/` (body 64, query 18, ids 9, versions 8, conflicts 4, paths 12). Unknown query params → 400; unknown path → 404; wrong method → 405 + `Allow`; unknown fields named. **132 tests total.** |
-| **Security tests** | **63 green** in `tests/security/` (tokens 23, auth-first 12, injection 8, leaks 9, CORS 9, body size 2). Found and fixed 2 holes: tokens without `exp` were accepted; `X-Powered-By: Express` was sent. Also: auth now runs before the body is read; oversized body → `413`; `bearer` in any case. **192 tests total.** |
+| **Security tests** | **73 green** in `tests/security/` (tokens 23, auth-first 12, injection 8, leaks 9, CORS 9, body size 2, public docs 10). Found and fixed 2 holes: tokens without `exp` were accepted; `X-Powered-By: Express` was sent. Also: auth now runs before the body is read; oversized body → `413`; `bearer` in any case. **192 tests total.** |
 | **Rate-limit tests** | **12 green** in `tests/rate-limit/`. `shared/rate-limit.ts`: 100/min per IP, fixed window, before auth, after CORS; `trustProxy` option (default 0). Checked by hand with a `curl` loop. **204 tests total.** |
 | **Database** | PostgreSQL via **Drizzle** on **PGlite** (decision 11). Tables `users`, `user_phones`, `user_addresses`; migration `api/migrations/0000_create_users.sql`. In-memory repository removed. **All 204 tests green on PostgreSQL**, one file at a time (`maxWorkers: 1`, ~50 s; parallel runs froze the laptop). `npm run dev` saves to `project/.data/`; checked in Swagger that data survives a restart. |
 | **Integrity tests** | **14 green** in `tests/integrity/` (races 6, isolation 2, rollback 2, database rules 4). Races forced with `tests/helpers/racing-repository.ts`; mid-save failure via a temporary trigger. **Found 1 bug:** a same-email race got `500`, now `409` (`EmailTakenError`). Server logs included query values (names, emails): fixed in hosting step 2. **218 tests total.** |
@@ -37,7 +37,7 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 1. **Next: host the API on Render.** All 8 hosting questions are decided (journal row 37, decision 05). Build them in this order, each one red → green, then deploy:
    1. ~~Run on plain Node~~ **Done:** `erasableSyntaxOnly` on, 4 files' constructors rewritten, `npm start` = `node api/src/server.ts`, `dev` and `token` on plain `node` too, `tsx` removed, laptop Node 24.21.0 (pin it in `.nvmrc` and on Render at deploy). 218 green
    2. ~~Safe error logs~~ **Done:** logs only method, path, error name, PostgreSQL code, constraint, and the stack's `at` lines; 3 security tests (leaks D3a–c). **221 green**
-   3. **Swagger in the API:** `/docs` (`swagger-ui-dist`) and `/openapi.yaml` without a token, spec `servers: /`; delete `website/api-docs/` and `netlify.toml` (`website/` stays for the web client); update README and PROGRESS instructions
+   3. ~~Swagger in the API~~ **Done:** `/docs` (our page + an allowlist of 2 `swagger-ui-dist` files) and `/openapi.yaml`, no token; spec `servers: /`; Scarf install statistics off; `website/api-docs/` and `netlify.toml` deleted, `website/README.md` placeholder for the client. 10 security tests. **231 green**; tried in Swagger at `localhost:3000/docs`
    4. **Settings from env vars:** `TRUST_PROXY` (default 0), `DEMO_MODE`, `MAX_USERS`
    5. **200-user cap:** `409` `/problems/user-limit`, deleted users included; advisory lock; bad-call and integrity (race) tests; spec first
    6. **Demo token:** `POST /demo/token`, 1-hour token, only when `DEMO_MODE` is on; spec first
@@ -61,11 +61,11 @@ A quick "where are we" for resuming work. The full story is in [`project/docs/jo
 | `npm run typecheck` | TypeScript check |
 | `npm run lint:spec` | Lint the OpenAPI spec |
 | `npm start` | Start the API the way Render does (`node api/src/server.ts`); needs `JWT_SECRET` and `DATABASE_URL` set |
-| `npm run dev` | Start the API on port 3000 with plain `node --watch` (dev secret; allows the docs page on 8080 via CORS). Also starts PostgreSQL on port 54320; data in `project/.data/postgres` survives restarts; delete that folder (with the server stopped) to start empty. |
+| `npm run dev` | Start the API on port 3000 with plain `node --watch` (dev secret); docs at `http://localhost:3000/docs`. Also starts PostgreSQL on port 54320; data in `project/.data/postgres` survives restarts; delete that folder (with the server stopped) to start empty. |
 | `npm run db:generate` | After changing `users.table.ts`: write the next SQL migration into `api/migrations/` (review it before running) |
 | `npm run token` | Print an admin token (8 hours) to paste into Swagger UI's **Authorize** |
 
-**Try the API in Swagger UI:** `npm run dev` in one terminal; `python3 -m http.server 8080` from the repo root in another; open `http://localhost:8080/website/api-docs/`; click **Authorize** and paste the output of `npm run token`; then **Try it out**.
+**Try the API in Swagger UI:** `npm run dev`; open `http://localhost:3000/docs`; click **Authorize** and paste the output of `npm run token`; then **Try it out**.
 
 ## Working agreements
 

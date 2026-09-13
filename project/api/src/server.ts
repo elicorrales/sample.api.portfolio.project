@@ -25,6 +25,7 @@ const db = await openDatabase(databaseUrl);
 const server = createApp({ jwtSecret, corsOrigins, usersRepository: new PgUsersRepository(db) }).listen(port, () => {
   const { host, pathname } = new URL(databaseUrl); // printed without the password
   console.log(`API listening on http://localhost:${port}`);
+  console.log(`Docs: http://localhost:${port}/docs`);
   console.log(`CORS allowed origins: ${corsOrigins.join(", ") || "(none)"}`);
   console.log(`Database: ${host}${pathname}`);
 });

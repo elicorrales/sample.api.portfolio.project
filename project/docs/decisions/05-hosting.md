@@ -43,7 +43,15 @@ Start local, then host on services I already use.
 
 **A misunderstanding from day one:** I created the empty `website/` folder **for the web client**. The AI read it as "portfolio pages about how it was built" (see the first table above) and later put the Swagger page in it. Corrected: `website/` holds the admin web client, and the "how it was built" story lives on GitHub (README, journal, decisions).
 
-**Origin:** mine (Netlify and `website/` for the client); the `/docs` details were suggested and I agreed
+**Origin:** mine (Netlify and `website/` for the client)
+
+**As built:**
+
+- **Only 2 package files are served** (`swagger-ui.css`, `swagger-ui-bundle.js`), not the whole `swagger-ui-dist` folder. A check before running the tests showed the folder also served Swagger's sample Petstore `index.html`. **Origin:** suggested
+- **Scarf turned off** (`"scarfSettings": { "enabled": false }`). Installing `swagger-ui-dist` added a second package, `@scarf/scarf`, which reports install statistics on every `npm install`, Render's included. **Origin:** suggested; I agreed
+- The path-trick tests send requests **raw**: supertest resolves `..` before sending, so they would have tested nothing
+- `website/README.md` is a placeholder for the web client, since git doesn't keep empty folders
+- 10 security tests; 231 green; tried in Swagger at `localhost:3000/docs`; the `/docs` details were suggested and I agreed
 
 ### Database provider and plans (2026-09-13)
 
