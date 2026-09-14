@@ -13,9 +13,11 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "api:types": "npx --yes openapi-typescript@7.13.0 ../project/api/openapi.yaml --output src/api/schema.ts"
   },
   "dependencies": {
+    "openapi-fetch": "0.17.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -27,6 +29,7 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
     "jsdom": "30.0.1",
+    "msw": "2.15.0",
     "typescript": "7.0.2",
     "vite": "8.3.0",
     "vitest": "5.0.0"

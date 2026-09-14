@@ -95,7 +95,16 @@ The client is built for a desktop or laptop screen, about 1280 px wide or more. 
 | `vitest`, `jsdom` | 5.0.0, 30.0.1 | Tests without opening a browser |
 | `@testing-library/react`, `/dom`, `/jest-dom` | 16.3.3, 10.4.2, 7.0.1 | Find things the way a person does (by role and text); `/dom` must be installed alongside `/react` |
 
-Still to add when their first test needs them: `openapi-fetch` and the types generated from the spec, and MSW (a fake API inside tests).
+Added with the first API tests:
+
+| Package | Version | Why |
+|---|---|---|
+| `openapi-fetch` | 0.17.0 | API calls checked against the types generated from `openapi.yaml` (`npm run api:types`, pinned `openapi-typescript` 7.13.0 via `npx`, since it needs TypeScript 5) |
+| `msw` | 2.15.0 | A fake API inside the tests; a request it has no answer for fails the test |
+
+**The token (2026-09-13):** the app gets a demo token automatically on open and keeps it in memory only, so a reload gets a fresh one and nothing stays saved in the browser. The Experiments tab will show what happens without one. **Origin:** suggested (the AI's picks; I agreed)
+
+**Tests never reach Render,** guarded twice: the client looks up `fetch` on every call so MSW can catch it (without that, the first run quietly called the live API), and tests point at `http://fake-api.test`, which can't exist. Checked by removing the first guard on purpose ([journal row 51](../journal.md)).
 
 ## Still open
 
