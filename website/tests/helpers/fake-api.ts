@@ -60,9 +60,10 @@ export function detailedUser(user: UserBasic, changes: Partial<UserDetailed> = {
   return {
     ...user,
     dateOfBirth: "1988-04-12",
+    // Returned in E.164, as the API stores them.
     phones: [
-      { number: "(305) 555-0130", type: "mobile", primary: true },
-      { number: "(305) 555-0131", type: "work", primary: false },
+      { number: "+13055550130", type: "mobile", primary: true },
+      { number: "+13055550131", type: "work", primary: false },
     ],
     addresses: [{ street: "1420 Brickell Ave", street2: "Apt 4B", city: "Miami", state: "FL", zip: "33101", type: "home", primary: true }],
     version: 3,
@@ -95,8 +96,8 @@ export function countRequests() {
 }
 
 // Problem Details, the way the API sends every error.
-export function problem(status: number, title: string, detail: string) {
-  const body: Problem = { type: `/problems/${title.toLowerCase().replaceAll(" ", "-")}`, title, status, detail };
+export function problem(status: number, title: string, detail: string, extra: Partial<Problem> = {}) {
+  const body: Problem = { type: `/problems/${title.toLowerCase().replaceAll(" ", "-")}`, title, status, detail, ...extra };
   return HttpResponse.json(body, { status, headers: { "Content-Type": "application/problem+json" } });
 }
 

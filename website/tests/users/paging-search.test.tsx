@@ -146,7 +146,7 @@ describe("paging and search: the normal case", () => {
     const rightPage = screen.getByRole("region", { name: "Opened user" });
 
     await user.click(screen.getByRole("button", { name: "Adams" }));
-    expect(await within(rightPage).findByText("1988-04-12")).toBeInTheDocument();
+    expect(await within(rightPage).findByDisplayValue("1988-04-12")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Next" }));
     expect(await screen.findByText("25 users, page 2 of 3")).toBeInTheDocument();

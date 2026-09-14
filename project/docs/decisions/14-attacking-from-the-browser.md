@@ -37,7 +37,7 @@ Each row was checked against the API's existing tests before being written here.
 
 This is the demo's real exposure. Nothing above breaks the API, but **every visitor holds an admin token and the data is shared.** With a short script staying under 100 calls a minute, someone could rename all users to something offensive, delete them all, or create users up to the 200 cap. **Other visitors would see it until the nightly reset at 08:00 UTC.**
 
-Also: the rate limit counts **per IP address**, so someone with many addresses gets 100 calls a minute from each.
+Also: the rate limit counts **per IP address**, so someone with many addresses gets 100 calls a minute from each. And its windows are **fixed minutes**: a client that sends 100 just before a minute ends and 100 just after gets 200 through in a few seconds. Found by the live flood experiment ([13](13-web-client.md#experiments-tab-2026-09-13)); a sliding window would close it.
 
 ### Ideas to limit it (not decided, not built)
 
@@ -76,5 +76,26 @@ My questions, with what's already known and what's still to find out. The plan i
 | Newlines and tabs pasted | A single-line box usually drops newlines | What reaches the API |
 | `&page=999` typed as text | Should be encoded and searched as plain text | That paging isn't affected |
 | Recovery | — | That after a `400`, `429`, or `500`, the box still works and the next search clears the message |
+
+### What trying it found (2026-09-13)
+
+I pasted about 30 strings into the real search box, against the live API. The AI replayed the surprising one with `curl` to find where it stopped.
+
+| Tried | Result |
+|---|---|
+| `'; DROP TABLE users;--` | **Blocked before our API:** Render's Cloudflare edge answered `403` with an HTML page titled "Blocked". The page has no CORS header, so the browser reported a CORS error and **our page said "Can't reach the API", which is wrong**: the API was up. `' OR '1'='1` and `DROP TABLE users;--` alone did reach our API. **Our client test with the same string had passed**, because the fake API has no firewall |
+| `<img src=x onerror=alert(1)>`, `<script>alert(1)</script>`, `"><b>bold</b>` | Reached our API (not blocked by the firewall); shown as plain text: no pop-up, no bold |
+| `&page=999`, `?search=x`, `#top`, `%00`, `../../etc/passwd` | Encoded and searched as plain text; paging unaffected |
+| `o'brien`, `st. clair`, `smith-`, `@example.com` | Found O'Brien, St. Clair, Smith-Jones, and all 45 users |
+| `O’Brien` (curly apostrophe), `ＬＥＥ` (full-width letters) | No matches, as they should: the API matches characters exactly |
+| `José`, `ß`, Arabic, Hebrew, emoji | No matches; displayed correctly, right-to-left text included |
+| 51 emoji (102 of the 100 allowed characters) | Chrome cut cleanly at 50 whole emoji; no half emoji that would have broken the request |
+| `   lee   ` | Trimmed; found Lee |
+| Several lines pasted at once | Chrome turned the line breaks into spaces: one search |
+| A zero-width space inside `lee` | **Not tested yet:** copying from the terminal dropped the invisible character |
+
+**Wording for "no readable answer" (decided: leave as is):** a browser can't tell a firewall block or CORS refusal from being offline. The options were an honest general message, or a follow-up check against a public page (`/openapi.yaml`) to say "the API is up, but this request was blocked". **I chose to leave the current "Can't reach the API" message** and move on to the user form; the finding stays recorded here. **Origin:** picked (the AI recommended the follow-up check)
+
+**Still open:** the zero-width space (use `copy("le\u200Be")` in the console); and the NUL character, which needs a `fetch` from the console.
 
 **Origin:** mine (the questions and asking for this record); the AI wrote the answers and checked each "proven by" against the API's tests

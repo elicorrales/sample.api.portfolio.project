@@ -96,7 +96,7 @@ describe("demo token: when things go wrong", () => {
     useFakeClock();
     const user = await openWithToken();
     await user.click(screen.getByRole("button", { name: "Lee" }));
-    expect(await within(rightPage()).findByText("1988-04-12")).toBeInTheDocument();
+    expect(await within(rightPage()).findByDisplayValue("1988-04-12")).toBeInTheDocument();
 
     await passTime(3599_000);
     expect(screen.getByText("demo token, 0:01 left")).toBeInTheDocument();

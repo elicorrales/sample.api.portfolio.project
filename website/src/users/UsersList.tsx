@@ -7,7 +7,7 @@ import { bearer } from "../api/token.ts";
 type UserBasic = components["schemas"]["UserBasic"];
 type UserPage = components["schemas"]["UserPage"];
 
-type Query = { search: string; page: number };
+type Query = { search: string; page: number; includeDeleted: boolean };
 // Each answer remembers the query it belongs to, so a late answer for an older query is never shown.
 type Answer = { query: Query } & ({ status: "loaded"; page: UserPage } | { status: "failed"; message: string });
 
@@ -20,11 +20,13 @@ type Props = {
   onTokenRefused: (token: string) => void;
   openedId: string | null;
   onOpen: (user: UserBasic) => void;
+  onNew: () => void;
+  reloadKey: number; // changes after a save, delete, or restore, so the list shows it
 };
 
-export function UsersList({ token, onTokenRefused, openedId, onOpen }: Props) {
+export function UsersList({ token, onTokenRefused, openedId, onOpen, onNew, reloadKey }: Props) {
   const [typed, setTyped] = useState("");
-  const [query, setQuery] = useState<Query>({ search: "", page: 1 });
+  const [query, setQuery] = useState<Query>({ search: "", page: 1, includeDeleted: false });
   const [answer, setAnswer] = useState<Answer | null>(null);
   // The last page that loaded: stays on screen, faded, while the next one loads.
   const [shown, setShown] = useState<UserPage | null>(null);
@@ -33,7 +35,7 @@ export function UsersList({ token, onTokenRefused, openedId, onOpen }: Props) {
   useEffect(() => {
     const timer = setTimeout(() => {
       const search = typed.trim();
-      setQuery((current) => (current.search === search ? current : { search, page: 1 }));
+      setQuery((current) => (current.search === search ? current : { ...current, search, page: 1 }));
     }, SEARCH_PAUSE_MS);
     return () => clearTimeout(timer);
   }, [typed]);
@@ -56,11 +58,11 @@ export function UsersList({ token, onTokenRefused, openedId, onOpen }: Props) {
     return () => {
       replaced = true;
     };
-  }, [token, onTokenRefused, query]);
+  }, [token, onTokenRefused, query, reloadKey]);
 
   const loading = answer?.query !== query;
   const page = loading ? shown : answer.status === "loaded" ? answer.page : null;
-  const goTo = (pageNumber: number) => setQuery({ search: query.search, page: pageNumber });
+  const goTo = (pageNumber: number) => setQuery({ ...query, page: pageNumber });
 
   return (
     <>
@@ -69,6 +71,13 @@ export function UsersList({ token, onTokenRefused, openedId, onOpen }: Props) {
           Search name or email
           <input type="search" value={typed} maxLength={SEARCH_MAX} onChange={(event) => setTyped(event.target.value)} />
         </label>
+        <label className="tick">
+          <input type="checkbox" checked={query.includeDeleted} onChange={(event) => setQuery({ ...query, includeDeleted: event.target.checked, page: 1 })} />{" "}
+          Include deleted
+        </label>
+        <button type="button" className="btn solid" onClick={onNew}>
+          New user
+        </button>
       </div>
 
       {!loading && answer.status === "failed" ? (
@@ -97,12 +106,20 @@ export function UsersList({ token, onTokenRefused, openedId, onOpen }: Props) {
             <tbody>
               {page.items.map((user) => (
                 // The whole row opens the user; the last name is a button so the keyboard can too.
-                <tr key={user.id} aria-current={user.id === openedId ? "true" : undefined} onClick={() => onOpen(user)}>
+                <tr
+                  key={user.id}
+                  className={user.deletedAt ? "deleted" : undefined}
+                  aria-current={user.id === openedId ? "true" : undefined}
+                  onClick={() => onOpen(user)}
+                >
                   <td>
                     <button type="button" className="row-open">{user.lastName}</button>
                   </td>
                   <td>{user.firstName}</td>
-                  <td className="data">{user.email}</td>
+                  <td className="data">
+                    {user.email}
+                    {user.deletedAt ? <span className="tag">deleted</span> : null}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -124,10 +141,12 @@ export function UsersList({ token, onTokenRefused, openedId, onOpen }: Props) {
   );
 }
 
-function loadPage(token: string, { search, page }: Query): Promise<UserPage> {
+function loadPage(token: string, { search, page, includeDeleted }: Query): Promise<UserPage> {
   return call(() =>
     api.GET("/v1/users", {
-      params: { query: { sort: "lastName", ...(search ? { search } : {}), page, pageSize: PAGE_SIZE } },
+      params: {
+        query: { sort: "lastName", ...(search ? { search } : {}), page, pageSize: PAGE_SIZE, ...(includeDeleted ? { includeDeleted } : {}) },
+      },
       headers: bearer(token),
     }),
   );

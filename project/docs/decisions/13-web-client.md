@@ -143,6 +143,46 @@ Checking the spec first found two traps: `search` must be 1–100 characters (so
 
 **Origin:** suggested (the AI's picks; I agreed)
 
+## Add, edit, delete, restore (2026-09-13)
+
+I asked for all four as one step, since they share one form. 11 picks, all the AI's, approved together:
+
+| # | Question | Picked |
+|---|---|---|
+| 1 | Validation | **The API decides.** The form doesn't repeat the rules; each `400` message shows next to the field it names (`email`, `phones.1.number`). Only input types help: a date picker, dropdowns for types and the state |
+| 2 | The form | Always editable on the right page, like mockup C2; **New user** opens it empty; Save and Cancel turn on once something changes |
+| 3 | Phones and addresses | 1 row each to start; add up to 3, remove down to 1; one primary per list, automatic with one |
+| 4 | After creating | The list reloads; the new user stays open |
+| 5 | `409` | Email taken: next to Email. User limit: a message above Save |
+| 6 | `412` on save | "Someone saved this user first. Nothing of yours was saved." + **Load their version** |
+| 7 | Unsaved changes, then another user or New user | Blocked: "You have unsaved changes: Save or Cancel first" |
+| 8 | Delete | Confirmed on the page, not a browser pop-up; sent with `If-Match`, so a stale copy gets `412` |
+| 9 | Deleted users | **Include deleted** checkbox; deleted rows faded and marked; opening one shows it read-only with **Restore** |
+| 10 | Restore | One click; if someone restored it first (`409`), say so and reload |
+| 11 | Opening a user | Always with `includeDeleted=true`, so a user deleted meanwhile shows as deleted with Restore; only a user that's truly gone gets `404` |
+
+**Origin:** suggested (I approved all 11 at once, to keep going)
+
+## Experiments tab (2026-09-13)
+
+**My direction, to finish the portfolio:** show all 7 experiments as in mockup C2, but run only the flood for real. The other 6 show their stamp without a click, and **Replay the test** plays back the requests their automated test sends, labeled as a replay ("Nothing was sent from your browser"), since sending them from a public demo would change other visitors' data. **The flood goes first, marked "runs live"**, so visitors don't click through replays and assume it's fake too.
+
+| # | Experiment | Stamp | On this page |
+|---|---|---|---|
+| 1 | Flood the API | what really happened | **Runs live:** 150 requests at once, without a token |
+| 2 | No token at all | 401 | Replay of `auth-first.test.ts` |
+| 3 | Forge a token | 401 | Replay of `tokens.test.ts` |
+| 4 | Save a stale copy | 412 | Replay of `versions.test.ts` |
+| 5 | Same email twice | 409 | Replay of `conflicts.test.ts` |
+| 6 | Nonsense input | 400 | Replay of `body.test.ts`, with the API's real messages |
+| 7 | SQL in the search box | 200 | Replay of `injection.test.ts`, plus the firewall finding (decision 14) |
+
+- Tabs are notebook dividers; both tabs stay on the page (one hidden), so unsaved edits and a running flood survive switching
+- **The flood, first sent one request at a time, got "105 answered, and no 429"** on its first live run. The API's limit was fine (120 requests at once from `curl`: 93 answered, 27 refused); the requests had most likely crossed a minute boundary, where the API's count starts over. **I asked why it wasn't a real flood:** the AI had copied the mockup's "in a row" without questioning it. Now all 150 go at once, and the page explains more than 100 answers as a new minute starting mid-flood
+- **Known trade-off, found by this:** fixed one-minute windows let a well-timed client get up to 200 requests in a few seconds, around the boundary. Not changed
+
+**Origin:** mine (only the flood live, flood first, stamps without a click, a real flood); the AI suggested replays for the other 6
+
 ## Still open
 
 - How the users screen and the experiments work in detail (which checks, how the rate-limit warning works)
