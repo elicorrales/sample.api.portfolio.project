@@ -1,34 +1,15 @@
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, test } from "vitest";
-import { App } from "../../src/App.tsx";
+import { openWithToken, startApp } from "../helpers/app.ts";
 import { apiUrl, DEMO_TOKEN, fakeApi, problem } from "../helpers/fake-api.ts";
 
-describe("users list: when things go wrong", () => {
-  test("API can't be reached: says so, and shows no table", async () => {
-    fakeApi.use(http.post(apiUrl("/demo/token"), () => HttpResponse.error()));
-
-    render(<App />);
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(/can't reach the API/i);
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
-  });
-
-  test("no demo token (the server isn't in demo mode): shows the status and the API's own message", async () => {
-    fakeApi.use(http.post(apiUrl("/demo/token"), () => problem(401, "Not signed in", "A valid admin token is required")));
-
-    render(<App />);
-
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("401");
-    expect(alert).toHaveTextContent("A valid admin token is required");
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
-  });
-
+describe("users list: when things go wrong (token failures are in tests/token)", () => {
   test("list refused: shows the status and the API's own message", async () => {
     fakeApi.use(http.get(apiUrl("/v1/users"), () => problem(500, "Internal error", "Something went wrong")));
+    const user = startApp();
 
-    render(<App />);
+    await user.click(screen.getByRole("button", { name: "Get demo token" }));
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("500");
@@ -55,9 +36,9 @@ describe("users list: the normal case", () => {
       }),
     );
 
-    render(<App />);
+    await openWithToken();
 
-    const table = await screen.findByRole("table");
+    const table = screen.getByRole("table");
     const rows = within(table).getAllByRole("row");
     expect(rows).toHaveLength(2); // the header row and Nora
     expect(within(rows[1]).getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["O'Brien", "Nora", "nora.obrien@example.com"]);

@@ -106,9 +106,26 @@ Added with the first API tests:
 
 **Only working controls on screen:** search, paging, tabs, and New user appear when they work, not as dead buttons.
 
-**The token (2026-09-13):** the app gets a demo token automatically on open and keeps it in memory only, so a reload gets a fresh one and nothing stays saved in the browser. The Experiments tab will show what happens without one. **Origin:** suggested (the AI's picks; I agreed)
+**The token (2026-09-13):** kept in memory only, so a reload starts over and nothing stays saved in the browser. **Origin:** suggested (I agreed). At first the app also got it automatically on open; [revised below](#the-demo-token-on-screen-2026-09-13).
 
 **Tests never reach Render,** guarded twice: the client looks up `fetch` on every call so MSW can catch it (without that, the first run quietly called the live API), and tests point at `http://fake-api.test`, which can't exist. Checked by removing the first guard on purpose ([journal row 51](../journal.md)).
+
+## The demo token on screen (2026-09-13)
+
+After opening a user worked, **I asked why the list was showing at all:** the app quietly got a demo token on open, and nothing on screen said so.
+
+| Question | Options | Picked |
+|---|---|---|
+| What replaces the list without a token | **A notebook page explaining why** (in plain words, with the API's own answer and a Try again button; the right page explains what the demo token is) · one red line and a Try again button | **The explaining page** |
+| How the token is got | Automatically on open, shown in the corner · **a Get demo token button first** | **The button** (reversing the automatic pick) |
+| When the hour runs out | **Show it** (the list is replaced by "Your demo token expired" and a Get a new token button) · renew quietly | **Show it** |
+
+- **Why the button:** visitors see that an API like this needs a pass before anything else, and that this demo hands one out; nothing happens behind their back
+- **Why show expiry:** it's the API enforcing the token's `exp`, one of the security tests, seen by a person instead of only by a test
+
+**Origin:** picked (the AI gave the options, recommending automatic; I chose the button, and the explaining page and visible expiry as recommended)
+
+**Built (2026-09-13):** 5 states in `src/token/useDemoToken.ts` (none, getting, failed, active, ended as expired or refused); the pages in `src/token/NoTokenPages.tsx`; the corner shows `no token`, `demo token, 59:12 left`, `demo token expired`, or `demo token refused`. The countdown uses the visitor's clock from `expiresIn`. A `429` counts down from `Retry-After` (the API already exposes that header to browsers). **A late `401` for an old token can't end a new one,** guarded twice (checked by removing each guard, [journal row 55](../journal.md)). 8 tests in `website/tests/token/`.
 
 ## Still open
 

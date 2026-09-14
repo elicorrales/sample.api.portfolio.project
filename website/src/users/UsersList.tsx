@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { call, isTokenRefused, messageOf } from "../api/call.ts";
 import { api } from "../api/client.ts";
 import type { components } from "../api/schema.ts";
+import { bearer } from "../api/token.ts";
 
+type UserBasic = components["schemas"]["UserBasic"];
 type UserPage = components["schemas"]["UserPage"];
 
 type ListState =
@@ -11,19 +14,31 @@ type ListState =
 
 const PAGE_SIZE = 10;
 
-export function UsersList() {
+type Props = {
+  token: string;
+  onTokenRefused: (token: string) => void;
+  openedId: string | null;
+  onOpen: (user: UserBasic) => void;
+};
+
+export function UsersList({ token, onTokenRefused, openedId, onOpen }: Props) {
   const [state, setState] = useState<ListState>({ status: "loading" });
 
   useEffect(() => {
     // Ignore a late answer if the page was closed meanwhile.
     let closed = false;
-    loadFirstPage().then((next) => {
-      if (!closed) setState(next);
-    });
+    loadFirstPage(token).then(
+      (page) => !closed && setState({ status: "loaded", page }),
+      (error) => {
+        if (closed) return;
+        if (isTokenRefused(error)) onTokenRefused(token);
+        setState({ status: "failed", message: messageOf(error) });
+      },
+    );
     return () => {
       closed = true;
     };
-  }, []);
+  }, [token, onTokenRefused]);
 
   if (state.status === "loading") return <p className="waiting">Loading users…</p>;
   if (state.status === "failed") return <p role="alert" className="problem">{state.message}</p>;
@@ -31,7 +46,7 @@ export function UsersList() {
   const { page } = state;
   return (
     <>
-      <table>
+      <table className="users">
         <thead>
           <tr>
             <th>Last name, sorted</th>
@@ -41,8 +56,11 @@ export function UsersList() {
         </thead>
         <tbody>
           {page.items.map((user) => (
-            <tr key={user.id}>
-              <td>{user.lastName}</td>
+            // The whole row opens the user; the last name is a button so the keyboard can too.
+            <tr key={user.id} aria-current={user.id === openedId ? "true" : undefined} onClick={() => onOpen(user)}>
+              <td>
+                <button type="button" className="row-open">{user.lastName}</button>
+              </td>
               <td>{user.firstName}</td>
               <td className="data">{user.email}</td>
             </tr>
@@ -56,27 +74,11 @@ export function UsersList() {
   );
 }
 
-async function loadFirstPage(): Promise<ListState> {
-  try {
-    // Demo token: kept in memory only, so a reload gets a fresh one.
-    const token = await api.POST("/demo/token");
-    if (!token.data) return refused(token.response.status, token.error);
-
-    const list = await api.GET("/v1/users", {
+function loadFirstPage(token: string): Promise<UserPage> {
+  return call(() =>
+    api.GET("/v1/users", {
       params: { query: { sort: "lastName", page: 1, pageSize: PAGE_SIZE } },
-      headers: { Authorization: `Bearer ${token.data.token}` },
-    });
-    if (!list.data) return refused(list.response.status, list.error);
-
-    return { status: "loaded", page: list.data };
-  } catch {
-    // fetch throws only when no answer came back at all.
-    return { status: "failed", message: "Can't reach the API. Check your connection, or try again in a minute." };
-  }
-}
-
-// Shows the API's own words. A proxy error page (not Problem Details) gets just the status.
-function refused(status: number, body: unknown): ListState {
-  const detail = typeof body === "object" && body !== null && "detail" in body ? String(body.detail) : "";
-  return { status: "failed", message: `The API answered ${status}${detail ? `: ${detail}` : "."}` };
+      headers: bearer(token),
+    }),
+  );
 }

@@ -49,3 +49,35 @@ td.data { font-family: var(--mono); font-size: 13px; color: var(--blue); }
 .waiting { font-style: italic; color: var(--pencil); }
 .problem { color: var(--red); font-style: italic; border-left: 3px solid var(--red); padding: 2px 0 2px 14px; }
 .blank-page { margin: auto; max-width: 30ch; text-align: center; font-style: italic; color: var(--pencil); }
+
+/* Rows open a user; the last name is the keyboard's way in. The opened row is marked in yellow, with an arrow to the right page. */
+.users tbody tr { cursor: pointer; }
+.users tbody tr:hover td { background: rgba(246, 226, 94, 0.22); }
+.users tbody tr[aria-current="true"] td { background: var(--mark); }
+.users tbody tr[aria-current="true"] td:last-child { position: relative; }
+.users tbody tr[aria-current="true"] td:last-child::after { content: "→"; position: absolute; right: -30px; top: 50%; transform: translateY(-50%); font-family: var(--serif); font-size: 20px; line-height: 1; color: var(--ink); }
+.row-open { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.row-open:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* The right page: the opened user written on the notebook's lines. */
+.opened h2 { font-size: 30px; font-weight: 500; margin: 0 0 2px; line-height: 1.2; }
+.opened .sub { font-family: var(--mono); font-size: 12.5px; color: var(--pencil); margin: 0 0 12px; }
+.opened h3 { font-size: 18px; font-weight: 600; margin: 16px 0 2px; }
+.fill { display: grid; grid-template-columns: 130px 1fr; gap: 5px 14px; align-items: end; margin: 0; }
+.fill dt { font-size: 15px; color: var(--pencil); }
+.fill dd { margin: 0; font: 15px var(--mono); color: var(--blue); border-bottom: 1px solid var(--ink); padding: 3px 2px; min-height: 1.6em; }
+.opened .waiting, .opened .problem { margin-top: 16px; }
+
+/* No token: the left page explains and offers the token; the right page says what a demo token is. */
+.btn { font: 500 15px var(--serif); color: var(--ink); background: transparent; border: 1.5px solid var(--ink); border-radius: 3px; padding: 5px 14px; cursor: pointer; }
+.btn.solid { background: var(--ink); color: var(--paper); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.gate { margin: 40px 0 auto; max-width: 44ch; }
+.gate h2, .explain h2 { font-size: 30px; font-weight: 500; margin: 0 0 8px; line-height: 1.2; }
+.gate p { margin: 0 0 14px; }
+.gate .btn { margin-top: 6px; }
+.explain { margin: 40px 0 auto; max-width: 52ch; }
+.explain p { margin: 0 0 12px; }
+.explain code, .gate code { font-family: var(--mono); font-size: 13.5px; color: var(--blue); }
+.explain .proof { font-size: 15px; color: var(--pencil); border-left: 3px solid var(--blue); padding-left: 14px; }
