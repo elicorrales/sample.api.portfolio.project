@@ -4,4 +4,17 @@ The admin page for managing users: a simple, professional CRUD screen, the kind 
 
 **Meant for a big screen** (desktop or laptop, about 1280 px wide or more); there's no phone layout ([decision 13](../project/docs/decisions/13-web-client.md#screen-size-big-screens-only-2026-09-13)).
 
-Not built yet: it's the next step after hosting the API (see [PROGRESS](../PROGRESS.md)). The API's own Swagger docs are served by the API at `/docs`.
+Just started: the project is set up with one test; the screens come next (see [PROGRESS](../PROGRESS.md)). The API's own Swagger docs are served by the API at `/docs`.
+
+## Commands (from `website/`, Node 24.21.0 via `nvm use`)
+
+| Command | Does |
+|---|---|
+| `npm run dev` | Start the dev server at `http://localhost:5173` |
+| `npm test` | Run the tests once |
+| `npm run test:watch` | Re-run tests on file changes |
+| `npm run typecheck` | TypeScript check |
+| `npm run build` | Type-check, then build the static site into `dist/` |
+| `npm run preview` | Serve the built `dist/` locally |
+
+The mockups are at `/mockups/index.html` (the full name; `/mockups/` shows the app).

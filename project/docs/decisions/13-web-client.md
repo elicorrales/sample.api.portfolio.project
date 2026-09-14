@@ -21,7 +21,7 @@ Click a picture for the full page.
 **Seeing, not just reading.** I asked that visitors can see the mockups, not only read about them:
 
 - **Screenshots** (above): 1440 px wide pages at 2× sharpness, taken in Chrome's device toolbar with "Capture full size screenshot". My first try was a picture of my screen (1912 × 858, zoomed, cut off), and it showed a real layout bug: form boxes running past their column in A, B, C, and E. Fixed before retaking
-- **The pages themselves** live in `website/public/`, so Vite copies them into the build and they're served with the client at `/mockups/`
+- **The pages themselves** live in `website/public/`, so Vite copies them into the build and they're served with the client at `/mockups/index.html` (the full name: the dev server answers `/mockups/` with the app, not the folder's index)
 
 **Picked C.** Why:
 
@@ -79,6 +79,23 @@ The client is built for a desktop or laptop screen, about 1280 px wide or more. 
 - A visitor on a phone can still read the README, the journal, and the screenshots
 
 **Origin:** mine
+
+## Project setup (2026-09-13)
+
+- **`website/` is the Vite project** (Render's root directory will be `website`); the mockups stay in `public/mockups/` and ship with the build
+- **The AI wrote a small set of files by hand** instead of running `npm create vite`, which wants an empty folder and adds demo files to delete. Same `.nvmrc` (Node 24.21.0) and exact-version `.npmrc` as the API
+- **Tests in `website/tests/`**, like the API's `project/tests/`: Vitest with jsdom (a fake browser page inside Node) and React Testing Library, one file at a time
+- **Started red:** the first test (the app opens on "Users" with the demo notice) ran against an app that shows nothing, failed as predicted, then passed
+
+| Package | Version | Why |
+|---|---|---|
+| `react`, `react-dom` | 19.3.0 | The UI |
+| `vite`, `@vitejs/plugin-react` | 8.3.0, 6.1.1 | Dev server and build into `dist/` |
+| `typescript` | 7.0.2 | Same as the API; `npm run build` type-checks first |
+| `vitest`, `jsdom` | 5.0.0, 30.0.1 | Tests without opening a browser |
+| `@testing-library/react`, `/dom`, `/jest-dom` | 16.3.3, 10.4.2, 7.0.1 | Find things the way a person does (by role and text); `/dom` must be installed alongside `/react` |
+
+Still to add when their first test needs them: `openapi-fetch` and the types generated from the spec, and MSW (a fake API inside tests).
 
 ## Still open
 
