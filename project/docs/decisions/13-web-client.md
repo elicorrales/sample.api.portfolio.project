@@ -127,6 +127,22 @@ After opening a user worked, **I asked why the list was showing at all:** the ap
 
 **Built (2026-09-13):** 5 states in `src/token/useDemoToken.ts` (none, getting, failed, active, ended as expired or refused); the pages in `src/token/NoTokenPages.tsx`; the corner shows `no token`, `demo token, 59:12 left`, `demo token expired`, or `demo token refused`. The countdown uses the visitor's clock from `expiresIn`. A `429` counts down from `Retry-After` (the API already exposes that header to browsers). **A late `401` for an old token can't end a new one,** guarded twice (checked by removing each guard, [journal row 55](../journal.md)). 8 tests in `website/tests/token/`.
 
+## Paging and search (2026-09-13)
+
+Checking the spec first found two traps: `search` must be 1–100 characters (so an empty box must leave it out, or the API answers `400`), and `%` and `_` are plain characters.
+
+| Question | Picked | Other option |
+|---|---|---|
+| When the search runs | **As you type, after a 300 ms pause**: fast typing sends one request, which matters with 100 requests a minute | Only on Enter or a Search button |
+| Spaces-only or empty box | **Trimmed; empty means no search** | Sent as typed, and the API answers `400` |
+| Over 100 characters | **The box stops at 100**, so it can't send what the API refuses; showing that `400` belongs in Experiments | Let it through and show the API's `400` |
+| Page past the end (users deleted, or the nightly reset) | **Say so**, with a button to the last page | Jump there silently |
+
+- A new search starts at page 1; while a page loads, the old rows stay visible, faded, and the buttons pause
+- The opened user stays open while paging or searching
+
+**Origin:** suggested (the AI's picks; I agreed)
+
 ## Still open
 
 - How the users screen and the experiments work in detail (which checks, how the rate-limit warning works)

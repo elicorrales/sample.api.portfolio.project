@@ -9,13 +9,14 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | You have | Do this |
 |---|---|
 | **2 minutes: try the API** | 1. Open [Swagger UI](https://users-admin-api-98o8.onrender.com/docs) · 2. **Demo** → `POST /demo/token` → **Try it out** → **Execute** · 3. Copy `token` · 4. **Authorize** (top right) → paste · 5. Try any operation. Without the token, every call gets `401`. All data is fake and resets every night at 08:00 UTC. |
+| **5 minutes: see me think like an attacker** | Read [decision 14](project/docs/decisions/14-attacking-from-the-browser.md): what a visitor could try from the browser's dev tools (forged tokens, bypassed limits, script and SQL injection, floods), what stops each one and which test proves it, and the demo's real weak spot, written down even though it isn't fixed. How the stored data is protected (and why field-level encryption wasn't built): [decision 12](project/docs/decisions/12-encryption.md). |
 | **10 minutes: see how I think** | Read the [journal](project/docs/journal.md): the project step by step, including where I pushed back on the AI. |
 
 ## Status
 
 | Stage | State |
 |---|---|
-| Design decisions | ✅ Logged (13 topics) |
+| Design decisions | ✅ Logged (14 topics) |
 | OpenAPI spec | ✅ All 6 operations, passes lint (v0.1.0) |
 | First vertical slice | ✅ Create user works end to end (tests green, callable from Swagger UI) |
 | List users | ✅ Search, sort, paging (tests green, callable from Swagger UI) |
@@ -26,7 +27,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Tests | ✅ 263 green; see [Tests](#tests) below |
 | Storage | ✅ PostgreSQL 18 via Drizzle; locally a real server run from `node_modules` (`embedded-postgres`); hosted on Render Postgres, reached over Render's private network with SSL |
 | Hosting | ✅ [Live on Render](https://users-admin-api-98o8.onrender.com/docs): the API serves its own Swagger page; demo token, 50 starting users, 200-user limit, nightly reset; rate limit checked from outside |
-| Admin web client | ⏳ In progress, as a Render static site: look picked from [5 mockups](project/docs/decisions/13-web-client.md#look-and-feel-the-engineering-notebook-2026-09-13) (with screenshots); Vite + React + TypeScript |
+| Admin web client | ⏳ In progress (Vite + React + TypeScript, look picked from [5 mockups](project/docs/decisions/13-web-client.md#look-and-feel-the-engineering-notebook-2026-09-13)): demo token with countdown and expiry, users list with search and paging, open a user; 24 client tests, non-happy first. Runs locally against the live API; not deployed yet |
 
 Details: [PROGRESS.md](PROGRESS.md)
 
@@ -48,11 +49,12 @@ Details: [PROGRESS.md](PROGRESS.md)
 
 ## What's worth a look
 
+- **Security first, including what isn't fixed.** The browser page is never trusted: every limit it shows is enforced again by the API and proven by a test. I asked what an attacker could do from dev tools, checked each answer against the tests, and wrote down the one real weak spot, shared demo data anyone can vandalize until the nightly reset, with the options and costs for fixing it ([decision 14](project/docs/decisions/14-attacking-from-the-browser.md)).
+- **Encryption, thought through but not built.** Data is encrypted in transit (HTTPS, SSL to a database the internet can't reach) and at rest by the provider; I raised field-level encryption myself and wrote up why it would break search and the unique email rule, and what doing it properly would take ([decision 12](project/docs/decisions/12-encryption.md)).
 - **Spec before code.** The contract ([`openapi.yaml`](project/api/openapi.yaml)) was written and linted before any endpoint existed.
 - **Tests before code.** Each test is written first and must fail for the right reason before any code is written to pass it.
 - **201 bad-call, security, integrity, and rate-limit tests vs 17 happy-path.** Most of the work is proving what the API refuses ([tests](project/docs/testing.md)).
 - **Storage swapped twice, tests unchanged.** In-memory → PGlite → a real PostgreSQL server; no test changed, and the tests caught the one behavior that differed ([decision 11](project/docs/decisions/11-database.md#what-the-swap-found)).
-- **Encryption, thought through but not built.** What protects user data in transit and at rest, why field-level encryption would break search and the unique email rule, and what doing it properly would take ([decision 12](project/docs/decisions/12-encryption.md)).
 - **Decisions on paper.** Every choice records the question, the options, what was picked, and why ([decision log](project/docs/decisions/README.md)).
 - **A visible AI trail.** See below.
 

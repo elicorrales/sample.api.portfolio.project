@@ -20,6 +20,41 @@ export const firstPageUsers: UserBasic[] = [
   { id: "0b6f1c2e-1111-4a2b-9c3d-000000000003", firstName: "Mason", lastName: "Lopez", email: "mason.lopez@example.com" },
 ];
 
+// 25 users, already sorted by last name: 3 pages of 10.
+const LAST_NAMES = ["Adams", "Allen", "Baker", "Brown", "Clark", "Davis", "Evans", "Flores", "Garcia", "Green", "Hall", "Harris", "Jones", "King", "Lee", "Lewis", "Lopez", "Martin", "Moore", "Nelson", "O'Brien", "Perez", "Reed", "Scott", "Young"];
+const FIRST_NAMES = ["Ryan", "Hazel", "Owen", "Noah", "Ivy", "Liam", "Ruby", "Violet", "James", "Isaac", "Mateo", "Wyatt", "Ava", "Leo", "Carter", "Levi", "Mason", "Jackson", "Aiden", "Naomi", "Nora", "Ella", "Mila", "Eli", "Zoe"];
+export const twentyFiveUsers: UserBasic[] = LAST_NAMES.map((lastName, i) => ({
+  id: `0b6f1c2e-2222-4a2b-9c3d-${String(i + 1).padStart(12, "0")}`,
+  firstName: FIRST_NAMES[i],
+  lastName,
+  email: `${FIRST_NAMES[i].toLowerCase()}.${lastName.toLowerCase().replace("'", "")}@example.com`,
+}));
+
+// GET /v1/users the way the API answers it: search (ignoring case), sorted by last name, paged; a page past the end is empty.
+export function listAnswer(request: Request, users: UserBasic[]) {
+  const query = new URL(request.url).searchParams;
+  const search = query.get("search")?.toLowerCase();
+  const page = Number(query.get("page") ?? 1);
+  const pageSize = Number(query.get("pageSize") ?? 20);
+  const matching = users
+    .filter((user) => !search || [user.firstName, user.lastName, user.email].some((field) => field.toLowerCase().includes(search)))
+    .sort((a, b) => a.lastName.localeCompare(b.lastName));
+  return HttpResponse.json({
+    items: matching.slice((page - 1) * pageSize, page * pageSize),
+    page,
+    pageSize,
+    totalItems: matching.length,
+    totalPages: Math.ceil(matching.length / pageSize),
+  });
+}
+
+export const listLikeTheApi = (users: () => UserBasic[]) => http.get(apiUrl("/v1/users"), ({ request }) => listAnswer(request, users()));
+
+// The list requests seen so far, as query objects, e.g. { sort: "lastName", page: "2", pageSize: "10" }.
+export function listQueries(requests: string[]) {
+  return requests.filter((request) => request.startsWith("GET /v1/users?") || request === "GET /v1/users").map((request) => Object.fromEntries(new URLSearchParams(request.split("?")[1] ?? "")));
+}
+
 // The full user, as GET /v1/users/{id}?view=detailed returns it.
 export function detailedUser(user: UserBasic, changes: Partial<UserDetailed> = {}): UserDetailed {
   return {
@@ -50,7 +85,10 @@ export function tokenAnswer() {
 // Counts every request that reaches the fake API from now until the test ends.
 export function countRequests() {
   const seen: string[] = [];
-  const listener = ({ request }: { request: Request }) => void seen.push(`${request.method} ${new URL(request.url).pathname}`);
+  const listener = ({ request }: { request: Request }) => {
+    const url = new URL(request.url);
+    seen.push(`${request.method} ${url.pathname}${url.search}`);
+  };
   fakeApi.events.on("request:start", listener);
   onTestFinished(() => fakeApi.events.removeListener("request:start", listener));
   return seen;
@@ -68,7 +106,7 @@ export const fakeApi = setupServer(
     HttpResponse.json({ items: firstPageUsers, page: 1, pageSize: 10, totalItems: 45, totalPages: 5 }),
   ),
   http.get(apiUrl("/v1/users/:userId"), ({ params }) => {
-    const found = firstPageUsers.find((user) => user.id === params.userId);
+    const found = [...firstPageUsers, ...twentyFiveUsers].find((user) => user.id === params.userId);
     if (!found) return problem(404, "Not found", "No user with this id");
     const user = detailedUser(found);
     return HttpResponse.json(user, { headers: { ETag: `"${user.version}"` } });

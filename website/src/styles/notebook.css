@@ -81,3 +81,11 @@ td.data { font-family: var(--mono); font-size: 13px; color: var(--blue); }
 .explain p { margin: 0 0 12px; }
 .explain code, .gate code { font-family: var(--mono); font-size: 13.5px; color: var(--blue); }
 .explain .proof { font-size: 15px; color: var(--pencil); border-left: 3px solid var(--blue); padding-left: 14px; }
+
+/* Search and paging on the left page. */
+.tools { display: flex; gap: 20px; align-items: end; margin-bottom: 12px; }
+.line-input { display: grid; font-size: 13px; color: var(--pencil); }
+.line-input input { font: 16px var(--mono); color: var(--blue); background: transparent; border: 0; border-bottom: 1.5px solid var(--ink); padding: 4px 2px; width: 280px; }
+.line-input input:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.users.loading { opacity: 0.5; }
+.past-end p { margin: 0 0 10px; font-style: italic; color: var(--pencil); }

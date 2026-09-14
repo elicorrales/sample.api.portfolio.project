@@ -2,7 +2,7 @@ import { act, screen, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 import { openWithToken, startApp } from "../helpers/app.ts";
-import { apiUrl, countRequests, detailedUser, fakeApi, firstPageUsers, problem, tokenAnswer } from "../helpers/fake-api.ts";
+import { apiUrl, countRequests, detailedUser, fakeApi, firstPageUsers, listQueries, problem, tokenAnswer } from "../helpers/fake-api.ts";
 
 // A fake clock that still moves on its own, so waiting for the page keeps working; tests jump it ahead when needed.
 function useFakeClock() {
@@ -117,7 +117,9 @@ describe("demo token: when things go wrong", () => {
 
     expect(await screen.findByRole("table")).toBeInTheDocument();
     expect(within(rightPage()).queryByText("Carter Lee")).not.toBeInTheDocument();
-    expect(requests).toEqual(["POST /demo/token", "GET /v1/users"]);
+    expect(requests).toHaveLength(2);
+    expect(requests[0]).toBe("POST /demo/token");
+    expect(listQueries(requests)).toEqual([{ sort: "lastName", page: "1", pageSize: "10" }]);
   });
 
   test("a late 401 for the old token, arriving after a new token was got, doesn't end the new one", async () => {

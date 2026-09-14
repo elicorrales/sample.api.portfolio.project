@@ -106,6 +106,8 @@ See [journal row 30](journal.md).
 
 Every `401` looks the same (`"A valid admin token is required"`, `WWW-Authenticate: Bearer`), whatever the reason, so an attacker learns nothing from trying.
 
+**Beyond these tests:** what a visitor could try from the browser's dev tools, mapped to the tests below, and the demo's one real weak spot (shared data anyone with a demo token can vandalize) are in [decision 14](decisions/14-attacking-from-the-browser.md). How stored data is protected, and why field-level encryption wasn't built, is in [decision 12](decisions/12-encryption.md).
+
 ### A. Tokens: 23 tests ([`tokens.test.ts`](../tests/security/tokens.test.ts))
 
 | Group | Example cases | Result |

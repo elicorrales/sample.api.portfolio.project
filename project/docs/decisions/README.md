@@ -40,12 +40,14 @@ These docs are written in my voice: **I / my / mine** means me, the project auth
 | 11 | [Database (Drizzle + PostgreSQL)](11-database.md) | Decided |
 | 12 | [Encrypting user data](12-encryption.md) | Decided: documented, not built |
 | 13 | [Admin web client](13-web-client.md) | Partly decided: look and stack chosen |
+| 14 | [Attacking the demo from the browser](14-attacking-from-the-browser.md) | Documented: ideas not built yet |
 
 ## Open items
 
-- Pick how public demo visitors get an admin token (05)
-- Keep personal data out of server logs before hosting (11)
-- Confirm the folder layout (06)
-- Write the OpenAPI file from the reviewed [plain-language operations list](../spec/operations.md) and the [API conventions](10-api-conventions.md)
+- ~~Pick how public demo visitors get an admin token (05)~~ Done: `POST /demo/token`
+- ~~Keep personal data out of server logs before hosting (11)~~ Done: safe error logs
+- ~~Confirm the folder layout (06)~~ Done
+- ~~Write the OpenAPI file~~ Done: [`openapi.yaml`](../../api/openapi.yaml)
+- Limit vandalism of the shared demo data: 5 ideas, none picked ([14](14-attacking-from-the-browser.md#ideas-to-limit-it-not-decided-not-built))
 
 See also the step-by-step [project journal](../journal.md).

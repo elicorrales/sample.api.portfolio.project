@@ -46,8 +46,8 @@ And the key has to live somewhere:
 
 What doing it properly would take, in order:
 
-1. **Confirm the basics when hosting:** HTTPS only, `sslmode=require` on `DATABASE_URL`, and the provider's at-rest encryption checked in their documentation
-2. **Keep personal data out of logs** (already an open item, [11](11-database.md#found-along-the-way-personal-data-in-server-logs-open)). Logs are often the easiest place to leak data from
+1. **Confirm the basics when hosting:** HTTPS only, SSL on `DATABASE_URL`, and the provider's at-rest encryption checked in their documentation. **Done at hosting:** HTTPS is automatic on Render; the database connection uses SSL (`sslmode=no-verify`, since Render's internal certificate is self-signed) with outside access to the database blocked; Render's AES-256 at-rest encryption verified ([05](05-hosting.md#connecting-the-api-to-the-database-2026-09-13))
+2. **Keep personal data out of logs** ([11](11-database.md#found-along-the-way-personal-data-in-server-logs-open)). Logs are often the easiest place to leak data from. **Done before hosting:** errors log only the method, path, error name, and PostgreSQL's code and constraint, proven by 3 security tests
 3. **Encrypt the unsearched fields** (option B): date of birth, phone numbers, and street, city, and ZIP, with AES-256-GCM and a fresh random IV per value, stored as `bytea`. Only the repository would change; the service and API wouldn't know
 4. **Key handling:** a key version stored with each value, so keys can be rotated without re-encrypting everything at once
 5. **If name or email had to be encrypted:** a blind index for exact email matches and uniqueness, and accept that partial search on names goes away
@@ -63,4 +63,7 @@ Even without encryption, several things already limit who can reach the data:
 | Rate limiting before auth | [10](10-api-conventions.md), rate-limit tests |
 | Errors never include SQL, stack traces, or file paths | Security tests (data leaks) |
 | Every value goes into SQL as a parameter, never pasted in | Security tests (injection) |
-| The public demo holds fake data only, with a notice and a scheduled reset | [05](05-hosting.md) (to build when hosting) |
+| The public demo holds fake data only, with a notice and a scheduled reset | [05](05-hosting.md) (built) |
+| Server logs hold no names, emails, or other personal data | [11](11-database.md), security tests (data leaks) |
+| The database accepts no connections from the internet; the API reaches it over Render's private network with SSL | [05](05-hosting.md#connecting-the-api-to-the-database-2026-09-13) |
+| What a visitor could still try from the browser, and what stops it | [14](14-attacking-from-the-browser.md) |
