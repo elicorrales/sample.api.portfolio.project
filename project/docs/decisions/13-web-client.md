@@ -32,6 +32,30 @@ Click a picture for the full page.
 
 **Found while making the mockups:** the list call returns only `id`, `firstName`, `lastName`, `email` (and `deletedAt` with `includeDeleted`). The first drafts showed city, phone count, and version in the table, which would need one extra call per row. Removed: the table shows what the list returns, and the full user loads when one is opened.
 
+## Layout: the notebook lies open (2026-09-13)
+
+**The problem with C as picked:** the users screen put the list on top and the opened user below it, so every edit meant scrolling down to the form and back up to the list.
+
+| Option | Downside |
+|---|---|
+| **Two-page spread: list on the left page, opened user on the right** | Needs a wide screen (fine: [big screens only](#screen-size-big-screens-only-2026-09-13)) |
+| Slide-over panel from the right | Covers the list while editing |
+| Pop-up dialog | Cramped once a user has several phones and addresses |
+| Its own page (`/users/:id`) | An extra click each way; the list is out of sight |
+| Row opens in place | Pushes the rows below it down, so the scroll comes back |
+
+**Picked the spread**, drawn as [mockup C2](../../../website/public/mockups/c2-notebook-spread.html):
+
+<a href="../../../website/public/mockups/screenshots/c2-notebook-spread.png"><img src="../../../website/public/mockups/screenshots/c2-notebook-spread.png" width="440" alt="Mockup C2: the notebook open, users list on the left page, the opened user on the right"></a>
+
+- It fits the notebook look: an open notebook has two facing pages
+- Both pages are as tall as the window; each scrolls on its own only if its content is taller
+- The Experiments tab works the same way: all experiments listed on the left page with a small status each, the chosen one on the right with the requests it sent and what came back. **First drawn as two entries per page:** the screenshot showed the half-width pages made the text wrap until the second entry ran off the page, so it was redrawn as list and detail
+- Small links join the two screens, like "Try it: save a stale copy →" next to the saving note
+- The tabs already kept the experiments off the admin's screen; this only fixes the scroll inside the users screen
+
+**Origin:** mine to fix the scroll; the AI listed the 5 options and recommended the spread, and I agreed
+
 ## Stack: Vite + React + TypeScript (2026-09-13)
 
 | Option | Pros | Cons |
@@ -45,6 +69,16 @@ Click a picture for the full page.
 - **I'm much more familiar with plain JS,** but chose React because it's what the project should show
 
 **Origin:** suggested (I accepted the AI's recommendation over the option I know best)
+
+## Screen size: big screens only (2026-09-13)
+
+The client is built for a desktop or laptop screen, about 1280 px wide or more. No phone or tablet layout.
+
+- It's an admin tool: people manage users at a desk, not on a phone
+- A phone layout would double the layout work and the screenshots for no one who would really use it
+- A visitor on a phone can still read the README, the journal, and the screenshots
+
+**Origin:** mine
 
 ## Still open
 
