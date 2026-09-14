@@ -1,6 +1,6 @@
 # 13 — Admin web client
 
-**Date:** 2026-09-13 · **Status:** Partly decided (look and stack chosen; setup, build, and deploy still open)
+**Date:** 2026-09-13 · **Status:** Decided and built: [live on Render](https://users-admin-web.onrender.com)
 
 A single-page app in `website/` that calls the live API, hosted as a Render static site ([decision 05](05-hosting.md#web-client-on-render-not-netlify-2026-09-13)). Besides the usual list, create, edit, delete, and restore, it has a place for visitors to watch the API refuse things: get a token, flood the rate limit, save a stale copy, and so on.
 
@@ -185,5 +185,6 @@ I asked for all four as one step, since they share one form. 11 picks, all the A
 
 ## Still open
 
-- How the users screen and the experiments work in detail (which checks, how the rate-limit warning works)
-- Deploy as a Render static site (and whether it auto-deploys), then add its address to `CORS_ORIGINS`
+- ~~How the users screen and the experiments work~~ Done (sections above)
+- ~~Deploy as a Render static site~~ Done: auto-deploy off, `CORS_ORIGINS` updated ([05](05-hosting.md#web-client-on-render-not-netlify-2026-09-13))
+- Not built, if the project continued: the 6 replayed experiments running live, a request inspector, a `curl`-with-your-token entry, and links from the Users screen to matching experiments

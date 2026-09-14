@@ -182,6 +182,19 @@ The plan above put the admin web client on Netlify. **Changed to a Render static
 
 **Origin:** changed (I raised Render; the AI laid out pros and cons and recommended it; I agreed)
 
+**Deployed (2026-09-13):** static site `users-admin-web` in the same project, live at https://users-admin-web.onrender.com.
+
+| Setting | Value |
+|---|---|
+| Root directory | `website` (Node 24.21.0 from `website/.nvmrc`) |
+| Build command | `npm ci && npm run build` (type-checks, then builds) |
+| Publish directory | `dist` |
+| Environment variables | None: the client points at the API's address by default |
+| Auto-deploy | **Off**, like the API; build filters not needed |
+| API's `CORS_ORIGINS` | `http://localhost:5173,https://users-admin-web.onrender.com` (**Save and deploy**, no rebuild) |
+
+Checked after deploying: Render's build produced the same file names as the local build; the site's address gets CORS permission and a look-alike (`…onrender.com.evil.example`) doesn't; `/` and `/mockups/index.html` load; in the browser, token, users, edits, and Experiments all worked.
+
 ## Viewing the spec before the API exists
 
 **Question:** How do I (and employers) see the OpenAPI spec while it's being written?

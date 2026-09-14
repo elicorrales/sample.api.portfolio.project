@@ -8,6 +8,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 
 | You have | Do this |
 |---|---|
+| **1 minute: try the admin page** | Open **[users-admin-web.onrender.com](https://users-admin-web.onrender.com)** on a laptop or desktop · **Get demo token** · open, add, edit, delete, and restore users · then the **Experiments** tab: run the live flood (it blocks your address for up to a minute) and replay the other 6 checks. All data is fake and resets every night at 08:00 UTC. |
 | **2 minutes: try the API** | 1. Open [Swagger UI](https://users-admin-api-98o8.onrender.com/docs) · 2. **Demo** → `POST /demo/token` → **Try it out** → **Execute** · 3. Copy `token` · 4. **Authorize** (top right) → paste · 5. Try any operation. Without the token, every call gets `401`. All data is fake and resets every night at 08:00 UTC. |
 | **5 minutes: see me think like an attacker** | Read [decision 14](project/docs/decisions/14-attacking-from-the-browser.md): what a visitor could try from the browser's dev tools (forged tokens, bypassed limits, script and SQL injection, floods), what stops each one and which test proves it, and the demo's real weak spot, written down even though it isn't fixed. How the stored data is protected (and why field-level encryption wasn't built): [decision 12](project/docs/decisions/12-encryption.md). |
 | **10 minutes: see how I think** | Read the [journal](project/docs/journal.md): the project step by step, including where I pushed back on the AI. |
@@ -27,7 +28,7 @@ I'm building it as a portfolio piece and as an honest record of how a real API g
 | Tests | ✅ 263 green; see [Tests](#tests) below |
 | Storage | ✅ PostgreSQL 18 via Drizzle; locally a real server run from `node_modules` (`embedded-postgres`); hosted on Render Postgres, reached over Render's private network with SSL |
 | Hosting | ✅ [Live on Render](https://users-admin-api-98o8.onrender.com/docs): the API serves its own Swagger page; demo token, 50 starting users, 200-user limit, nightly reset; rate limit checked from outside |
-| Admin web client | ⏳ In progress (Vite + React + TypeScript, look picked from [5 mockups](project/docs/decisions/13-web-client.md#look-and-feel-the-engineering-notebook-2026-09-13)): demo token with countdown and expiry, users list with search and paging, open a user; 24 client tests, non-happy first. Runs locally against the live API; not deployed yet |
+| Admin web client | ✅ [Live on Render](https://users-admin-web.onrender.com) (Vite + React + TypeScript, look picked from [5 mockups](project/docs/decisions/13-web-client.md#look-and-feel-the-engineering-notebook-2026-09-13)): demo token with countdown and expiry; search, paging, add, edit, delete, restore; an Experiments tab with a live rate-limit flood; **47 client tests**, non-happy first |
 
 Details: [PROGRESS.md](PROGRESS.md)
 
