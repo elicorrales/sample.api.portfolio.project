@@ -102,6 +102,10 @@ Added with the first API tests:
 | `openapi-fetch` | 0.17.0 | API calls checked against the types generated from `openapi.yaml` (`npm run api:types`, pinned `openapi-typescript` 7.13.0 via `npx`, since it needs TypeScript 5) |
 | `msw` | 2.15.0 | A fake API inside the tests; a request it has no answer for fails the test |
 
+**Fonts (2026-09-13):** Newsreader and Spline Sans Mono installed as packages (`@fontsource-variable/newsreader`, `@fontsource-variable/spline-sans-mono`, 5.3.0) instead of a Google Fonts link: pinned versions and no request to Google from visitors' browsers. **Origin:** suggested (I agreed)
+
+**Only working controls on screen:** search, paging, tabs, and New user appear when they work, not as dead buttons.
+
 **The token (2026-09-13):** the app gets a demo token automatically on open and keeps it in memory only, so a reload gets a fresh one and nothing stays saved in the browser. The Experiments tab will show what happens without one. **Origin:** suggested (the AI's picks; I agreed)
 
 **Tests never reach Render,** guarded twice: the client looks up `fetch` on every call so MSW can catch it (without that, the first run quietly called the live API), and tests point at `http://fake-api.test`, which can't exist. Checked by removing the first guard on purpose ([journal row 51](../journal.md)).
@@ -109,4 +113,4 @@ Added with the first API tests:
 ## Still open
 
 - How the users screen and the experiments work in detail (which checks, how the rate-limit warning works)
-- Local run against the Render API (`CORS_ORIGINS`), then deploy with build filters
+- Deploy as a Render static site (and whether it auto-deploys), then add its address to `CORS_ORIGINS`

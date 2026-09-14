@@ -1,0 +1,51 @@
+/* The engineering notebook, lying open (decision 13, mockup C2). Left page: the list. Right page: what it opened.
+   Ink blue for data from the API, red pencil for results and problems. Big screens only. */
+:root {
+  --desk: #CBD3C4;
+  --paper: #EEF3E8;
+  --grid: rgba(74, 128, 92, 0.13);
+  --margin: #C9695F;
+  --ink: #1E2A48;
+  --blue: #2946A3;
+  --pencil: #5F665E;
+  --red: #B0342C;
+  --mark: rgba(246, 226, 94, 0.55);
+  --serif: "Newsreader Variable", Georgia, serif;
+  --mono: "Spline Sans Mono Variable", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--desk); color: var(--ink); font: 17px/1.6 var(--serif); }
+
+.spread {
+  display: grid; grid-template-columns: 1fr 1fr;
+  max-width: min(1340px, calc(100vw - 110px)); height: max(700px, calc(100vh - 48px)); margin: 24px auto;
+  box-shadow: 0 1px 0 #B5BEAE, 0 12px 30px rgba(40, 55, 40, 0.18);
+}
+.page {
+  position: relative; display: flex; flex-direction: column; overflow-y: auto; min-width: 0;
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+/* Red margin on each page's outer edge; a soft shadow where the pages meet the binding. */
+.page::before { content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: var(--margin); }
+.page-left { padding: 30px 40px 26px 88px; box-shadow: inset -18px 0 22px -18px rgba(40, 55, 40, 0.35); }
+.page-left::before { left: 64px; }
+.page-right { padding: 30px 88px 26px 44px; box-shadow: inset 18px 0 22px -18px rgba(40, 55, 40, 0.35); }
+.page-right::before { right: 64px; }
+
+.head { display: flex; align-items: baseline; gap: 18px; border-bottom: 2px solid var(--ink); padding-bottom: 8px; }
+.head h1 { font-size: 44px; line-height: 1; font-weight: 500; margin: 0; letter-spacing: -0.01em; }
+.who { margin-left: auto; font-family: var(--mono); font-size: 12.5px; color: var(--pencil); text-align: right; line-height: 1.5; }
+.note { font-style: italic; color: var(--pencil); margin: 8px 0 18px; }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-weight: 600; font-size: 14.5px; padding: 6px 8px; border-bottom: 1.5px solid var(--ink); }
+td { padding: 4px 8px; border-bottom: 1px solid rgba(30, 42, 72, 0.18); font-size: 16px; }
+td.data { font-family: var(--mono); font-size: 13px; color: var(--blue); }
+.pager { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 14px; font-style: italic; color: var(--pencil); }
+
+.waiting { font-style: italic; color: var(--pencil); }
+.problem { color: var(--red); font-style: italic; border-left: 3px solid var(--red); padding: 2px 0 2px 14px; }
+.blank-page { margin: auto; max-width: 30ch; text-align: center; font-style: italic; color: var(--pencil); }

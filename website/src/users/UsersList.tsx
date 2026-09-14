@@ -25,8 +25,8 @@ export function UsersList() {
     };
   }, []);
 
-  if (state.status === "loading") return <p>Loading users…</p>;
-  if (state.status === "failed") return <p role="alert">{state.message}</p>;
+  if (state.status === "loading") return <p className="waiting">Loading users…</p>;
+  if (state.status === "failed") return <p role="alert" className="problem">{state.message}</p>;
 
   const { page } = state;
   return (
@@ -44,12 +44,14 @@ export function UsersList() {
             <tr key={user.id}>
               <td>{user.lastName}</td>
               <td>{user.firstName}</td>
-              <td>{user.email}</td>
+              <td className="data">{user.email}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p>{`${page.totalItems} users, page ${page.page} of ${page.totalPages}`}</p>
+      <div className="pager">
+        <span>{`${page.totalItems} users, page ${page.page} of ${page.totalPages}`}</span>
+      </div>
     </>
   );
 }
